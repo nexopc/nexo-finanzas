@@ -1,8 +1,18 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "fecha": "2026-10-28",
-  "mensaje": "Primera versión de NEXO Finanzas.",
+  "mensaje": "Inicio más sencillo y colores naranja y morado.",
   "notas": [
+    {
+      "version": "1.1.0",
+      "fecha": "28 oct 2026",
+      "cambios": [
+        "Inicio más simple: Puedes gastar, Es tu ahorro y Guárdalo para pagos.",
+        "Una sola acción importante para hoy; el resto en Consejos.",
+        "Metas más discretas: el detalle sale al tocarlas.",
+        "Nuevos colores naranja y morado."
+      ]
+    },
     {
       "version": "1.0.0",
       "fecha": "28 oct 2026",

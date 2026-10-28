@@ -12,8 +12,8 @@ head = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
-<meta name="theme-color" content="#0C1311" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#EEF3F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#110D17" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F5F2F8" media="(prefers-color-scheme: light)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="NEXO $">

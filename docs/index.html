@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
-<meta name="theme-color" content="#0C1311" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#EEF3F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#110D17" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F5F2F8" media="(prefers-color-scheme: light)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="NEXO $">
@@ -18,26 +18,29 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: una sola columna tipo libreta de caja, barra inferior fija con botón central para registrar; las cifras de plata van grandes en la fuente display */
+/* Layout: una sola columna; Inicio responde 3 preguntas (gastar · ahorro · guardar) con una barra que reparte el total; morado = marca y ahorro, naranja = gastar y registrar */
 :root{
-  --bg:#EEF3F0; --surface:#FFFFFF; --surface-2:#E3EBE6; --ink:#12201B; --ink-2:#465650; --ink-3:#6E7D76; --line:#D3DDD8;
-  --accent:#0E7A5A; --accent-ink:#FFFFFF; --accent-soft:#D2ECE1; --gold:#B88400;
+  --bg:#F5F2F8; --surface:#FFFFFF; --surface-2:#EEE8F5; --ink:#1D1527; --ink-2:#4E4460; --ink-3:#766B88; --line:#E0D7EB;
+  --accent:#6A2BD4; --accent-ink:#FFFFFF; --accent-soft:#ECE3FB; --gold:#B88400;
+  --orange:#E8650F; --orange-ink:#FFFFFF; --orange-soft:#FDE8D8; --keep:#8A8198;
   --good:#167F4E; --warn:#A86B00; --bad:#C23B2B; --good-bg:#DDF2E6; --warn-bg:#FBEFD6; --bad-bg:#FBE1DC;
-  --s-in:#2a78d6; --s-out:#eb6834; --s-save:#0E7A5A;
+  --s-in:#6A2BD4; --s-out:#E8650F; --s-save:#6A2BD4;
   --fd:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
   --fb:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --r:16px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0C1311; --surface:#141E1B; --surface-2:#1C2925; --ink:#E7EFEB; --ink-2:#AFBCB5; --ink-3:#83918A; --line:#283632;
-  --accent:#3FC79A; --accent-ink:#04241A; --accent-soft:#16392D; --gold:#E2B33E;
+  --bg:#110D17; --surface:#1A1423; --surface-2:#241C30; --ink:#F1EBF8; --ink-2:#C4B9D4; --ink-3:#9186A2; --line:#30263E;
+  --accent:#A98BFA; --accent-ink:#1A0B38; --accent-soft:#2C2047; --gold:#E2B33E;
+  --orange:#FB8B3E; --orange-ink:#2A1203; --orange-soft:#3A2414; --keep:#9A90AA;
   --good:#45CF8F; --warn:#E4AC3E; --bad:#F27461; --good-bg:#153024; --warn-bg:#33280F; --bad-bg:#3A1C17;
-  --s-in:#3987e5; --s-out:#d95926; --s-save:#3FC79A; color-scheme:dark}}
+  --s-in:#A98BFA; --s-out:#FB8B3E; --s-save:#A98BFA; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0C1311; --surface:#141E1B; --surface-2:#1C2925; --ink:#E7EFEB; --ink-2:#AFBCB5; --ink-3:#83918A; --line:#283632;
-  --accent:#3FC79A; --accent-ink:#04241A; --accent-soft:#16392D; --gold:#E2B33E;
+  --bg:#110D17; --surface:#1A1423; --surface-2:#241C30; --ink:#F1EBF8; --ink-2:#C4B9D4; --ink-3:#9186A2; --line:#30263E;
+  --accent:#A98BFA; --accent-ink:#1A0B38; --accent-soft:#2C2047; --gold:#E2B33E;
+  --orange:#FB8B3E; --orange-ink:#2A1203; --orange-soft:#3A2414; --keep:#9A90AA;
   --good:#45CF8F; --warn:#E4AC3E; --bad:#F27461; --good-bg:#153024; --warn-bg:#33280F; --bad-bg:#3A1C17;
-  --s-in:#3987e5; --s-out:#d95926; --s-save:#3FC79A; color-scheme:dark}
+  --s-in:#A98BFA; --s-out:#FB8B3E; --s-save:#A98BFA; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
@@ -115,7 +118,7 @@ h1,h2,h3{font-family:var(--fd);text-wrap:balance;margin:0;line-height:1.15}
 .tab{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:600;color:var(--ink-3);padding:6px 0}
 .tab svg{width:24px;height:24px}
 .tab[aria-current="page"]{color:var(--accent)}
-.fab{justify-self:center;width:62px;height:62px;border-radius:20px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;margin-top:-26px;box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 45%,transparent)}
+.fab{justify-self:center;width:62px;height:62px;border-radius:20px;background:var(--orange);color:var(--orange-ink);display:grid;place-items:center;margin-top:-26px;box-shadow:0 6px 18px color-mix(in srgb,var(--orange) 45%,transparent)}
 .fab svg{width:30px;height:30px}
 #scrim{position:fixed;inset:0;background:rgb(0 0 0/.45);z-index:30}
 #sheet{position:fixed;left:0;right:0;bottom:0;z-index:31;background:var(--bg);border-radius:22px 22px 0 0;max-height:94dvh;overflow:auto;overscroll-behavior:contain;
@@ -134,7 +137,7 @@ h1,h2,h3{font-family:var(--fd);text-wrap:balance;margin:0;line-height:1.15}
 .quick button:active{background:var(--accent-soft)}
 .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .keypad button{background:var(--surface-2);border-radius:10px;padding:13px 0;font-size:20px;font-weight:600;font-family:var(--fd)}
-.save{background:var(--accent);color:var(--accent-ink);border-radius:14px;padding:16px;font-weight:700;font-size:17px;width:100%}
+.save{background:var(--orange);color:var(--orange-ink);border-radius:14px;padding:16px;font-weight:700;font-size:17px;width:100%}
 .save:disabled{opacity:.45}
 .ghost{background:var(--surface-2);border-radius:12px;padding:12px 14px;font-weight:600;font-size:14px}
 .danger{color:var(--bad)}
@@ -170,6 +173,23 @@ h1,h2,h3{font-family:var(--fd);text-wrap:balance;margin:0;line-height:1.15}
 .cardchip small{opacity:.85}
 .fields{display:flex;flex-direction:column;gap:12px}
 .note{font-size:12px;color:var(--ink-3)}
+.split3{display:flex;height:14px;border-radius:99px;overflow:hidden;gap:3px;background:color-mix(in srgb,var(--accent-ink) 18%,transparent)}
+.split3 i{display:block;height:100%;min-width:4px}
+.three{gap:0;padding:6px 16px}
+.q{display:grid;grid-template-columns:14px minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}
+.q:first-child{border-top:0}
+.q .dot{width:14px;height:14px;grid-column:1;grid-row:1}
+.q .t{font-weight:700;font-size:16px;grid-column:2;grid-row:1}
+.q .v{font-family:var(--fd);font-weight:800;font-size:24px;grid-column:3;grid-row:1;text-align:right;white-space:nowrap}
+.q .s{font-size:13px;color:var(--ink-2);grid-column:2/4;grid-row:2}
+.q.go .v{color:var(--orange)}
+.do{background:var(--orange-soft);border-radius:var(--r);padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+.do .ic{font-size:22px}
+.do b{display:block;font-size:15px}
+.do p{margin:2px 0 0;font-size:13px;color:var(--ink-2)}
+.goal{display:flex;flex-direction:column;gap:6px;padding:12px 0;border-top:1px solid var(--line);width:100%;text-align:left}
+.goal:first-child{border-top:0}
+.goal .bar{height:6px}
 @media (prefers-reduced-motion:no-preference){#sheet:not([hidden]){animation:up .22s ease-out}@keyframes up{from{transform:translateY(30px);opacity:.6}}}
 @media (min-width:700px){.big{font-size:46px}}
 </style>
@@ -222,7 +242,7 @@ const money=(n,c)=>(!c||c==='COP')?cop(n):(n<0?'−':'')+(c==='USD'?'US$':'€')
 const short=n=>{const a=Math.abs(n),s=n<0?'−':'';if(a>=1e6)return s+'$'+nf1.format(a/1e6)+' M';if(a>=1000)return s+'$'+nf0.format(Math.round(a/1000))+' mil';return cop(n)};
 const pct=n=>nf0.format(Math.round(n*100))+'%';
 
-const APP_VERSION='1.0.0';
+const APP_VERSION='1.1.0';
 const RATE_MS=3*36e5;
 
 /*FX-START*/
@@ -558,7 +578,7 @@ function advice(){
 }
 
 /* ---------- vista ---------- */
-const V={tab:'inicio',sub:null,period:'mes',adv:'hoy',openTx:null,confirm:null};
+const V={tab:'inicio',sub:null,period:'mes',adv:'hoy',openTx:null,confirm:null,goalOpen:null};
 const view=$('#view');
 
 function render(){
@@ -604,29 +624,41 @@ function txRow(t){
 const TABS={
 inicio(){
   const real=realCOP(); const total=Object.values(real).reduce((a,b)=>a+b,0);
-  const eb=envBals(), dl=dailyLimit(), sv=savingsAt();
-  const adv=advice().filter(a=>a.sc.includes('hoy')).slice(0,3);
-  const up=subsUpcoming(10).slice(0,3);
-  const last=[...S.tx].sort((a,b)=>b.t-a.t).slice(0,5);
-  const incBtns=S.incomes.map(i=>{const p=pendingDues(i);return `<button class="fav" data-a="payinc" data-id="${i.id}"><span class="ic">💼</span><span style="min-width:0"><b>${esc(i.name)} ${short(i.amount)}</b><span>${p.length?'Pendiente desde '+fDate(p[0]):'Próximo: '+fDate(nextDue(i))}</span></span></button>`;}).join('');
+  const eb=envBals(), dl=dailyLimit();
+  const gastar=eb.gastos||0, guardar=Math.max(0,eb.fijos||0);
+  const ahorro=goals().reduce((s2,g)=>s2+Math.max(0,eb[g.id]||0),0);
+  const parts=Math.max(1,Math.max(0,gastar)+ahorro+guardar);
+  const up=subsUpcoming(31); const moves=suggestMoves();
+  const sepMove=moves.find(m=>m.from.id==='efectivo'&&m.to.cur==='COP');
+  const adv=advice().filter(a2=>a2.sc.includes('hoy')&&a2.ic!=='📅');
+  const last=[...S.tx].sort((x,y)=>y.t-x.t).slice(0,5);
+  const incBtns=S.incomes.map(i=>{const p=pendingDues(i);return `<button class="fav" data-a="payinc" data-id="${i.id}"><span class="ic">💼</span><span style="min-width:0"><b>Me pagaron</b><span class="num">${short(i.amount)} · ${p.length?'debe '+fDate(p[0]):'próx. '+fDate(nextDue(i))}</span></span></button>`;}).join('');
   return `
   <section class="card hero">
-    <div class="eyebrow">Tienes en total</div>
+    <div class="eyebrow">Toda tu plata</div>
     <div class="big num">${cop(total)}</div>
-    <div class="hero-grid num">
-      <div><span>Hoy puedes gastar</span><b>${cop(Math.max(0,dl.left))}</b></div>
-      <div><span>Ahorro real</span><b>${short(sv.real)}</b></div>
-      <div><span>Deberías llevar</span><b>${short(sv.should)}</b></div>
-    </div>
-    <div class="row" style="font-size:13px;justify-content:space-between"><span>Para gastar: <b class="num">${cop(eb.gastos||0)}</b></span><span>Suscripciones: <b class="num">${cop(eb.fijos||0)}</b></span></div>
+    <div class="split3" aria-hidden="true"><i style="width:${Math.max(0,gastar)/parts*100}%;background:var(--orange)"></i><i style="width:${ahorro/parts*100}%;background:var(--accent-ink)"></i><i style="width:${guardar/parts*100}%;background:color-mix(in srgb,var(--accent-ink) 45%,transparent)"></i></div>
+    <div style="font-size:13px;opacity:.9">Así se divide 👇</div>
   </section>
-  <section class="card"><div class="card-h"><h2>Registro en 1 toque</h2><span class="muted">se guarda al tocar</span></div>
+  <section class="card three">
+    <div class="q go"><span class="dot" style="background:var(--orange)"></span><span class="t">Puedes gastar</span><span class="v num">${cop(Math.max(0,gastar))}</span>
+      <span class="s">${gastar<0?`Te pasaste ${cop(-gastar)}: eso salió de tu ahorro.`:dl.left>0?`Hoy hasta <b class="num">${cop(dl.left)}</b> para que te alcance hasta el ${fDate(dl.until)}.`:`Hoy ya no: mañana tienes ${cop(dl.per)} de nuevo.`}</span></div>
+    <div class="q"><span class="dot" style="background:var(--accent)"></span><span class="t">Es tu ahorro</span><span class="v num">${cop(ahorro)}</span>
+      <span class="s">${sepMove?`Te falta separar <b class="num">${cop(sepMove.cop)}</b>: consígnalos en ${esc(sepMove.to.name)}.`:'No lo toques. Ya está separado ✓'}</span></div>
+    <div class="q"><span class="dot" style="background:var(--keep)"></span><span class="t">Guárdalo para pagos</span><span class="v num">${cop(guardar)}</span>
+      <span class="s">${up.length?`Para ${esc(up[0].s.name)} (${fDate(up[0].d)})${up.length>1?' y '+(up.length-1)+' pago'+(up.length>2?'s':'')+' más':''}.`:'No tienes pagos este mes.'}</span></div>
+  </section>
+  ${adv.length?`<div class="do"><span class="ic">${adv[0].ic}</span><div class="grow"><b>${esc(adv[0].ti)}</b><p>${esc(adv[0].tx)}</p>${adv.length>1?`<button class="link" style="margin-top:6px" data-a="go" data-sub="consejos">Ver ${adv.length-1} consejo${adv.length>2?'s':''} más</button>`:''}</div></div>`:''}
+  <section class="card"><div class="card-h"><h2>Registrar rápido</h2><span class="muted">1 toque y listo</span></div>
     <div class="favs">${favorites().map((f,i)=>`<button class="fav" data-a="fav" data-i="${i}"><span class="ic">${CAT(f.cat).ic}</span><span style="min-width:0"><b>${esc(CAT(f.cat).name.replace('­',''))}</b><span class="num">${cop(f.cop)} · ${esc(accById(f.acc).name)}</span></span></button>`).join('')}${incBtns}</div>
+    <div class="muted">Para otro monto, toca el botón naranja <b>+</b> de abajo.</div>
   </section>
-  <section class="card"><div class="card-h"><h2>Para hoy</h2><button class="link" data-a="go" data-sub="consejos">Ver semana y mes</button></div>${adv.map(tipHTML).join('')||'<div class="empty">Todo en orden por hoy.</div>'}</section>
-  <section class="card"><div class="card-h"><h2>Tus cuentas</h2><button class="link" data-a="go" data-sub="cuentas">Ajustar</button></div>${accRows()}</section>
-  <section class="card"><div class="card-h"><h2>Próximos cobros</h2><button class="link" data-a="go" data-sub="tarjetas">Tarjetas</button></div>
-    ${up.length?up.map(x=>{const card=S.cards.find(c=>c.id===x.s.card);return `<div class="row acc-row"><span class="dot" style="background:${card?card.col:'var(--ink-3)'}"></span><div class="grow"><div class="acc-name">${esc(x.s.name)}</div><div class="muted">${x.late?'<span class="pill warn">desde '+fDate(x.d)+'</span>':fDate(x.d)} · ${esc(card?card.name:'Sin tarjeta')}${card&&card.last4?' ••'+esc(card.last4):''}</div></div><div class="right"><div class="amt num">${money(x.s.amount,x.s.cur)}</div><button class="link" data-a="paysub" data-id="${x.s.id}" data-due="${ymd(x.d)}">Ya me cobraron</button></div></div>`;}).join(''):'<div class="empty">Nada en los próximos 10 días.</div>'}</section>
+  <section class="card"><div class="card-h"><h2>¿Dónde está tu plata?</h2><button class="link" data-a="go" data-sub="cuentas">Detalle</button></div>
+    ${S.accounts.filter(a2=>Math.abs(accBal(a2.id))>0.004||a2.cur==='COP').map(a2=>`<div class="row acc-row"><span class="dot" style="background:${a2.col}"></span><span class="grow acc-name">${esc(a2.name)}</span><span class="amt num">${money(accBal(a2.id),a2.cur)}</span></div>`).join('')}
+    ${moves.length?moves.map(m=>`<div class="muted">↪ ${m.from.id==='efectivo'&&m.to.cur==='COP'?'Consigna':'Pasa'} <b class="num">${cop(m.cop)}</b> de ${esc(m.from.name)} a ${esc(m.to.name)}</div>`).join(''):'<div class="muted">✓ Cada cuenta tiene lo que le toca.</div>'}
+  </section>
+  <section class="card"><div class="card-h"><h2>Próximos pagos</h2><button class="link" data-a="go" data-sub="tarjetas">Tarjetas</button></div>
+    ${up.length?up.slice(0,3).map(x=>{const card=S.cards.find(c=>c.id===x.s.card);return `<div class="row acc-row"><span class="dot" style="background:${card?card.col:'var(--ink-3)'}"></span><div class="grow"><div class="acc-name">${esc(x.s.name)}</div><div class="muted">${x.late?'Desde el '+fDate(x.d):fDate(x.d)} · ${esc(card?card.name:'Sin tarjeta')}${card&&card.last4?' ••'+esc(card.last4):''}</div></div><div class="right"><div class="amt num">${money(x.s.amount,x.s.cur)}</div><button class="link" data-a="paysub" data-id="${x.s.id}" data-due="${ymd(x.d)}">Ya lo pagué</button></div></div>`;}).join(''):'<div class="empty">Nada este mes.</div>'}</section>
   <section class="card"><div class="card-h"><h2>Últimos movimientos</h2><button class="link" data-a="go" data-sub="movs">Ver todos</button></div><div>${last.map(txRow).join('')||'<div class="empty">Aún no hay movimientos. Toca + para registrar el primero.</div>'}</div></section>`;
 },
 graficas(){
@@ -642,21 +674,24 @@ graficas(){
     <div id="ch-line"></div><div class="chart-detail num" id="ch-line-d">Toca la gráfica para ver un día.</div></section>`;
 },
 metas(){
-  const eb=envBals(); const tot=goals().reduce((s,g)=>s+(+g.share||0),0)||1;
-  return `<section class="card"><div class="card-h"><h2>Cómo se reparte tu ahorro</h2></div>
-    <div class="muted">De cada sueldo ahorras el <b>${S.set.pctFijo} %</b> y de cada ingreso extra el <b>${S.set.pctExtra} %</b>. Ese ahorro se divide así entre tus metas:</div>
-    ${goals().map(g=>`<div class="row"><span style="font-size:20px">${g.ic}</span><span class="grow acc-name">${esc(g.name)}</span><div class="stepper"><button data-a="share" data-id="${g.id}" data-d="-5" aria-label="Bajar">−</button><b class="num" style="min-width:52px;text-align:center">${pct((+g.share||0)/tot)}</b><button data-a="share" data-id="${g.id}" data-d="5" aria-label="Subir">+</button></div></div>`).join('')}
-  </section>`+goals().map(g=>{const target=goalTarget(g), have=eb[g.id]||0, p=target?Math.min(1,Math.max(0,have/target)):0;
+  const eb=envBals(); const tot=goals().reduce((s2,g)=>s2+(+g.share||0),0)||1;
+  const ahorro=goals().reduce((s2,g)=>s2+Math.max(0,eb[g.id]||0),0);
+  return `<section class="card"><div class="eyebrow">Tu ahorro total</div><div class="big num" style="font-size:34px;color:var(--accent)">${cop(ahorro)}</div>
+    <div class="muted">Cada vez que te pagan, el ${S.set.pctFijo} % se separa solo (y el ${S.set.pctExtra} % de los ingresos extra). Toca una meta para ver el detalle.</div></section>
+  <section class="card" style="gap:0">`+goals().map(g=>{const target=goalTarget(g), have=Math.max(0,eb[g.id]||0), p=target?Math.min(1,have/target):0, open=V.goalOpen===g.id;
     const months=Math.max(0.5,dDiff(today(),pd(g.date))/30.4), need=Math.max(0,(target-have)/months), pace=goalPace(g);
-    const st=have>=target&&target?'<span class="pill good">Completa</span>':pace>=need?'<span class="pill good">A tiempo</span>':pace>=need*0.5?'<span class="pill warn">Atrasada</span>':'<span class="pill bad">Muy atrasada</span>';
-    return `<section class="card"><div class="card-h"><h2>${g.ic} ${esc(g.name)}</h2>${st}</div>
-      <div class="row" style="justify-content:space-between;align-items:baseline"><span class="big num" style="font-size:30px">${cop(have)}</span><span class="muted num">de ${cop(target)}</span></div>
-      <div class="bar"><i style="width:${(p*100).toFixed(1)}%"></i></div>
-      <div class="stats num"><div class="stat"><b>${short(need)}</b><span>necesitas al mes</span></div><div class="stat"><b>${short(pace)}</b><span>llevas al mes</span></div></div>
-      <div class="muted">Fecha: ${fDate(g.date)} ${pd(g.date).getFullYear()} · Se guarda en ${esc((g.accounts||[]).map(id=>accById(id)?.name).filter(Boolean).join(', ')||'—')}</div>
-      ${g.items&&g.items.length?`<div class="goal-items">${g.items.map(i=>`<div class="row"><span class="grow">${esc(i.name)}</span><span class="num muted">${cop(i.price)}</span></div>`).join('')}</div>`:''}
-      <div class="row" style="gap:8px;flex-wrap:wrap"><button class="ghost" data-a="editgoal" data-id="${g.id}">Editar meta</button>${g.items?`<button class="ghost" data-a="additem" data-id="${g.id}">+ Agregar cosa a comprar</button>`:''}</div></section>`;}).join('')+
-    `<button class="ghost" data-a="editgoal" data-id="">+ Nueva meta</button>`;
+    return `<button class="goal" data-a="goalopen" data-id="${g.id}"><span class="row"><span style="font-size:20px">${g.ic}</span><span class="grow acc-name">${esc(g.name)}</span><span class="num muted">${short(have)} de ${short(target)}</span></span>
+      <span class="bar"><i style="width:${(p*100).toFixed(1)}%"></i></span>
+      <span class="muted">Le toca el ${pct((+g.share||0)/tot)} de tu ahorro · para el ${fDate(g.date)} ${pd(g.date).getFullYear()}</span></button>
+      ${open?`<div class="fields" style="padding-bottom:12px">
+        <div class="stats num"><div class="stat"><b>${short(need)}</b><span>necesitas al mes</span></div><div class="stat"><b>${short(pace)}</b><span>llevas al mes</span></div></div>
+        <div class="muted">${have>=target&&target?'¡Completa!':pace>=need?'Vas a tiempo.':'A este ritmo no llegas a la fecha. Sube su porcentaje o súmale ingresos extra.'} Se guarda en ${esc((g.accounts||[]).map(id=>accById(id)?.name).filter(Boolean).join(', ')||'—')}.</div>
+        ${g.items&&g.items.length?`<div class="goal-items">${g.items.map(i=>`<div class="row"><span class="grow">${esc(i.name)}</span><span class="num muted">${cop(i.price)}</span></div>`).join('')}</div>`:''}
+        <div class="row" style="gap:8px;flex-wrap:wrap"><button class="ghost" data-a="editgoal" data-id="${g.id}">Editar meta</button>${g.items?`<button class="ghost" data-a="additem" data-id="${g.id}">+ Cosa a comprar</button>`:''}</div></div>`:''}`;}).join('')+`</section>
+  <section class="card"><div class="card-h"><h2>¿Cuánto va a cada meta?</h2></div>
+    ${goals().map(g=>`<div class="row"><span style="font-size:20px">${g.ic}</span><span class="grow acc-name">${esc(g.name)}</span><div class="stepper"><button data-a="share" data-id="${g.id}" data-d="-5" aria-label="Bajar">−</button><b class="num" style="min-width:52px;text-align:center">${pct((+g.share||0)/tot)}</b><button data-a="share" data-id="${g.id}" data-d="5" aria-label="Subir">+</button></div></div>`).join('')}
+  </section>
+  <button class="ghost" data-a="editgoal" data-id="">+ Nueva meta</button>`;
 },
 mas(){
   const it=[['consejos','💡','Consejos del día, semana y mes'],['movs','🧾','Todos los movimientos'],['cuentas','🏦','Cuentas y saldos'],['tarjetas','💳','Tarjetas y suscripciones'],['ingresos','💼','Ingresos fijos'],['reglas','⚙️','Reglas de ahorro y reparto'],['tasas','💱','Dólar, euro y alertas'],['respaldo','💾','Copia de seguridad'],['app','🚀','Actualizar la app e ideas nuevas']];
@@ -1002,6 +1037,7 @@ document.addEventListener('click',e=>{
     case 'undo': S.tx=S.tx.filter(t=>t.id!==d.id); save(); render(); $('#toast').hidden=true; break;
     case 'txopen': V.openTx=V.openTx===d.id?null:d.id; V.confirm=null; render(); break;
     case 'txdel': if(V.confirm===d.id){S.tx=S.tx.filter(t=>t.id!==d.id);V.confirm=null;V.openTx=null;save();toast('Movimiento eliminado.');} else V.confirm=d.id; render(); break;
+    case 'goalopen': V.goalOpen=V.goalOpen===d.id?null:d.id; render(); break;
     case 'share': {const g=envById(d.id); g.share=Math.max(0,Math.min(100,(+g.share||0)+(+d.d))); save(); render(); break;}
     case 'pct': S.set[d.k]=Math.max(0,Math.min(90,S.set[d.k]+(+d.d))); save(); render(); break;
     case 'envacc': {const e2=envById(d.env); const s=new Set(e2.accounts||[]); s.has(d.acc)?s.delete(d.acc):s.add(d.acc); if(!s.size)break; e2.accounts=[...s]; save(); render(); break;}
