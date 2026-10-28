@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "fecha": "2026-10-28",
+  "mensaje": "Primera versión de NEXO Finanzas.",
+  "notas": [
+    {
+      "version": "1.0.0",
+      "fecha": "28 oct 2026",
+      "cambios": [
+        "Registro de gastos, ingresos y movimientos en 3 toques, más botones de 1 toque.",
+        "Reparto automático: 30 % del sueldo y 50 % de los extras a tus metas.",
+        "Cuentas Efectivo, Nequi, ARQ Dólares y ARQ Euros, con lo que deberías tener en cada una.",
+        "Tarjetas con sus suscripciones y aviso antes de cada cobro.",
+        "Dólar y euro cada 3 horas, con avisos para mover tu plata.",
+        "Gráficas, metas y consejos del día, la semana y el mes."
+      ]
+    }
+  ]
+}
