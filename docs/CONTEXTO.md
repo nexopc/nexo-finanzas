@@ -1,10 +1,9 @@
 # Cómo se publica cada actualización de NEXO Finanzas
 
 ## Quién es el usuario
-Cristóbal, 18 años, Quibdó (Chocó, Colombia). Estudia y trabaja en una tienda de computadores.
-Sueldo: $150.000 quincenal **en efectivo** (días 15 y 30, a veces llega hasta una quincena tarde).
+Cristóbal (NEXO PC). Sueldo quincenal **en efectivo**, que a veces llega tarde.
 Cuentas: Efectivo, Nequi, ARQ (dólares y euros). Celular: Samsung Galaxy A25 (Chrome). También usa PC con Windows.
-Metas: Diciembre, NEXO PC (≈ $100 millones en 2 años), Equipo de contenido. Ahorra 30 % del sueldo y 50 % de los extras.
+Metas: Diciembre, NEXO PC y Equipo de contenido. Los montos reales viven solo en su celular, nunca en este repositorio.
 Español de Colombia, directo, con datos reales.
 
 ## Cómo llega una idea nueva
