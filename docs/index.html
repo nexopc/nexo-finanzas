@@ -242,7 +242,7 @@ const money=(n,c)=>(!c||c==='COP')?cop(n):(n<0?'−':'')+(c==='USD'?'US$':'€')
 const short=n=>{const a=Math.abs(n),s=n<0?'−':'';if(a>=1e6)return s+'$'+nf1.format(a/1e6)+' M';if(a>=1000)return s+'$'+nf0.format(Math.round(a/1000))+' mil';return cop(n)};
 const pct=n=>nf0.format(Math.round(n*100))+'%';
 
-const APP_VERSION='1.2.0';
+const APP_VERSION='1.3.0';
 const RATE_MS=3*36e5;
 
 /*FX-START*/
@@ -296,6 +296,7 @@ const CATS_OUT=[
   {id:'super',name:'Súper­mercado',ic:'🛒',env:'gastos'},
   {id:'internet',name:'Compras internet',ic:'📦',env:'gastos'},
   {id:'subs',name:'Suscripción',ic:'📺',env:'fijos'},
+  {id:'fijo',name:'Gasto fijo',ic:'🏠',env:'fijos'},
   {id:'comida',name:'Comida',ic:'🍔',env:'gastos'},
   {id:'transporte',name:'Mototaxi / bus',ic:'🛵',env:'gastos'},
   {id:'recargas',name:'Recarga / datos',ic:'📶',env:'gastos'},
@@ -326,7 +327,7 @@ function baseState(){
       {id:'arq_eur',name:'ARQ Euros',cur:'EUR',col:'#6250d6'}],
     envs:[
       {id:'gastos',name:'Para gastar',kind:'gastos',ic:'🛍️',accounts:['efectivo','nequi']},
-      {id:'fijos',name:'Suscripciones',kind:'fijos',ic:'📺',accounts:['arq_usd','nequi']},
+      {id:'fijos',name:'Pagos fijos',kind:'fijos',ic:'📺',accounts:['arq_usd','nequi']},
       {id:'g_dic',name:'Diciembre',kind:'meta',ic:'🎄',target:300000,date:'2026-12-15',share:50,accounts:['nequi'],items:[]},
       {id:'g_nexo',name:'NEXO PC',kind:'meta',ic:'🖥️',target:40000000,date:ymd(new Date(t.getFullYear()+2,t.getMonth(),t.getDate())),share:30,accounts:['nequi'],items:[]},
       {id:'g_equipo',name:'Equipo de contenido',kind:'meta',ic:'📷',target:0,date:'2027-08-31',share:20,accounts:['nequi'],items:[
@@ -349,7 +350,8 @@ function demoState(){
   st.subs=[
     {id:'s1',name:'Netflix',amount:26900,cur:'COP',day:5,card:'c_arq',active:true,start:ymd(start)},
     {id:'s2',name:'Spotify',amount:16900,cur:'COP',day:12,card:'c_nequi',active:true,start:ymd(start)},
-    {id:'s3',name:'Wondershare Filmora',amount:7.5,cur:'USD',day:20,card:'c_arq',active:true,start:ymd(start)}];
+    {id:'s3',name:'Wondershare Filmora',amount:7.5,cur:'USD',day:20,card:'c_arq',active:true,start:ymd(start)},
+    {id:'f1',kind:'fijo',name:'Plan del celular',amount:25000,cur:'COP',day:8,acc:'nequi',active:true,start:ymd(start)}];
   S=st;
   let seed=7; const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
   const at=(d,h)=>{const x=new Date(d);x.setHours(h,Math.floor(rnd()*59));return x.getTime()};
@@ -360,7 +362,7 @@ function demoState(){
   const inc=st.incomes[0];
   const dues=dueDates(inc,start,t);
   const delays=[0,3,0,9];  // el 4.º llega 9 días tarde y el 5.º todavía no llega
-  dues.forEach((d,i)=>{ if(i>=delays.length) return; const when=addD(d,delays[i]); if(when>t) return; const ts=when.getTime()+9*36e5; payIncomeAt(inc,ymd(d),ts,Math.round(subsMonthly()/2));
+  dues.forEach((d,i)=>{ if(i>=delays.length) return; const when=addD(d,delays[i]); if(when>t) return; const ts=when.getTime()+9*36e5; payIncomeAt(inc,ymd(d),ts,Math.round((subsMonthly()+fijosMonthly())/2));
     push({type:'mover',t:ts+36e5,acc:'efectivo',acc2:'nequi',amount:70000,amount2:70000,cop:70000});
     push({type:'mover',t:ts+2*36e5,acc:'nequi',acc2:'arq_usd',amount:30000,amount2:r2(30000/3250),cop:30000}); });
   for(let i=0;i<=75;i++){
@@ -378,6 +380,7 @@ function demoState(){
 }
 
 function migrate(o){
+  {const f=(o.envs||[]).find(e=>e.id==='fijos'); if(f&&f.name==='Suscripciones')f.name='Pagos fijos';}
   if(!o.projects)o.projects=baseProjects();
   if(!o.plan)o.plan=basePlan();
   if(!o.set.mig12){const g=(o.envs||[]).find(e=>e.id==='g_nexo'); if(g&&+g.target===100000000)g.target=40000000; o.set.mig12=true;}
@@ -415,8 +418,10 @@ function expectedByAcc(){
   const eb=envBals(), real=realCOP(), exp={};
   S.accounts.forEach(a=>exp[a.id]=0);
   const valid=e=>(e.accounts||[]).filter(id=>exp[id]!=null);
-  for(const e of S.envs){const ids=valid(e); if(ids.length===1) exp[ids[0]]+=eb[e.id]||0;}
-  for(const e of S.envs){const ids=valid(e); if(ids.length<2) continue;
+  const payAccs=[...new Set(S.subs.filter(x=>x.active).map(x=>payInfo(x).acc?.id).filter(Boolean))];
+  const ids0=e=>e.kind==='fijos'&&payAccs.length?payAccs.filter(id=>exp[id]!=null):valid(e);
+  for(const e of S.envs){const ids=ids0(e); if(ids.length===1) exp[ids[0]]+=eb[e.id]||0;}
+  for(const e of S.envs){const ids=ids0(e); if(ids.length<2) continue;
     const w=ids.map(i=>Math.max(0,real[i]-exp[i])), sum=w.reduce((a,b)=>a+b,0);
     ids.forEach((i,k)=>exp[i]+=(eb[e.id]||0)*(sum>0?w[k]/sum:1/ids.length));}
   return {exp,real};
@@ -452,7 +457,11 @@ const monthlyFixed=()=>S.incomes.reduce((s,i)=>s+toCOP(i.amount,i.cur||'COP')*(i
 
 /* suscripciones */
 const subCOP=s=>toCOP(s.amount,s.cur);
-const subsMonthly=()=>S.subs.filter(s=>s.active).reduce((a,s)=>a+subCOP(s),0);
+const subsMonthly=()=>S.subs.filter(s=>s.active&&s.kind!=='fijo').reduce((a,s)=>a+subCOP(s),0);
+const fijosMonthly=()=>S.subs.filter(s=>s.active&&s.kind==='fijo').reduce((a,s)=>a+subCOP(s),0);
+/* con qué se paga un cobro: una tarjeta (sale de su cuenta) o directo de una cuenta (efectivo, Nequi…) */
+function payInfo(s){const card=s.card&&S.cards.find(c=>c.id===s.card); const acc=s.acc?accById(s.acc):card?accById(card.acc):null;
+  return {card,acc,col:card?card.col:acc?acc.col:'var(--ink-3)',label:card?card.name+(card.last4?' ••'+card.last4:''):acc?acc.name:'Sin forma de pago'};}
 function subLastDue(s){const t=today();let d=new Date(t.getFullYear(),t.getMonth(),Math.min(s.day,new Date(t.getFullYear(),t.getMonth()+1,0).getDate()));if(d>t)d=new Date(t.getFullYear(),t.getMonth()-1,Math.min(s.day,new Date(t.getFullYear(),t.getMonth(),0).getDate()));return d;}
 function subNextDue(s){const l=subLastDue(s);return new Date(l.getFullYear(),l.getMonth()+1,Math.min(s.day,new Date(l.getFullYear(),l.getMonth()+2,0).getDate()));}
 const subPaid=(s,d)=>S.tx.some(t=>t.subId===s.id&&t.due===ymd(d));
@@ -485,9 +494,9 @@ function payIncomeAt(inc,due,ts,fixedNeed){
   S.tx.push(tx); return tx;
 }
 function paySubAt(s,due,ts){
-  const card=S.cards.find(c=>c.id===s.card); const acc=accById(card?card.acc:S.set.lastAcc)||S.accounts[0];
+  const acc=payInfo(s).acc||accById(S.set.lastAcc)||S.accounts[0];
   const c=subCOP(s); const amount=acc.cur===s.cur?s.amount:r2(fromCOP(c,acc.cur));
-  const tx={id:uid(),type:'gasto',t:ts,acc:acc.id,amount:acc.cur==='COP'?Math.round(amount):amount,cop:Math.round(c),cat:'subs',env:'fijos',subId:s.id,due,note:s.name};
+  const tx={id:uid(),type:'gasto',t:ts,acc:acc.id,amount:acc.cur==='COP'?Math.round(amount):amount,cop:Math.round(c),cat:s.kind==='fijo'?'fijo':'subs',env:'fijos',subId:s.id,due,note:s.name};
   S.tx.push(tx); return tx;
 }
 
@@ -516,7 +525,7 @@ function fxSummary(){
   const o={notif:S.set.notif};
   for(const cur of ['USD','EUR']){let bal=0,basis=0;
     for(const a of S.accounts.filter(a=>a.cur===cur)){const f=fxBasis(a);bal+=Math.max(0,accBal(a.id));basis+=f.basis;}
-    let need=0; for(const s of S.subs){if(!s.active)continue;const card=S.cards.find(c=>c.id===s.card);const acc=card&&accById(card.acc);if(acc&&acc.cur===cur)need+=s.cur===cur?s.amount:fromCOP(subCOP(s),cur);}
+    let need=0; for(const s of S.subs){if(!s.active)continue;const acc=payInfo(s).acc;if(acc&&acc.cur===cur)need+=s.cur===cur?s.amount:fromCOP(subCOP(s),cur);}
     o[cur]={bal:r2(bal),need:r2(need),basis:Math.round(basis)};}
   return o;
 }
@@ -578,11 +587,14 @@ function advice(){
   out.push({lv:dl.left<=0?'bad':dl.left<3000?'warn':'good',ic:'📅',sc:['hoy'],
     ti:dl.left<=0?`Ya pasaste tu límite de hoy (${cop(dl.per)})`:`Hoy puedes gastar hasta ${cop(dl.left)}`,
     tx:dl.late?`Tu pago va atrasado, así que calculé para que tu plata alcance hasta el ${fDate(dl.until)}.`:`Así te alcanza hasta tu próximo pago (${fDate(dl.until)}). Llevas ${cop(dl.spent)} gastados hoy.`});
-  for(const x of subsUpcoming(5)){const card=S.cards.find(c=>c.id===x.s.card), acc=card&&accById(card.acc);
+  {const np=nextPayDate(), need=subsNeedUntil(np), have=Math.max(0,eb.fijos||0);
+    if(need-have>=1000)out.push({lv:'warn',ic:'🏠',sc:['hoy','semana'],ti:`Aparta ${cop(need-have)} para tus pagos fijos`,
+      tx:`Antes de tu próximo pago (${fDate(np)}) se cobran ${cop(need)} y solo tienes apartados ${cop(have)}. Pásalos de "Para gastar" con + → Mover → Entre apartados.`});}
+  for(const x of subsUpcoming(5)){const pi=payInfo(x.s), card=pi.card, acc=pi.acc;
     const have=acc?toCOP(accBal(acc.id),acc.cur):0, need=subCOP(x.s);
     out.push({lv:have<need?'bad':x.late?'warn':'info',ic:'💳',sc:['hoy','semana'],
       ti:`${x.s.name}: ${money(x.s.amount,x.s.cur)} ${x.late?'(cobro del '+fDate(x.d)+')':'el '+fDate(x.d)}`,
-      tx:have<need?`En ${acc?acc.name:'la cuenta de esa tarjeta'} tienes ${cop(have)}. Recarga al menos ${cop(need-have)} antes de esa fecha.`:`Se cobra a ${card?card.name:'tu tarjeta'}${card&&card.last4?' ••'+card.last4:''}. Hay saldo suficiente.`});}
+      tx:have<need?`En ${acc?acc.name:'esa cuenta'} tienes ${cop(have)}. ${acc&&acc.id==='efectivo'?'Aparta':'Recarga'} al menos ${cop(need-have)} antes de esa fecha.`:`Se paga con ${pi.label}. Hay saldo suficiente.`});}
   for(const m of suggestMoves()){const cash=m.from.id==='efectivo'&&m.to.cur==='COP';
     out.push({lv:'warn',ic:cash?'🏧':'🔄',sc:['hoy','semana'],ti:cash?`Consigna ${cop(m.cop)} de tu efectivo en ${m.to.name}`:`Pasa ${cop(m.cop)} de ${m.from.name} a ${m.to.name}`,
     tx:cash?'Es la parte de tu sueldo que va a tus metas. Consígnala el mismo día del pago, en un corresponsal o punto de recarga, para no gastártela.':`Así cada cuenta queda con lo que le toca según tus apartados.${m.to.cur!=='COP'?' Son unos '+money(fromCOP(m.cop,m.to.cur),m.to.cur)+'.':''}`});}
@@ -698,8 +710,8 @@ inicio(){
     ${S.accounts.filter(a2=>Math.abs(accBal(a2.id))>0.004||a2.cur==='COP').map(a2=>`<div class="row acc-row"><span class="dot" style="background:${a2.col}"></span><span class="grow acc-name">${esc(a2.name)}</span><span class="amt num">${money(accBal(a2.id),a2.cur)}</span></div>`).join('')}
     ${moves.length?moves.map(m=>`<div class="muted">↪ ${m.from.id==='efectivo'&&m.to.cur==='COP'?'Consigna':'Pasa'} <b class="num">${cop(m.cop)}</b> de ${esc(m.from.name)} a ${esc(m.to.name)}</div>`).join(''):'<div class="muted">✓ Cada cuenta tiene lo que le toca.</div>'}
   </section>
-  <section class="card"><div class="card-h"><h2>Próximos pagos</h2><button class="link" data-a="go" data-sub="tarjetas">Tarjetas</button></div>
-    ${up.length?up.slice(0,3).map(x=>{const card=S.cards.find(c=>c.id===x.s.card);return `<div class="row acc-row"><span class="dot" style="background:${card?card.col:'var(--ink-3)'}"></span><div class="grow"><div class="acc-name">${esc(x.s.name)}</div><div class="muted">${x.late?'Desde el '+fDate(x.d):fDate(x.d)} · ${esc(card?card.name:'Sin tarjeta')}${card&&card.last4?' ••'+esc(card.last4):''}</div></div><div class="right"><div class="amt num">${money(x.s.amount,x.s.cur)}</div><button class="link" data-a="paysub" data-id="${x.s.id}" data-due="${ymd(x.d)}">Ya lo pagué</button></div></div>`;}).join(''):'<div class="empty">Nada este mes.</div>'}</section>
+  <section class="card"><div class="card-h"><h2>Próximos pagos</h2><button class="link" data-a="go" data-sub="fijos">Gastos fijos</button></div>
+    ${up.length?up.slice(0,3).map(x=>{const pi=payInfo(x.s);return `<div class="row acc-row"><span class="dot" style="background:${pi.col}"></span><div class="grow"><div class="acc-name">${esc(x.s.name)}</div><div class="muted">${x.late?'Desde el '+fDate(x.d):fDate(x.d)} · ${esc(pi.label)}</div></div><div class="right"><div class="amt num">${money(x.s.amount,x.s.cur)}</div><button class="link" data-a="paysub" data-id="${x.s.id}" data-due="${ymd(x.d)}">Ya lo pagué</button></div></div>`;}).join(''):'<div class="empty">Nada este mes.</div>'}</section>
   <section class="card"><div class="card-h"><h2>Últimos movimientos</h2><button class="link" data-a="go" data-sub="movs">Ver todos</button></div><div>${last.map(txRow).join('')||'<div class="empty">Aún no hay movimientos. Toca + para registrar el primero.</div>'}</div></section>`;
 },
 graficas(){
@@ -765,7 +777,7 @@ proyectos(){
   <button class="ghost" data-a="editproj" data-id="">+ Nuevo proyecto</button>`;
 },
 mas(){
-  const it=[['consejos','💡','Consejos del día, semana y mes'],['movs','🧾','Todos los movimientos'],['cuentas','🏦','Cuentas y saldos'],['tarjetas','💳','Tarjetas y suscripciones'],['ingresos','💼','Ingresos fijos'],['reglas','⚙️','Reglas de ahorro y reparto'],['tasas','💱','Dólar, euro y alertas'],['respaldo','💾','Copia de seguridad'],['app','🚀','Actualizar la app e ideas nuevas']];
+  const it=[['consejos','💡','Consejos del día, semana y mes'],['movs','🧾','Todos los movimientos'],['cuentas','🏦','Cuentas y saldos'],['fijos','🏠','Gastos fijos (arriendo, plan, cuotas…)'],['tarjetas','💳','Tarjetas y suscripciones'],['ingresos','💼','Ingresos fijos'],['reglas','⚙️','Reglas de ahorro y reparto'],['tasas','💱','Dólar, euro y alertas'],['respaldo','💾','Copia de seguridad'],['app','🚀','Actualizar la app e ideas nuevas']];
   return `<section class="card" style="gap:0">${it.map(([k,ic,l])=>`<button class="list-btn" data-a="go" data-sub="${k}"><span class="ic">${ic}</span><span class="grow">${l}</span><span class="chev">›</span></button>`).join('')}</section>
   <p class="note">Versión ${APP_VERSION}. Tus datos se guardan solo en este dispositivo. Haz una copia de seguridad cada semana.</p>`;
 }};
@@ -794,12 +806,18 @@ cuentas(){const {exp,real}=expectedByAcc();
 tarjetas(){
   return back('Tarjetas y suscripciones')+S.cards.map(c=>{const ss=S.subs.filter(s=>s.card===c.id);const tot=ss.filter(s=>s.active).reduce((a,s)=>a+subCOP(s),0);
     return `<section class="card"><div class="cardchip" style="background:${c.col}"><small>${esc(accById(c.acc)?.name||'')}</small><b style="font-size:17px">${esc(c.name)}</b><small class="num">${c.last4?'•••• '+esc(c.last4):'Sin últimos 4 dígitos'}</small></div>
-    <div class="card-h"><span class="eyebrow">Paga estas suscripciones</span><span class="num muted">${cop(tot)}/mes</span></div>
-    ${ss.map(s=>`<button class="tx" data-a="editsub" data-id="${s.id}"><span class="ic">📺</span><span class="grow"><b style="display:block;font-weight:600">${esc(s.name)}</b><span class="muted">Día ${s.day} de cada mes${s.active?'':' · pausada'}</span></span><span class="amt num">${money(s.amount,s.cur)}</span></button>`).join('')||'<div class="empty">Ninguna todavía.</div>'}
+    <div class="card-h"><span class="eyebrow">Paga estos cobros</span><span class="num muted">${cop(tot)}/mes</span></div>
+    ${ss.map(s=>`<button class="tx" data-a="${s.kind==='fijo'?'editfijo':'editsub'}" data-id="${s.id}"><span class="ic">${s.kind==='fijo'?'🏠':'📺'}</span><span class="grow"><b style="display:block;font-weight:600">${esc(s.name)}</b><span class="muted">Día ${s.day} de cada mes${s.active?'':' · pausada'}</span></span><span class="amt num">${money(s.amount,s.cur)}</span></button>`).join('')||'<div class="empty">Ninguna todavía.</div>'}
     <div class="row" style="gap:8px;flex-wrap:wrap"><button class="ghost" data-a="editsub" data-id="" data-card="${c.id}">+ Suscripción</button><button class="ghost" data-a="editcard" data-id="${c.id}">Editar tarjeta</button></div></section>`;}).join('')+
   `<button class="ghost" data-a="editcard" data-id="">+ Agregar tarjeta</button>
   <p class="note">Por seguridad solo se guardan el nombre y, si quieres, los últimos 4 dígitos. Nunca el número completo ni el CVV.</p>
   <section class="card"><div class="stats num"><div class="stat"><b>${cop(subsMonthly())}</b><span>en suscripciones al mes</span></div><div class="stat"><b>${monthlyFixed()?pct(subsMonthly()/monthlyFixed()):'—'}</b><span>de tu ingreso fijo</span></div></div></section>`;},
+fijos(){const fs=S.subs.filter(x=>x.kind==='fijo'); const tot=fijosMonthly(), inc=monthlyFixed();
+  return back('Gastos fijos')+`<section class="card"><div class="stats num"><div class="stat"><b>${cop(tot)}</b><span>en gastos fijos al mes</span></div><div class="stat"><b>${inc?pct(tot/inc):'—'}</b><span>de tu ingreso fijo</span></div></div>
+    <div class="muted">Cuando te pagan, la app aparta primero lo que se cobra antes del próximo pago. Lo ves en Inicio como "Guárdalo para pagos".</div></section>
+  <section class="card" style="gap:0">${fs.map(f=>{const pi=payInfo(f);return `<button class="tx" data-a="editfijo" data-id="${f.id}"><span class="ic">🏠</span><span class="grow"><b style="display:block;font-weight:600">${esc(f.name)}</b><span class="muted">Día ${f.day} · ${esc(pi.label)}${f.active?'':' · pausado'}</span></span><span class="amt num">${money(f.amount,f.cur)}</span></button>`;}).join('')||'<div class="empty">Aún no tienes gastos fijos. Agrega el primero abajo.</div>'}</section>
+  <button class="save" data-a="editfijo" data-id="">+ Agregar gasto fijo</button>
+  <p class="note">Ejemplos: arriendo, plan del celular, internet de la casa, transporte del mes, cuota de algo que compraste. Las suscripciones (Netflix, Spotify…) van en Tarjetas y suscripciones.</p>`;},
 ingresos(){
   return back('Ingresos fijos')+S.incomes.map(i=>{const p=pendingDues(i);return `<section class="card"><div class="card-h"><h2>💼 ${esc(i.name)}</h2><span class="amt num">${cop(i.amount)}</span></div>
     <div class="muted">${i.freq==='quincenal'?'Quincenal, días '+i.days.join(' y '):i.freq==='mensual'?'Mensual, día '+i.days[0]:'Semanal'} · llega a ${esc(accById(i.acc)?.name||'—')}</div>
@@ -1052,6 +1070,17 @@ function formSub(id,cardId){const s=S.subs.find(x=>x.id===id)||{name:'',amount:'
   openForm({title:id?'Editar suscripción':'Nueva suscripción',fields:[{k:'name',label:'Nombre',type:'text',value:s.name,ph:'Ej. Spotify'},{k:'amount',label:'Valor',type:'number',value:s.amount,ph:'Ej. 16900 o 7,99'},{k:'cur',label:'Moneda del cobro',type:'chips',value:s.cur,options:[{v:'COP',l:'Pesos'},{v:'USD',l:'Dólares'},{v:'EUR',l:'Euros'}]},{k:'day',label:'Día del mes en que la cobran',type:'number',value:s.day},{k:'card',label:'¿Con qué tarjeta se paga?',type:'chips',value:s.card,options:S.cards.map(c=>({v:c.id,l:c.name+(c.last4?' ••'+c.last4:''),col:c.col}))},{k:'active',label:'Estado',type:'chips',value:s.active?'1':'0',options:[{v:'1',l:'Activa'},{v:'0',l:'Pausada'}]}],
     onSave:v=>{if(!v.name||!(v.amount>0))return 'Falta el nombre o el valor.'; const day=Math.min(31,Math.max(1,Math.round(v.day||1))); const o={name:v.name,amount:v.amount,cur:v.cur,day,card:v.card,active:v.active==='1'}; if(id)Object.assign(s,o); else S.subs.push({id:uid(),start:ymd(today()),...o});},
     onDelete:id?()=>{S.subs=S.subs.filter(x=>x.id!==id);}:null});}
+function formFijo(id){const f=S.subs.find(x=>x.id===id)||{kind:'fijo',name:'',amount:'',cur:'COP',day:today().getDate(),acc:'efectivo',active:true};
+  const payOpts=[...S.accounts.filter(a=>a.cur==='COP').map(a=>({v:'a:'+a.id,l:a.name,col:a.col})),...S.cards.map(c=>({v:'c:'+c.id,l:'💳 '+c.name+(c.last4?' ••'+c.last4:''),col:c.col}))];
+  openForm({title:id?'Editar gasto fijo':'Nuevo gasto fijo',fields:[{k:'name',label:'¿Qué es?',type:'text',value:f.name,ph:'Ej. Plan del celular'},
+    {k:'amount',label:'¿Cuánto pagas cada mes? (pesos)',type:'number',value:f.amount,ph:'Ej. 25000'},
+    {k:'day',label:'¿Qué día del mes lo pagas?',type:'number',value:f.day},
+    {k:'pay',label:'¿Con qué lo pagas?',type:'chips',value:f.card?'c:'+f.card:'a:'+(f.acc||'efectivo'),options:payOpts},
+    {k:'active',label:'Estado',type:'chips',value:f.active?'1':'0',options:[{v:'1',l:'Activo'},{v:'0',l:'Pausado'}]}],
+    onSave:v=>{if(!v.name||!(v.amount>0))return 'Falta el nombre o el valor.'; const day=Math.min(31,Math.max(1,Math.round(v.day||1)));
+      const [t2,pid]=String(v.pay).split(':'); const o={kind:'fijo',name:v.name,amount:v.amount,cur:'COP',day,acc:t2==='a'?pid:null,card:t2==='c'?pid:null,active:v.active==='1'};
+      if(id)Object.assign(f,o); else S.subs.push({id:uid(),start:ymd(today()),...o});},
+    onDelete:id?()=>{S.subs=S.subs.filter(x=>x.id!==id);}:null});}
 function formIncome(id){const i=S.incomes.find(x=>x.id===id)||{name:'',amount:'',freq:'mensual',days:[30],acc:'nequi',start:ymd(today())};
   openForm({title:id?'Editar ingreso fijo':'Nuevo ingreso fijo',fields:[{k:'name',label:'Nombre',type:'text',value:i.name,ph:'Ej. Agencia — cliente Panadería'},{k:'amount',label:'Valor de cada pago (pesos)',type:'number',value:i.amount},{k:'freq',label:'¿Cada cuánto?',type:'chips',value:i.freq,options:[{v:'quincenal',l:'Quincenal'},{v:'mensual',l:'Mensual'}]},{k:'d1',label:'Día de pago',type:'number',value:i.days[0]},{k:'d2',label:'Segundo día de pago',type:'number',value:i.days[1]||30,show:v=>v.freq==='quincenal'},{k:'acc',label:'¿A qué cuenta llega?',type:'chips',value:i.acc,options:accOpts()},{k:'start',label:'¿Desde qué fecha cuenta?',type:'date',value:i.start,note:'Los pagos esperados desde esta fecha que no hayas registrado salen como pendientes.'}],
     onSave:v=>{if(!v.name||!(v.amount>0))return 'Falta el nombre o el valor.'; const days=v.freq==='quincenal'?[v.d1||15,v.d2||30].map(n=>Math.min(31,Math.max(1,Math.round(n)))):[Math.min(31,Math.max(1,Math.round(v.d1||30)))];
@@ -1154,7 +1183,7 @@ document.addEventListener('click',e=>{
     case 'fav': {const f=favorites()[+d.i]; if(!f)break; const acc=accById(f.acc); const tx={id:uid(),type:'gasto',t:Date.now(),acc:acc.id,amount:acc.cur==='COP'?f.cop:r2(fromCOP(f.cop,acc.cur)),cop:f.cop,cat:f.cat,env:f.env}; S.tx.push(tx); save(); render(); toast(msgFor(tx),tx.id); break;}
     case 'payinc': {const inc=S.incomes.find(i=>i.id===d.id); const p=pendingDues(inc); const due=p.length?p[0]:nextDue(inc,addD(today(),-1)); const tx=payIncomeAt(inc,ymd(due),Date.now()); save(); render(); const dep=Object.entries(tx.alloc).filter(([k])=>{const e=envById(k);return e&&e.kind==='meta'&&!(e.accounts||[]).includes(tx.acc);}).reduce((a,x)=>a+x[1],0);
       toast(`${inc.name} (quincena ${fDate(due)}) guardado.${dep?' Consigna '+cop(dep)+' en Nequi para tus metas.':''}`,tx.id); break;}
-    case 'paysub': {const s=S.subs.find(x=>x.id===d.id); const tx=paySubAt(s,d.due,Date.now()); save(); render(); toast(`Cobro de ${s.name} guardado.`,tx.id); break;}
+    case 'paysub': {const s=S.subs.find(x=>x.id===d.id); const tx=paySubAt(s,d.due,Date.now()); save(); render(); toast(`Pago de ${s.name} guardado.`,tx.id); break;}
     case 'undo': S.tx=S.tx.filter(t=>t.id!==d.id); save(); render(); $('#toast').hidden=true; break;
     case 'txopen': V.openTx=V.openTx===d.id?null:d.id; V.confirm=null; render(); break;
     case 'txdel': if(V.confirm===d.id){S.tx=S.tx.filter(t=>t.id!==d.id);V.confirm=null;V.openTx=null;save();toast('Movimiento eliminado.');} else V.confirm=d.id; render(); break;
@@ -1169,6 +1198,7 @@ document.addEventListener('click',e=>{
     case 'adjust': formAdjust(d.id); break;
     case 'editcard': formCard(d.id); break;
     case 'editsub': formSub(d.id,d.card); break;
+    case 'editfijo': formFijo(d.id); break;
     case 'editinc': formIncome(d.id); break;
     case 'editgoal': formGoal(d.id); break;
     case 'additem': formItem(d.id); break;

@@ -1,8 +1,17 @@
 {
-  "version": "1.2.0",
+  "version": "1.3.0",
   "fecha": "2026-10-29",
-  "mensaje": "Nueva sección Mis proyectos.",
+  "mensaje": "Ahora puedes agregar gastos fijos.",
   "notas": [
+    {
+      "version": "1.3.0",
+      "fecha": "29 oct 2026",
+      "cambios": [
+        "Más → Gastos fijos: arriendo, plan del celular, cuotas… pagados con efectivo, Nequi o tarjeta.",
+        "Se apartan solos cuando te pagan y salen en Próximos pagos con el botón \"Ya lo pagué\".",
+        "Nueva categoría \"Gasto fijo\" al registrar con +."
+      ]
+    },
     {
       "version": "1.2.0",
       "fecha": "29 oct 2026",

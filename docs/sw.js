@@ -1,5 +1,5 @@
 /* NEXO Finanzas — service worker. Cambiar VERSION hace que la app muestre "Actualizar". */
-const VERSION='1.2.0';
+const VERSION='1.3.0';
 const SHELL='nf-shell-'+VERSION, FONTS='nf-fonts', DATA='nf-data';
 const FILES=['./','index.html','manifest.webmanifest','icons/icon-192.png','icons/icon-512.png','icons/maskable-512.png','icons/apple-180.png'];
 
