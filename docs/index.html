@@ -242,7 +242,7 @@ const money=(n,c)=>(!c||c==='COP')?cop(n):(n<0?'−':'')+(c==='USD'?'US$':'€')
 const short=n=>{const a=Math.abs(n),s=n<0?'−':'';if(a>=1e6)return s+'$'+nf1.format(a/1e6)+' M';if(a>=1000)return s+'$'+nf0.format(Math.round(a/1000))+' mil';return cop(n)};
 const pct=n=>nf0.format(Math.round(n*100))+'%';
 
-const APP_VERSION='1.1.0';
+const APP_VERSION='1.2.0';
 const RATE_MS=3*36e5;
 
 /*FX-START*/
@@ -306,7 +306,14 @@ const CATS_IN=[
   {id:'agencia',name:'Agencia',ic:'📣'},{id:'videos',name:'Videos',ic:'🎬'},{id:'appweb',name:'App / Web',ic:'💻'},
   {id:'venta',name:'Venta',ic:'🏷️'},{id:'regalo',name:'Regalo',ic:'🎁'},{id:'otroin',name:'Otro',ic:'➕'}];
 const CAT=id=>CATS_OUT.find(c=>c.id===id)||CATS_IN.find(c=>c.id===id)||{id,name:id,ic:'•'};
-const COLORS=['#0E7A5A','#c2187a','#2a78d6','#6250d6','#eb6834','#B88400','#1baf7a','#3d4a45'];
+const COLORS=['#6A2BD4','#E8650F','#c2187a','#2a78d6','#1baf7a','#B88400','#0E7A5A','#3d4a45'];
+
+/* proyectos que generan ingresos: cada hito = cantidad × precio en un mes de la ruta */
+function baseProjects(){return [
+  {id:'p_agencia',name:'Agencia',ic:'📣',cat:'agencia',unit:'clientes',col:'#6A2BD4',ms:[{m:3,u:2,p:300000},{m:6,u:3,p:400000},{m:12,u:5,p:450000},{m:24,u:6,p:550000}]},
+  {id:'p_app',name:'App catálogo',ic:'💻',cat:'appweb',unit:'tiendas',col:'#E8650F',ms:[{m:3,u:5,p:30000},{m:6,u:10,p:30000},{m:12,u:20,p:35000},{m:24,u:40,p:40000}]},
+  {id:'p_video',name:'Videos sueltos',ic:'🎬',cat:'videos',unit:'videos',col:'#1baf7a',ms:[{m:3,u:2,p:60000},{m:6,u:4,p:70000},{m:12,u:6,p:80000},{m:24,u:8,p:100000}]}];}
+function basePlan(){const t=today();return {start:ymd(new Date(t.getFullYear(),t.getMonth()+(t.getDate()>20?1:0),1)),months:24};}
 
 function baseState(){
   const t=today();
@@ -321,7 +328,7 @@ function baseState(){
       {id:'gastos',name:'Para gastar',kind:'gastos',ic:'🛍️',accounts:['efectivo','nequi']},
       {id:'fijos',name:'Suscripciones',kind:'fijos',ic:'📺',accounts:['arq_usd','nequi']},
       {id:'g_dic',name:'Diciembre',kind:'meta',ic:'🎄',target:300000,date:'2026-12-15',share:50,accounts:['nequi'],items:[]},
-      {id:'g_nexo',name:'NEXO PC',kind:'meta',ic:'🖥️',target:100000000,date:ymd(new Date(t.getFullYear()+2,t.getMonth(),t.getDate())),share:30,accounts:['nequi'],items:[]},
+      {id:'g_nexo',name:'NEXO PC',kind:'meta',ic:'🖥️',target:40000000,date:ymd(new Date(t.getFullYear()+2,t.getMonth(),t.getDate())),share:30,accounts:['nequi'],items:[]},
       {id:'g_equipo',name:'Equipo de contenido',kind:'meta',ic:'📷',target:0,date:'2027-08-31',share:20,accounts:['nequi'],items:[
         {id:uid(),name:'Celular gama media-alta',price:1800000},{id:uid(),name:'Cámara de entrada + lente',price:3000000},
         {id:uid(),name:'Portátil para editar',price:4500000},{id:uid(),name:'Micrófono + luz',price:400000}]}],
@@ -330,6 +337,7 @@ function baseState(){
       {id:'c_arq',name:'Mastercard ARQ',last4:'',col:'#2a78d6',acc:'arq_usd'}],
     subs:[],
     incomes:[{id:'i_tienda',name:'Sueldo tienda',amount:150000,freq:'quincenal',days:[15,30],acc:'efectivo',start:ymd(t)}],
+    projects:baseProjects(), plan:basePlan(),
     tx:[]};
 }
 
@@ -361,6 +369,7 @@ function demoState(){
     if(wd===6&&rnd()<0.3){push({type:'gasto',t:at(d,18),acc:'efectivo',amount:4000,cop:4000,cat:'transporte',env:'gastos'});}
     if(i===20||i===50){push({type:'gasto',t:at(d,17),acc:'efectivo',amount:62000,cop:62000,cat:'super',env:'gastos'});}
     if(i===38){push({type:'gasto',t:at(d,20),acc:'nequi',amount:50000,cop:50000,cat:'internet',env:'gastos'});}
+    if(i===66){push({type:'ingreso',t:at(d,16),acc:'nequi',amount:60000,cop:60000,cat:'videos',kind:'extra',alloc:allocate(60000,'extra',addD(d,30))});}
   }
   // cobros de suscripciones ya pasados
   for(const s of st.subs){ let d=new Date(start.getFullYear(),start.getMonth(),s.day); while(d<=addD(t,-1)){ if(d>=start) paySubAt(s,ymd(d),at(d,7)); d=new Date(d.getFullYear(),d.getMonth()+1,s.day);} }
@@ -369,6 +378,9 @@ function demoState(){
 }
 
 function migrate(o){
+  if(!o.projects)o.projects=baseProjects();
+  if(!o.plan)o.plan=basePlan();
+  if(!o.set.mig12){const g=(o.envs||[]).find(e=>e.id==='g_nexo'); if(g&&+g.target===100000000)g.target=40000000; o.set.mig12=true;}
   o.ideas=o.ideas||[]; o.set.fxSeen=o.set.fxSeen||{}; o.set.notif=!!o.set.notif; o.set.lastCheck=o.set.lastCheck||0;
   o.set.rateHist=(o.set.rateHist||[]).filter(x=>x&&x.ts);
   return o;
@@ -530,6 +542,32 @@ function goalPace(g){
   return got/days*30.4;
 }
 
+/* ---------- ruta de ingresos por proyecto ---------- */
+const planStart=()=>pd(S.plan.start);
+const planMonth=i=>{const s0=planStart();return new Date(s0.getFullYear(),s0.getMonth()+i,1);};
+const planIdx=()=>{const s0=planStart(),t=today();return (t.getFullYear()-s0.getFullYear())*12+t.getMonth()-s0.getMonth();};
+const mLabel=i=>{const d=planMonth(i);return MES[d.getMonth()]+' '+String(d.getFullYear()).slice(2);};
+function metaAt(pr,i){const n=i+1; const ms=[{m:0,v:0},...(pr.ms||[]).map(x=>({m:+x.m,v:(+x.u||0)*(+x.p||0)}))].sort((a,b)=>a.m-b.m);
+  if(n>=ms[ms.length-1].m)return ms[ms.length-1].v;
+  for(let k=1;k<ms.length;k++){if(n<=ms[k].m){const a=ms[k-1],b=ms[k];return Math.round((a.v+(b.v-a.v)*(n-a.m)/((b.m-a.m)||1))/1000)*1000;}}
+  return 0;}
+function monthSum(i,f){const a=planMonth(i).getTime(),b=planMonth(i+1).getTime();return S.tx.filter(t=>t.type==='ingreso'&&t.t>=a&&t.t<b&&f(t)).reduce((x,t)=>x+t.cop,0);}
+const realAt=(pr,i)=>monthSum(i,t=>t.cat===pr.cat&&!t.incomeId);
+const salaryReal=i=>monthSum(i,t=>!!t.incomeId);
+const metaTotal=i=>S.projects.reduce((a,p)=>a+metaAt(p,i),0)+monthlyFixed();
+const realTotal=i=>S.projects.reduce((a,p)=>a+realAt(p,i),0)+salaryReal(i);
+function nextHito(pr,i){const h=(pr.ms||[]).filter(x=>+x.m>=i+1).sort((a,b)=>a.m-b.m)[0];return h?`${h.u} ${pr.unit||''} × ${short(h.p)} para ${mLabel(+h.m-1)}`:'Ya pasaste el último hito.';}
+/* si cumples la ruta: cuánto ahorras en total y cuánto le llega a NEXO PC */
+function routeProjection(){
+  let total=0,nexo=0; const nx=envById('g_nexo');
+  for(let i=Math.max(0,planIdx());i<S.plan.months;i++){
+    const sv=monthlyFixed()*S.set.pctFijo/100+S.projects.reduce((a,p)=>a+metaAt(p,i),0)*S.set.pctExtra/100; total+=sv;
+    const act=goals().filter(g=>pd(g.date)>=planMonth(i)&&(+g.share||0)>0), sh=act.reduce((a,g)=>a+(+g.share),0);
+    if(nx&&act.includes(nx)&&sh)nexo+=sv*nx.share/sh;}
+  const eb=envBals(); return {total,nexo:nexo+Math.max(0,nx?eb[nx.id]||0:0),target:nx?goalTarget(nx):0,end:planMonth(S.plan.months-1)};
+}
+const projTip=pr=>pr.cat==='agencia'?'Esta semana manda 3 propuestas a negocios de Quibdó.':pr.cat==='appweb'?'Visita 2 tiendas y muéstrales el catálogo funcionando.':pr.cat==='videos'?'Publica un video de muestra y ofrécelo a 3 negocios.':'Define una acción concreta para esta semana.';
+
 /* ---------- consejos ---------- */
 function advice(){
   const out=[], t=today(), eb=envBals();
@@ -574,11 +612,13 @@ function advice(){
       tx:`Te costaron ${cop(basis)} (${ch>=0?'+':''}${nf1.format(ch*100)} %). Tus metas son en pesos: guardar el ahorro en ${a.cur==='USD'?'dólares':'euros'} es apostarle a que esa moneda suba. Úsala para suscripciones y compras en el exterior.`});}
   if(!S.accounts.some(a=>/\bnu\b/i.test(a.name))&&goals().some(g=>(eb[g.id]||0)>0))
     out.push({lv:'info',ic:'🏦',sc:['mes'],ti:'Tu ahorro en Nequi casi no rinde',tx:'Nequi paga cerca de 0,1 % al año. Una Cajita de Nu pagaba hasta 11,25 % EA en 2026 (confírmalo en la app). Si la abres, agrégala en Más → Cuentas y ponla como cuenta de tus metas.'});
+  {const n=planIdx(), dom=t.getDate(); if(n>=0&&n<S.plan.months&&dom>=10){ for(const pr of S.projects){const meta=metaAt(pr,n); if(meta<=0)continue; const real=realAt(pr,n), r=real/meta;
+    if(r<(dom/31)*0.6)out.push({lv:r<0.25?'warn':'info',ic:pr.ic,sc:['semana','mes'],ti:`${pr.name} va al ${pct(r)} de su meta del mes`,tx:`Meta de ${mLabel(n)}: ${cop(meta)}. Llevas ${cop(real)}. ${projTip(pr)}`});}}}
   const ord={bad:0,warn:1,good:2,info:3}, rk=x=>x.key?0.5:ord[x.lv]; return out.sort((a,b)=>rk(a)-rk(b));
 }
 
 /* ---------- vista ---------- */
-const V={tab:'inicio',sub:null,period:'mes',adv:'hoy',openTx:null,confirm:null,goalOpen:null};
+const V={mview:'aho',tab:'inicio',sub:null,period:'mes',adv:'hoy',openTx:null,confirm:null,goalOpen:null};
 const view=$('#view');
 
 function render(){
@@ -592,6 +632,7 @@ function render(){
   if(V.sub) h+=SUBS[V.sub](); else h+=TABS[V.tab]();
   view.innerHTML=h;
   if(V.tab==='graficas'&&!V.sub) bindCharts();
+  if(V.tab==='metas'&&V.mview==='proy'&&!V.sub) bindRoute();
 }
 
 function accRows(){
@@ -674,6 +715,11 @@ graficas(){
     <div id="ch-line"></div><div class="chart-detail num" id="ch-line-d">Toca la gráfica para ver un día.</div></section>`;
 },
 metas(){
+  const seg=`<div class="seg" role="group" aria-label="Vista"><button aria-pressed="${V.mview!=='proy'}" data-a="mview" data-v="aho">🟣 Mis ahorros</button><button aria-pressed="${V.mview==='proy'}" data-a="mview" data-v="proy">📈 Mis proyectos</button></div>`;
+  if(V.mview==='proy')return seg+TABS.proyectos();
+  return seg+TABS.metasAhorro();
+},
+metasAhorro(){
   const eb=envBals(); const tot=goals().reduce((s2,g)=>s2+(+g.share||0),0)||1;
   const ahorro=goals().reduce((s2,g)=>s2+Math.max(0,eb[g.id]||0),0);
   return `<section class="card"><div class="eyebrow">Tu ahorro total</div><div class="big num" style="font-size:34px;color:var(--accent)">${cop(ahorro)}</div>
@@ -692,6 +738,31 @@ metas(){
     ${goals().map(g=>`<div class="row"><span style="font-size:20px">${g.ic}</span><span class="grow acc-name">${esc(g.name)}</span><div class="stepper"><button data-a="share" data-id="${g.id}" data-d="-5" aria-label="Bajar">−</button><b class="num" style="min-width:52px;text-align:center">${pct((+g.share||0)/tot)}</b><button data-a="share" data-id="${g.id}" data-d="5" aria-label="Subir">+</button></div></div>`).join('')}
   </section>
   <button class="ghost" data-a="editgoal" data-id="">+ Nueva meta</button>`;
+},
+proyectos(){
+  const n=planIdx(), M=S.plan.months, cur=Math.min(Math.max(n,0),M-1);
+  const meta=metaTotal(cur), real=n>=0&&n<M?realTotal(cur):0, p=meta?Math.min(1,real/meta):0;
+  const rp=routeProjection();
+  const rows=S.projects.map(pr=>{const m=metaAt(pr,cur), r=n>=0?realAt(pr,cur):0, q=m?Math.min(1,r/m):0;
+    return `<button class="goal" data-a="editproj" data-id="${pr.id}"><span class="row"><span style="font-size:20px">${pr.ic}</span><span class="grow acc-name">${esc(pr.name)}</span><span class="num muted">${short(r)} de ${short(m)}</span></span>
+      <span class="bar"><i style="width:${(q*100).toFixed(1)}%;background:${pr.col}"></i></span><span class="muted">Próximo hito: ${esc(nextHito(pr,cur))}</span></button>`;}).join('');
+  const sal=monthlyFixed(), salR=n>=0?salaryReal(cur):0;
+  return `<section class="card"><div class="card-h"><span class="eyebrow">${n<0?'Tu ruta empieza el '+fDate(planStart()):'Mes '+(cur+1)+' de '+M+' · '+mLabel(cur)}</span><button class="link" data-a="editplan">Editar ruta</button></div>
+    <div class="muted">Este mes deberías ganar</div>
+    <div class="row" style="justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px"><span class="big num" style="font-size:32px;color:var(--accent)">${cop(meta)}</span><span class="muted num">Llevas ${cop(real)}</span></div>
+    <div class="bar"><i style="width:${(p*100).toFixed(1)}%"></i></div></section>
+  <section class="card chart"><div class="card-h"><h2>Tu ruta de ingresos</h2></div>
+    <div class="legend"><span><i style="background:var(--keep)"></i>Sueldo</span>${S.projects.map(pr=>`<span><i style="background:${pr.col}"></i>${esc(pr.name)}</span>`).join('')}<span><i class="line" style="background:var(--ink)"></i>Lo que ganaste</span></div>
+    <div id="ch-route"></div><div class="chart-detail num" id="ch-route-d">Toca un mes para ver cuánto deberías ganar.</div></section>
+  <section class="card" style="gap:0">${rows}
+    <div class="goal"><span class="row"><span style="font-size:20px">💼</span><span class="grow acc-name">Sueldo tienda</span><span class="num muted">${short(salR)} de ${short(sal)}</span></span><span class="bar"><i style="width:${sal?Math.min(100,salR/sal*100).toFixed(1):0}%;background:var(--keep)"></i></span><span class="muted">Se cambia en Más → Ingresos fijos.</span></div></section>
+  <div class="note">Toca un proyecto para cambiar sus metas, precios y fechas. Lo que ganas se suma solo cuando registras un ingreso como ${S.projects.map(pr=>'"'+esc(CAT(pr.cat).name)+'"').join(', ')}.</div>
+  <section class="card"><h2>🖥️ ¿Alcanza para NEXO PC?</h2>
+    <div class="muted">Si cumples esta ruta y ahorras el ${S.set.pctFijo} % del sueldo y el ${S.set.pctExtra} % de lo extra, para ${MES[rp.end.getMonth()]} ${rp.end.getFullYear()} tendrías:</div>
+    <div class="row" style="justify-content:space-between;align-items:baseline"><span class="big num" style="font-size:28px">${short(rp.nexo)}</span><span class="muted num">de ${short(rp.target)}</span></div>
+    <div class="bar"><i style="width:${rp.target?Math.min(100,rp.nexo/rp.target*100).toFixed(1):0}%"></i></div>
+    <div class="muted">${rp.nexo>=rp.target?'✓ La ruta alcanza para tu local.':`Te faltarían ${short(rp.target-rp.nexo)}. Sube el % de NEXO PC en "Mis ahorros", sube tus metas o alarga la ruta.`} En total ahorrarías ${short(rp.total)} entre todas tus metas.</div></section>
+  <button class="ghost" data-a="editproj" data-id="">+ Nuevo proyecto</button>`;
 },
 mas(){
   const it=[['consejos','💡','Consejos del día, semana y mes'],['movs','🧾','Todos los movimientos'],['cuentas','🏦','Cuentas y saldos'],['tarjetas','💳','Tarjetas y suscripciones'],['ingresos','💼','Ingresos fijos'],['reglas','⚙️','Reglas de ahorro y reparto'],['tasas','💱','Dólar, euro y alertas'],['respaldo','💾','Copia de seguridad'],['app','🚀','Actualizar la app e ideas nuevas']];
@@ -789,6 +860,30 @@ function spark(cur){
   <path d="${pts.map((p,i)=>(i?'L':'M')+x(i).toFixed(1)+','+y(p[cur]).toFixed(1)).join('')}" fill="none" stroke="${cur==='USD'?'var(--s-in)':'#6250d6'}" stroke-width="2"/>
   <circle cx="${x(pts.length-1)}" cy="${y(vs[vs.length-1])}" r="4" fill="${cur==='USD'?'var(--s-in)':'#6250d6'}"/></svg>
   <div class="row muted num" style="justify-content:space-between;font-size:11px"><span>mín ${cop(mn)}</span><span>promedio ${cop(avg)}</span><span>máx ${cop(mx)}</span></div></div>`;
+}
+
+function bindRoute(){
+  const el=$('#ch-route'); if(!el)return; const M=S.plan.months, n=planIdx();
+  const W=340,H=200,L=46,Rr=6,T=10,Bm=26, iw=W-L-Rr, ih=H-T-Bm;
+  const layers=[{col:'var(--keep)',f:()=>monthlyFixed()},...S.projects.map(pr=>({col:pr.col,f:i=>metaAt(pr,i)}))];
+  const stack=[]; for(let i=0;i<M;i++){let acc=0;stack.push(layers.map(l=>{const v=l.f(i);const r0=acc;acc+=v;return [r0,acc];}));}
+  const reals=[]; for(let i=0;i<=Math.min(n,M-1);i++)if(i>=0)reals.push(realTotal(i));
+  const max=niceMax(Math.max(...stack.map(s2=>s2[s2.length-1][1]),...reals,1));
+  const x=i=>L+(M>1?i/(M-1):0)*iw, y=v=>T+ih-(v/max)*ih;
+  let g=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Ingresos que deberías ganar cada mes por proyecto">`;
+  for(let k=0;k<=4;k++){const v=max*k/4;g+=`<line x1="${L}" x2="${W-Rr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="var(--ink-3)">${short(v).replace('$','')}</text>`;}
+  layers.forEach((l,k)=>{const top=stack.map((s2,i)=>`${x(i).toFixed(1)},${y(s2[k][1]).toFixed(1)}`), bot=stack.map((s2,i)=>`${x(i).toFixed(1)},${y(s2[k][0]).toFixed(1)}`).reverse();
+    g+=`<path d="M${top.join('L')}L${bot.join('L')}Z" fill="${l.col}" opacity=".85" stroke="var(--surface)" stroke-width="1"/>`;});
+  if(n>=0&&n<M)g+=`<line x1="${x(n)}" x2="${x(n)}" y1="${T}" y2="${T+ih}" stroke="var(--ink)" stroke-dasharray="3 3" opacity=".5"/><text x="${x(n)}" y="${T+8}" text-anchor="${n>M/2?'end':'start'}" dx="${n>M/2?-4:4}" font-size="10" fill="var(--ink-2)">hoy</text>`;
+  if(reals.length){g+=`<path d="${reals.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+','+y(v).toFixed(1)).join('')}" fill="none" stroke="var(--ink)" stroke-width="2.2"/>`;
+    reals.forEach((v,i)=>g+=`<circle cx="${x(i)}" cy="${y(v)}" r="${i===reals.length-1?4.5:3}" fill="var(--ink)" stroke="var(--surface)" stroke-width="2"/>`);}
+  [0,Math.round((M-1)/3),Math.round(2*(M-1)/3),M-1].forEach((i,k)=>g+=`<text x="${x(i)}" y="${H-8}" text-anchor="${k===0?'start':k===3?'end':'middle'}" font-size="10" fill="var(--ink-3)">${mLabel(i)}</text>`);
+  g+=`<line id="rxh" x1="0" x2="0" y1="${T}" y2="${T+ih}" stroke="var(--ink-3)" opacity="0"/><rect id="rhit" x="${L}" y="${T}" width="${iw}" height="${ih}" fill="transparent"/></svg>`;
+  el.innerHTML=g; const svg=el.querySelector('svg'), hit=el.querySelector('#rhit'), xh=el.querySelector('#rxh');
+  const mv=ev=>{const r=svg.getBoundingClientRect();const px=(ev.clientX-r.left)/r.width*W;const i=Math.max(0,Math.min(M-1,Math.round((px-L)/iw*(M-1))));
+    xh.setAttribute('x1',x(i));xh.setAttribute('x2',x(i));xh.setAttribute('opacity','.7');
+    $('#ch-route-d').innerHTML=`<b>Mes ${i+1} · ${mLabel(i)}</b>: deberías ganar ${cop(metaTotal(i))} (${S.projects.map(pr=>esc(pr.name)+' '+short(metaAt(pr,i))).join(' · ')} · sueldo ${short(monthlyFixed())})`+(i<=n?` · ganaste <b>${cop(realTotal(i))}</b>`:'');};
+  hit.addEventListener('pointermove',mv); hit.addEventListener('click',mv);
 }
 
 /* ---------- gráficas ---------- */
@@ -943,7 +1038,7 @@ function renderForm(){
 }
 function readForm(){for(const f of F.fields){if(f.type==='chips'||f.type==='multi')continue;const el=$('#f_'+f.k);if(el)F.vals[f.k]=f.type==='number'?parseFloat(String(el.value).replace(/\./g,'').replace(',','.')):el.value.trim();}return F.vals;}
 const accOpts=()=>S.accounts.map(a=>({v:a.id,l:a.name,col:a.col}));
-const colOpts=()=>COLORS.map((c,i)=>({v:c,l:['Verde','Fucsia','Azul','Violeta','Naranja','Dorado','Menta','Grafito'][i],col:c}));
+const colOpts=()=>COLORS.map((c,i)=>({v:c,l:['Morado','Naranja','Fucsia','Azul','Menta','Dorado','Verde','Grafito'][i],col:c}));
 
 function formAccount(id){const a=accById(id)||{name:'',cur:'COP',col:COLORS[2]};
   openForm({title:id?'Editar cuenta':'Nueva cuenta',fields:[{k:'name',label:'Nombre',type:'text',value:a.name,ph:'Ej. Nu Cajita'},{k:'cur',label:'Moneda',type:'chips',value:a.cur,options:[{v:'COP',l:'Pesos'},{v:'USD',l:'Dólares'},{v:'EUR',l:'Euros'}]},{k:'col',label:'Color',type:'chips',value:a.col,options:colOpts()}],
@@ -970,6 +1065,32 @@ function formGoal(id){const g=envById(id)||{name:'',ic:'🎯',target:'',date:ymd
 function formItem(gid){const g=envById(gid);
   openForm({title:'Agregar a '+g.name,fields:[{k:'name',label:'¿Qué vas a comprar?',type:'text',value:'',ph:'Ej. Trípode'},{k:'price',label:'Precio aproximado (pesos)',type:'number',value:''}],
     onSave:v=>{if(!v.name||!(v.price>0))return 'Falta el nombre o el precio.'; g.items=g.items||[]; if(!g.items.length&&g.target)g.items.push({id:uid(),name:'Meta anterior',price:g.target}); g.items.push({id:uid(),name:v.name,price:v.price});}});}
+function formProject(id){
+  const pr=S.projects.find(x=>x.id===id)||{name:'',ic:'🚀',cat:'otroin',unit:'clientes',col:COLORS[4],ms:[{m:3,u:1,p:100000},{m:12,u:3,p:150000}]};
+  const ms=[...(pr.ms||[])].sort((a,b)=>a.m-b.m).concat([{m:'',u:'',p:''}]);
+  const fields=[{k:'name',label:'Nombre del proyecto',type:'text',value:pr.name,ph:'Ej. Clases de computación'},
+    {k:'ic',label:'Ícono',type:'chips',value:pr.ic,options:['📣','💻','🎬','🖥️','🎮','📷','🛠️','🎓','🚀'].map(e=>({v:e,l:e}))},
+    {k:'cat',label:'¿Con qué tipo de ingreso lo registras?',type:'chips',value:pr.cat,options:CATS_IN.map(c=>({v:c.id,l:c.ic+' '+c.name})),note:'La app suma lo que ganas cuando registras un ingreso con este tipo.'},
+    {k:'unit',label:'¿Qué vendes? (clientes, tiendas, videos…)',type:'text',value:pr.unit},
+    {k:'col',label:'Color en la gráfica',type:'chips',value:pr.col,options:colOpts()}];
+  ms.forEach((h,k)=>{const last=k===ms.length-1;
+    fields.push({k:'m'+k,label:last?'➕ Nuevo hito (opcional): mes de la ruta (1 a '+S.plan.months+')':`Hito ${k+1}: mes de la ruta (1 a ${S.plan.months})`,type:'number',value:h.m,note:h.m?`Mes ${h.m} = ${mLabel(+h.m-1)}`:''});
+    fields.push({k:'u'+k,label:'Cuántos '+(pr.unit||'')+' para ese mes',type:'number',value:h.u});
+    fields.push({k:'p'+k,label:'Precio de cada uno (pesos al mes)',type:'number',value:h.p,note:last?'Para borrar un hito, deja su mes vacío.':''});});
+  openForm({title:id?'Editar '+pr.name:'Nuevo proyecto',fields,
+    onSave:v=>{if(!v.name)return 'Ponle un nombre.';
+      const out=[]; ms.forEach((h,k)=>{const m=Math.round(v['m'+k]),u=v['u'+k],p=v['p'+k]; if(m>=1&&m<=S.plan.months&&u>0&&p>0)out.push({m,u,p});});
+      if(!out.length)return 'Pon al menos un hito con mes, cantidad y precio.';
+      const o={name:v.name,ic:v.ic,cat:v.cat,unit:v.unit||'',col:v.col,ms:out.sort((a,b)=>a.m-b.m)};
+      if(id)Object.assign(pr,o); else S.projects.push({id:'p_'+uid(),...o});},
+    onDelete:id?()=>{S.projects=S.projects.filter(x=>x.id!==id);}:null});
+}
+function formPlan(){
+  openForm({title:'Editar ruta',fields:[{k:'start',label:'¿Desde qué mes empieza la ruta?',type:'date',value:S.plan.start,note:'Se toma el mes de esa fecha como mes 1.'},
+    {k:'months',label:'¿Cuántos meses dura?',type:'number',value:S.plan.months,note:'Ej. 24 = 2 años. Los hitos después de ese mes no se cuentan.'}],
+    onSave:v=>{const m=Math.round(v.months); if(!(m>=3&&m<=60))return 'La ruta debe durar entre 3 y 60 meses.'; const d=pd(v.start||S.plan.start);
+      S.plan={start:ymd(new Date(d.getFullYear(),d.getMonth(),1)),months:m};}});
+}
 function formAdjust(id){const a=accById(id);
   openForm({title:'Saldo real de '+a.name,fields:[{k:'bal',label:`¿Cuánto tienes de verdad? (${a.cur})`,type:'number',value:accBal(id),note:'Si no cuadra, se crea un ajuste en "Para gastar" por la diferencia. Así la app vuelve a quedar igual a tu cuenta.'}],
     onSave:v=>{if(!isFinite(v.bal))return 'Escribe un número.'; const d=r2(v.bal-accBal(id)); if(Math.abs(d)<0.005)return; S.tx.push({id:uid(),type:'ajuste',t:Date.now(),acc:id,amount:d,cop:Math.round(toCOP(d,a.cur)),env:'gastos',note:'Ajuste de saldo'});}});}
@@ -1037,6 +1158,9 @@ document.addEventListener('click',e=>{
     case 'undo': S.tx=S.tx.filter(t=>t.id!==d.id); save(); render(); $('#toast').hidden=true; break;
     case 'txopen': V.openTx=V.openTx===d.id?null:d.id; V.confirm=null; render(); break;
     case 'txdel': if(V.confirm===d.id){S.tx=S.tx.filter(t=>t.id!==d.id);V.confirm=null;V.openTx=null;save();toast('Movimiento eliminado.');} else V.confirm=d.id; render(); break;
+    case 'mview': V.mview=d.v; render(); window.scrollTo(0,0); break;
+    case 'editproj': formProject(d.id); break;
+    case 'editplan': formPlan(); break;
     case 'goalopen': V.goalOpen=V.goalOpen===d.id?null:d.id; render(); break;
     case 'share': {const g=envById(d.id); g.share=Math.max(0,Math.min(100,(+g.share||0)+(+d.d))); save(); render(); break;}
     case 'pct': S.set[d.k]=Math.max(0,Math.min(90,S.set[d.k]+(+d.d))); save(); render(); break;

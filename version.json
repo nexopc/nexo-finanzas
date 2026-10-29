@@ -1,8 +1,18 @@
 {
-  "version": "1.1.0",
-  "fecha": "2026-10-28",
-  "mensaje": "Inicio más sencillo y colores naranja y morado.",
+  "version": "1.2.0",
+  "fecha": "2026-10-29",
+  "mensaje": "Nueva sección Mis proyectos.",
   "notas": [
+    {
+      "version": "1.2.0",
+      "fecha": "29 oct 2026",
+      "cambios": [
+        "Metas → Mis proyectos: lo que deberías ganar cada mes con la agencia, la app y los videos.",
+        "Gráfica de tu ruta de 24 meses y lo que de verdad ganas.",
+        "Cada proyecto se edita tocándolo: hitos, cantidades, precios y fechas.",
+        "NEXO PC pasa a un local pequeño de $40 millones (opción B)."
+      ]
+    },
     {
       "version": "1.1.0",
       "fecha": "28 oct 2026",
