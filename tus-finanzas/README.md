@@ -4,7 +4,7 @@ App de Android para quien presta plata (hecha para Juan Gabriel, en Quibdó).
 Clientes, préstamos por cuotas, cobros, ruta del día con minimapa, gastos, reportes y consejos.
 **Funciona sin internet.** Los datos viven solo en el celular (más la copia que se guarde en Drive).
 
-- Instalador: [`TusFinanzas.apk`](TusFinanzas.apk) (Android 7 o superior; probado para Samsung).
+- Instalador: [`TusFinanzas.apk`](TusFinanzas.apk) (Android 7 o superior; pensada para Samsung).
 - Versión: ver `version.json`.
 
 ![Pantallas de Tus Finanzas](capturas.png)
