@@ -7,6 +7,8 @@ Clientes, préstamos por cuotas, cobros, ruta del día con minimapa, gastos, rep
 - Instalador: [`TusFinanzas.apk`](TusFinanzas.apk) (Android 7 o superior; probado para Samsung).
 - Versión: ver `version.json`.
 
+![Pantallas de Tus Finanzas](capturas.png)
+
 ## Un color = una acción
 
 | Color | Significa |
