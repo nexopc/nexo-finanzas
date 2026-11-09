@@ -9,3 +9,7 @@ Es una PWA: se instala desde Chrome en Android y desde Chrome/Edge en Windows, y
 - Armar la versión publicable: `python3 build.py` → regenera `docs/`.
 
 Los datos de Cristóbal **no** están en este repositorio: viven solo en su celular (localStorage).
+
+## Otras apps en este repositorio
+
+- [`tus-finanzas/`](tus-finanzas/): **Tus Finanzas**, app Android para prestamistas (clientes, cuotas, ruta de cobro con minimapa sin internet, reportes). Instalador: `tus-finanzas/TusFinanzas.apk`.
