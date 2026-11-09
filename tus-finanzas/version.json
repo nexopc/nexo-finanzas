@@ -1,4 +1,24 @@
 {
-  "version": "1.0.0",
-  "code": 1
+  "version": "1.1.0",
+  "code": 2,
+  "apk": "TusFinanzas.apk",
+  "notas": [
+    {
+      "v": "1.1.0",
+      "fecha": "9 nov 2026",
+      "cambios": [
+        "El interés se calcula solo: 10 % mensual según cuánto dura el préstamo.",
+        "Ajustes → Interés de los préstamos: cambia el porcentaje cuando quieras (solo afecta los préstamos nuevos).",
+        "Si un préstamo es especial, puedes cambiar el interés solo para ese préstamo.",
+        "Nuevo botón Actualizar la app: avisa cuando hay versión nueva y la instala sin borrar tus datos."
+      ]
+    },
+    {
+      "v": "1.0.0",
+      "fecha": "9 nov 2026",
+      "cambios": [
+        "Primera versión: clientes, cuotas, ruta del día con minimapa, gastos, reportes, recibos y copia de seguridad."
+      ]
+    }
+  ]
 }

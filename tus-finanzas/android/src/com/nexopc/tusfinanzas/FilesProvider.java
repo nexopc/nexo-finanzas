@@ -47,6 +47,7 @@ public class FilesProvider extends ContentProvider {
         if (n.endsWith(".png")) return "image/png";
         if (n.endsWith(".pdf")) return "application/pdf";
         if (n.endsWith(".json")) return "application/json";
+        if (n.endsWith(".apk")) return "application/vnd.android.package-archive";
         return "application/octet-stream";
     }
 

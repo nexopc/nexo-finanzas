@@ -11,9 +11,11 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.util.Base64;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
@@ -143,6 +145,83 @@ public class Bridge {
             NetworkInfo n = cm.getActiveNetworkInfo();
             return n != null && n.isConnected();
         } catch (Exception e) { return false; }
+    }
+
+    @JavascriptInterface
+    public int versionCode() {
+        try { return act.getPackageManager().getPackageInfo(act.getPackageName(), 0).versionCode; } catch (Exception e) { return 0; }
+    }
+
+    // ---------- actualizar la app ----------
+    static byte[] httpGet(String url) throws Exception {
+        HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+        c.setConnectTimeout(20000);
+        c.setReadTimeout(120000);
+        c.setUseCaches(false);
+        c.setRequestProperty("User-Agent", "TusFinanzas/1.0 (Android)");
+        c.setRequestProperty("Cache-Control", "no-cache");
+        try {
+            if (c.getResponseCode() != 200) throw new Exception("http_" + c.getResponseCode());
+            return readAll(c.getInputStream());
+        } finally { c.disconnect(); }
+    }
+
+    @JavascriptInterface
+    public void fetchText(final String cb, final String url) {
+        new Thread(new Runnable() {
+            @Override public void run() {
+                try {
+                    String t = new String(httpGet(url), "UTF-8");
+                    JSONObject o = new JSONObject();
+                    o.put("ok", true);
+                    o.put("text", t);
+                    callback(cb, o.toString());
+                } catch (Exception e) {
+                    callback(cb, "{\"ok\":false,\"error\":\"sin_internet\"}");
+                }
+            }
+        }).start();
+    }
+
+    @JavascriptInterface
+    public void installApk(final String cb, final String url) {
+        if (Build.VERSION.SDK_INT >= 26 && !act.getPackageManager().canRequestPackageInstalls()) {
+            try {
+                Intent i = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + act.getPackageName()));
+                act.startActivity(i);
+            } catch (Exception ignored) { }
+            callback(cb, "{\"ok\":false,\"error\":\"permiso_instalar\"}");
+            return;
+        }
+        new Thread(new Runnable() {
+            @Override public void run() {
+                try {
+                    byte[] apk = httpGet(url);
+                    if (apk.length < 10000 || apk[0] != 'P' || apk[1] != 'K') throw new Exception("archivo_invalido");
+                    File dir = new File(act.getCacheDir(), "share");
+                    dir.mkdirs();
+                    FileOutputStream o = new FileOutputStream(new File(dir, "actualizacion.apk"));
+                    o.write(apk);
+                    o.close();
+                    ui.post(new Runnable() {
+                        @Override public void run() {
+                            try {
+                                Uri uri = Uri.parse("content://" + FilesProvider.AUTHORITY + "/actualizacion.apk");
+                                Intent i = new Intent(Intent.ACTION_VIEW);
+                                i.setDataAndType(uri, "application/vnd.android.package-archive");
+                                i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                act.startActivity(i);
+                                callback(cb, "{\"ok\":true}");
+                            } catch (Exception e) {
+                                callback(cb, "{\"ok\":false,\"error\":\"instalador\"}");
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    callback(cb, "{\"ok\":false,\"error\":\"sin_internet\"}");
+                }
+            }
+        }).start();
     }
 
     @JavascriptInterface

@@ -171,6 +171,7 @@ function vistaRuta() {
     <div class="top-acc">${plan.totalM > 0 ? `<span class="chip">${I('moto', 'i', 'style="width:18px;height:18px"')}≈ ${km(plan.totalM)}</span>` : ''}
     <button class="icono-btn" data-acc="ajustes" aria-label="Ajustes">${I('ajustes')}</button></div></div>`;
 
+  h += avisoActualizacion();
   if (!DB.config.tipCuaderno && DB.clientes.length < 3)
     h += `<div class="aviso azul">${I('idea')}<span><b>Pasa tus clientes del cuaderno:</b> toca <b>+ Prestar</b> y marca "Ya venía del cuaderno".</span><button class="icono-btn" style="width:36px;height:36px" data-acc="cerrarTip" aria-label="Cerrar">✕</button></div>`;
 
@@ -266,6 +267,7 @@ function vistaResumen() {
   const maxBar = Math.max(im.potencial, im.deberia, im.real, 1);
   let h = `<div class="top"><div><p class="sub" style="margin:0">Hola${DB.config.nombre ? ', ' + esc(DB.config.nombre) : ''}</p><h1>Resumen</h1></div>
     <div class="top-acc"><button class="icono-btn" data-acc="ajustes" aria-label="Ajustes">${I('ajustes')}</button></div></div>`;
+  h += avisoActualizacion();
   const dCopia = DB.config.ultimaCopia ? diffDays(d, DB.config.ultimaCopia) : 999;
   if (DB.clientes.length && dCopia > 7)
     h += `<div class="aviso morado">${I('nube')}<span>${DB.config.ultimaCopia ? 'Tu última copia fue hace ' + dCopia + ' días.' : 'Aún no tienes copia de seguridad.'} Guárdala en Drive por si pierdes el celular.</span><button class="btn morado bajo" style="width:auto" data-acc="copia">Copiar</button></div>`;
@@ -360,7 +362,7 @@ function pintarFicha(h, cid) {
       <div class="grid3" style="margin-top:12px"><div><span class="muted peq">Le presté</span><br><b style="font-size:14px">${money(p.monto)}</b></div>
       <div><span class="muted peq">Ya pagó</span><br><b class="verde" style="font-size:14px">${money(pagadoTotal(p))}</b></div>
       <div><span class="muted peq">Ganancia total</span><br><b style="font-size:14px">${money(p.interes)}</b></div></div>
-      <p class="muted peq" style="margin-top:10px">${FREC_TXT[p.frecuencia]} · ${money(v[prox].valor)} por cuota · mora ${pct(p.moraPct, 0)} %${p.previo ? ' · venía del cuaderno' : ''}</p></div>
+      <p class="muted peq" style="margin-top:10px">${FREC_TXT[p.frecuencia]} · ${money(v[prox].valor)} por cuota${p.tasa != null ? ' · interés ' + pct(p.tasa, p.tasa % 1 ? 1 : 0) + ' % mensual × ' + mesesTexto(p.meses) : ''} · mora ${pct(p.moraPct, 0)} %${p.previo ? ' · venía del cuaderno' : ''}</p></div>
       <div style="margin:12px 16px 0" class="form">
         <button class="btn verde alto" data-acc="cobrar" data-id="${cid}">${I('check', 'i', 'style="stroke-width:3"')}${venceHoy ? (est.tipo === 'atrasado' ? 'Cobrar cuota atrasada · ' : 'Cobrar cuota de hoy · ') + money(v[prox].valor + moraDe(p, prox, d)) : 'Cobrar próxima · vence ' + fechaCorta(p.fechas[prox])}</button>
         <div class="botones"><button class="btn morado bajo" data-acc="recordar" data-id="${cid}">${I('chat')}Recordar</button>
@@ -466,18 +468,22 @@ function hojaEditarCliente(cid) {
 function hojaPrestamo(cid) {
   const existente = cid ? cliente(cid) : null;
   if (existente && prestamoActivo(cid)) { toast('Este cliente ya tiene un préstamo activo'); return; }
-  const F = { frec: 'diario', primera: siguienteHabil(addDays(hoy(), 1)), fechas: [], previo: false, gps: {} };
+  const F = { frec: 'diario', primera: primeraSugerida('diario'), fechas: [], previo: false, gps: {} };
   const html = `<div class="top" style="align-items:center"><button class="atras" data-acc="cerrar" aria-label="Volver">${I('atras', 'i', 'style="width:26px;height:26px"')}</button><h1 style="flex:1;font-size:20px">Nuevo préstamo</h1></div>
     <div class="card form"><div class="tit" style="margin:0"><span class="paso">1</span><h2>¿A quién le prestas?</h2></div>
       ${existente ? `<div class="fila"><b style="font-size:17px">${esc(existente.nombre)}</b><span class="muted">${esc(existente.dir || '')}</span></div>` : camposCliente()}</div>
     <div class="card form"><div class="tit" style="margin:0"><span class="paso">2</span><h2>¿Cuánto y cómo paga?</h2></div>
-      <div class="grid2"><label class="campo">Le presto<input id="p-monto" class="plata" inputmode="numeric" placeholder="$0"></label>
-      <label class="campo">Gano (interés)<input id="p-interes" class="plata" inputmode="numeric" placeholder="$0" style="color:var(--verde)"></label></div>
+      <label class="campo">Le presto<input id="p-monto" class="plata" inputmode="numeric" placeholder="$0"></label>
       <span class="b" style="font-size:13px;color:#374151">Cada cuánto paga</span>
       <div class="chips" id="p-frec">${FRECUENCIAS.map(([k, t]) => `<button type="button" data-f="${k}" class="${k === F.frec ? 'on' : ''}">${t}</button>`).join('')}</div>
       <div class="grid2"><label class="campo">Número de cuotas<input id="p-cuotas" type="number" inputmode="numeric" min="1" max="400" placeholder="Ej: 24"></label>
       <label class="campo">Mora por atraso (%)<input id="p-mora" type="number" inputmode="decimal" min="0" max="100" value="5"></label></div>
-      <div class="total-box grid2"><div><span>Me debe en total</span><b id="p-total">$0</b></div><div><span>Cada cuota</span><b id="p-cuota" class="verde">$0</b></div></div>
+      <div class="total-box form" style="gap:10px">
+        <div class="fila"><div><span>Gano (interés)</span><span class="peq" id="p-int-txt" style="color:var(--suave)">${pct(DB.config.tasaMensual, DB.config.tasaMensual % 1 ? 1 : 0)} % mensual · se calcula solo</span></div><b id="p-int" class="verde">$0</b></div>
+        <div class="grid2"><div><span>Me debe en total</span><b id="p-total">$0</b></div><div><span>Cada cuota</span><b id="p-cuota" class="verde">$0</b></div></div>
+        <button type="button" class="btn gris bajo" id="p-manual-btn" style="height:40px;font-size:13px">${I('lapiz', 'i', 'style="width:16px;height:16px"')}Cambiar el interés solo para este préstamo</button>
+        <label class="campo oculto" id="p-manual-box">Interés de este préstamo<input id="p-interes" class="plata" inputmode="numeric" placeholder="$0" style="color:var(--verde)"></label>
+      </div>
       <label class="switch"><span><b style="font-size:14px">Ya venía del cuaderno</b><br><span class="muted peq">Es un préstamo que hiciste antes de usar la app</span></span><input type="checkbox" id="p-previo"></label>
       <label class="campo oculto" id="p-pagadas-box">¿Cuántas cuotas ya pagó?<input id="p-pagadas" type="number" inputmode="numeric" min="0" value="0"></label></div>
     <div class="card form"><div class="tit" style="margin:0"><span class="paso">3</span><h2>Fechas de pago</h2></div>
@@ -490,11 +496,22 @@ function hojaPrestamo(cid) {
       if (!existente) montarGPS(h, F.gps);
       const q = s => h.querySelector(s);
       const n = () => Math.min(400, Math.max(0, parseInt(q('#p-cuotas').value, 10) || 0));
-      const recalc = (regen = true) => {
-        const monto = valorDe(h, '#p-monto'), inter = valorDe(h, '#p-interes'), k = n();
+      const interes = () => {
+        const monto = valorDe(h, '#p-monto');
+        if (F.manual) return { interes: valorDe(h, '#p-interes'), manual: true };
+        return interesAuto(monto, n(), F.frec);
+      };
+      const totales = () => {
+        const monto = valorDe(h, '#p-monto'), k = n(), it = interes(), inter = it.interes;
+        q('#p-int').textContent = money(inter);
+        const tasaTxt = pct(DB.config.tasaMensual, DB.config.tasaMensual % 1 ? 1 : 0) + ' % mensual';
+        q('#p-int-txt').textContent = it.manual ? 'Escrito a mano para este préstamo' : (it.meses ? tasaTxt + ' × ' + mesesTexto(it.meses) : tasaTxt + ' · se calcula solo');
         q('#p-total').textContent = money(monto + inter);
         q('#p-cuota').textContent = k ? money(Math.floor((monto + inter) / k)) : '$0';
-        if (regen) { F.fechas = k ? generarFechas(q('#p-primera').value || F.primera, F.frec, k) : []; pintarFechas(); }
+      };
+      const recalc = (regen = true) => {
+        if (regen) { F.fechas = n() ? generarFechas(q('#p-primera').value || F.primera, F.frec, n()) : []; pintarFechas(); }
+        totales();
       };
       const pintarFechas = () => {
         const box = q('#p-fechas'), pag = F.previo ? (parseInt(q('#p-pagadas').value, 10) || 0) : 0;
@@ -503,25 +520,32 @@ function hojaPrestamo(cid) {
           <input type="date" value="${f}" data-i="${i}" aria-label="Fecha de la cuota ${i + 1}"><span class="peq ${i < pag ? 'verde b' : 'muted'}" style="width:66px;text-align:right">${i < pag ? 'Pagada' : DIAS_C[fromISO(f).getDay()]}</span>${I('lapiz', 'i', 'style="width:17px;height:17px;color:var(--suave);margin-right:8px"')}</div>`).join('')
           + `<p class="muted peq" style="padding:4px 2px">Última cuota: ${fechaLarga(F.fechas[F.fechas.length - 1])}</p>`;
         box.querySelectorAll('input[type=date]').forEach(inp => inp.addEventListener('change', () => {
-          if (!inp.value) return; F.fechas[+inp.dataset.i] = inp.value; pintarFechas();
+          if (!inp.value) return; F.fechas[+inp.dataset.i] = inp.value; pintarFechas(); totales();
         }));
       };
       ['#p-monto', '#p-interes'].forEach(s => q(s).addEventListener('input', () => recalc(false)));
+      q('#p-manual-btn').onclick = () => {
+        F.manual = true; q('#p-manual-btn').classList.add('oculto'); q('#p-manual-box').classList.remove('oculto');
+        const it = interesAuto(valorDe(h, '#p-monto'), n(), F.frec);
+        q('#p-interes').value = plataAttr(it.interes); q('#p-interes').focus(); totales();
+      };
       q('#p-cuotas').addEventListener('input', () => recalc());
-      q('#p-primera').addEventListener('change', () => recalc());
+      q('#p-primera').addEventListener('change', () => { F.primeraManual = true; recalc(); });
       q('#p-pagadas').addEventListener('input', pintarFechas);
       q('#p-frec').addEventListener('click', e => {
         const b = e.target.closest('[data-f]'); if (!b) return;
-        F.frec = b.dataset.f; q('#p-frec').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); recalc();
+        F.frec = b.dataset.f; q('#p-frec').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+        if (!F.primeraManual && !F.previo) q('#p-primera').value = primeraSugerida(F.frec);
+        recalc();
       });
       q('#p-previo').addEventListener('change', e => {
         F.previo = e.target.checked; q('#p-pagadas-box').classList.toggle('oculto', !F.previo);
         q('#p-primera-l').firstChild.textContent = F.previo ? 'Fecha de la primera cuota (aunque ya haya pasado)' : 'Primera cuota';
-        pintarFechas();
+        pintarFechas(); totales();
       });
       q('#p-ok').onclick = async () => {
         const err = m => { q('#p-err').textContent = m; q('#p-err').scrollIntoView({ block: 'center' }); };
-        const monto = valorDe(h, '#p-monto'), inter = valorDe(h, '#p-interes'), k = n();
+        const monto = valorDe(h, '#p-monto'), k = n(), it = interes(), inter = it.interes;
         const mora = Math.max(0, Math.min(100, parseFloat(String(q('#p-mora').value).replace(',', '.')) || 0));
         const pag = F.previo ? Math.max(0, parseInt(q('#p-pagadas').value, 10) || 0) : 0;
         if (!existente && !q('#c-nombre').value.trim()) return err('Escribe el nombre del cliente.');
@@ -536,6 +560,7 @@ function hojaPrestamo(cid) {
         let c = existente;
         if (!c) { c = leerCliente(h, { id: uid(), creado: hoy() }); Object.assign(c, F.gps); DB.clientes.push(c); }
         const p = { id: uid(), clienteId: c.id, monto, interes: inter, cuotas: k, frecuencia: F.frec, moraPct: mora, fechas: F.fechas.slice().sort(), creado: hoy(), previo: F.previo, pagos: [] };
+        if (!it.manual) { p.tasa = it.tasa; p.meses = it.meses; }
         const v = valores(p);
         for (let i = 0; i < pag; i++) p.pagos.push({ i, fecha: p.fechas[i] < hoy() ? p.fechas[i] : hoy(), valor: v[i].valor, mora: 0, previo: true, ts: 0 });
         DB.prestamos.push(p); guardar();
@@ -772,6 +797,9 @@ function pintarAjustes(h) {
     <div class="card form" style="gap:10px"><div class="tit" style="margin:0">${I('reloj', 'i', 'style="width:20px;height:20px"')}<h2>Aviso diario</h2></div>
       <label class="switch"><span><b style="font-size:14px">Avisarme los cobros del día</b><br><span class="muted peq">"Hoy tienes 7 cobros · 2 atrasados"</span></span><input type="checkbox" id="a-avisos" ${c.avisos ? 'checked' : ''}></label>
       <label class="campo">Hora del aviso<input type="time" id="a-hora" value="${c.horaAviso || '07:00'}"></label></div>
+    <div class="card form" style="gap:10px"><div class="tit" style="margin:0">${I('sube', 'i', 'style="width:20px;height:20px"')}<h2>Interés de los préstamos</h2></div>
+      <label class="campo">Interés mensual (%)<input type="number" id="a-tasa" min="0" max="100" step="0.5" inputmode="decimal" value="${c.tasaMensual}"></label>
+      <p class="muted" id="a-tasa-ej">Ejemplo: ${money(1000000)} a 1 mes = ${money(Math.round(1000000 * c.tasaMensual / 100))} de interés. Solo cambia los préstamos nuevos; los que ya tienes siguen igual.</p></div>
     <div class="card form" style="gap:10px"><div class="tit" style="margin:0">${I('idea', 'i', 'style="width:20px;height:20px"')}<h2>Consejo del mes</h2></div>
       <label class="campo">De los intereses, ¿qué porcentaje vuelves a prestar?<input type="number" id="a-reinv" min="0" max="100" inputmode="numeric" value="${c.reinvertir}"></label>
       <label class="campo">Tu nombre<input id="a-nombre" value="${esc(c.nombre)}"></label>
@@ -781,10 +809,20 @@ function pintarAjustes(h) {
       <p class="muted">${c.ultimaCopia ? 'Última copia: ' + fechaLarga(c.ultimaCopia) : 'Aún no has hecho ninguna copia'}. Guárdala en Google Drive: si pierdes o cambias el celular, la restauras y no pierdes nada.</p>
       <button class="btn morado" data-acc="copia">${I('nube')}Hacer copia ahora</button>
       <button class="btn gris bajo" data-acc="restaurar">Restaurar una copia</button></div>
+    <div class="card form" style="gap:10px"><div class="tit" style="margin:0">${I('nube', 'i', 'style="width:20px;height:20px;transform:rotate(180deg)"')}<h2>Actualizar la app</h2></div>
+      <p class="muted">Tienes la versión <b>${esc(Nativo.version() || window.APP_VERSION)}</b>. ${UI.nueva ? '<b class="azul">Hay una versión nueva: ' + esc(UI.nueva.version) + '</b>' : 'Busca si hay una versión nueva (necesita internet).'}</p>
+      <p class="muted peq" id="act-estado"></p>
+      ${UI.nueva ? `<button class="btn azul" data-acc="actualizar">${I('nube', 'i', 'style="transform:rotate(180deg)"')}Actualizar a la ${esc(UI.nueva.version)}</button>` : `<button class="btn gris bajo" data-acc="buscarAct">${I('nube', 'i', 'style="transform:rotate(180deg)"')}Buscar actualización</button>`}</div>
     <p class="muted peq" style="text-align:center;margin:18px 0 28px">Tus Finanzas ${esc(Nativo.version() || window.APP_VERSION)} · Funciona sin internet<br>Tus datos están solo en este celular.</p>`);
   h.querySelectorAll('input[name=mapa]').forEach(r => r.addEventListener('change', () => { c.mapa = r.value; guardar(); pintarAjustes(h); render(); }));
   h.querySelector('#a-avisos').addEventListener('change', e => { c.avisos = e.target.checked; guardar(); if (c.avisos) Nativo.pedirAvisos(); });
   h.querySelector('#a-hora').addEventListener('change', e => { c.horaAviso = e.target.value || '07:00'; guardar(); toast('Aviso a las ' + horaTexto(c.horaAviso)); });
+  h.querySelector('#a-tasa').addEventListener('change', e => {
+    const t = Math.min(100, Math.max(0, parseFloat(String(e.target.value).replace(',', '.')) || 0));
+    c.tasaMensual = Math.round(t * 10) / 10; e.target.value = c.tasaMensual; guardar();
+    h.querySelector('#a-tasa-ej').textContent = 'Ejemplo: ' + money(1000000) + ' a 1 mes = ' + money(Math.round(1000000 * c.tasaMensual / 100)) + ' de interés. Solo cambia los préstamos nuevos; los que ya tienes siguen igual.';
+    toast('Interés de los préstamos nuevos: ' + pct(c.tasaMensual, c.tasaMensual % 1 ? 1 : 0) + ' % mensual');
+  });
   h.querySelector('#a-reinv').addEventListener('change', e => { c.reinvertir = Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)); guardar(); });
   h.querySelector('#a-nombre').addEventListener('change', e => { c.nombre = e.target.value.trim(); guardar(); });
 }
@@ -830,6 +868,48 @@ function restaurarCopia() {
     rd.readAsText(f);
   };
   inp.click();
+}
+
+/* ======================================================================
+   ACTUALIZAR LA APP (se publica en GitHub: carpeta tus-finanzas/ de la rama main)
+   ====================================================================== */
+const URL_ACT = 'https://raw.githubusercontent.com/nexopc/nexo-finanzas/main/tus-finanzas/';
+function avisoActualizacion() {
+  if (!UI.nueva) return '';
+  return `<div class="aviso azul">${I('nube', 'i', 'style="transform:rotate(180deg)"')}<span><b>Hay una versión nueva (${esc(UI.nueva.version)})</b><br>Tus datos no se borran.</span><button class="btn azul bajo" style="width:auto" data-acc="actualizar">Actualizar</button></div>`;
+}
+async function buscarActualizacion() {
+  const r = await Nativo.texto(URL_ACT + 'version.json?t=' + Date.now());
+  if (!r.ok) return { ok: false, error: r.error };
+  let v; try { v = JSON.parse(r.text); } catch (e) { return { ok: false, error: 'archivo' }; }
+  DB.config.ultimaRevision = Date.now();
+  try { localStorage.setItem('tf_db', JSON.stringify(DB)); } catch (e) { }
+  UI.nueva = (v && v.code > Nativo.versionCode()) ? v : null;
+  return { ok: true, nueva: UI.nueva };
+}
+function hojaActualizar() {
+  const v = UI.nueva; if (!v) return;
+  const nota = (v.notas || []).find(x => x.v === v.version);
+  abrirHoja(`<div class="card" style="margin-top:14px"><h2 style="font-size:20px;font-weight:800">Versión nueva ${esc(v.version)}</h2>
+    <p class="muted" style="margin:4px 0 10px">Tienes la ${esc(Nativo.version() || window.APP_VERSION)}.</p>
+    ${nota ? '<ul style="margin:0 0 12px;padding-left:20px;font-size:14px;line-height:1.5">' + nota.cambios.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' : ''}
+    <div class="aviso verde" style="margin:0 0 12px;background:var(--verde-bg);color:#052e16">${I('check', 'i', 'style="color:var(--verde)"')}<span>Tus clientes, cobros y gastos <b>no se borran</b>.</span></div>
+    <p class="muted peq" style="margin-bottom:12px">Se descarga la app nueva y Android te pregunta: toca <b>Actualizar</b> o <b>Instalar</b>.</p>
+    <p class="error" id="act-err"></p>
+    <div class="form"><button class="btn azul" id="act-ok">${I('nube', 'i', 'style="transform:rotate(180deg)"')}Actualizar ahora</button><button class="btn gris bajo" data-acc="cerrar">Ahora no</button></div></div>`, {
+    montar: h => {
+      h.querySelector('#act-ok').onclick = async () => {
+        const b = h.querySelector('#act-ok'); b.disabled = true; b.lastChild.textContent = 'Descargando…';
+        guardar();
+        const r = await Nativo.instalar(URL_ACT + (v.apk || 'TusFinanzas.apk') + '?t=' + Date.now());
+        b.disabled = false; b.lastChild.textContent = 'Actualizar ahora';
+        if (r.ok) { cerrarHoja(); return; }
+        h.querySelector('#act-err').innerHTML = r.error === 'permiso_instalar'
+          ? 'Android pide permiso: activa <b>"Permitir de esta fuente"</b> para Tus Finanzas, vuelve aquí y toca otra vez <b>Actualizar ahora</b>.'
+          : 'No se pudo descargar. Revisa el internet e intenta otra vez.';
+      };
+    }
+  });
 }
 
 /* ======================================================================
@@ -943,6 +1023,15 @@ const ACC = {
     else if (est) est.textContent = r.error === 'sin_internet' ? 'Sin internet. Conéctate a wifi o datos e intenta otra vez.' : 'No se pudo descargar ahora (' + r.error + '). Intenta más tarde.';
   },
   corregirMano: () => hojaCorregirMano(),
+  actualizar: () => hojaActualizar(),
+  buscarAct: async (_, btn) => {
+    btn.disabled = true; const est = $('#act-estado'); if (est) est.textContent = 'Buscando…';
+    const r = await buscarActualizacion();
+    btn.disabled = false;
+    if (!r.ok) { if (est) est.textContent = r.error === 'sin_internet' ? 'Sin internet. Conéctate e intenta otra vez.' : 'No se pudo revisar ahora (' + r.error + '). Intenta más tarde.'; return; }
+    UI.hojas.forEach(x => { if (x.querySelector('#a-reinv')) pintarAjustes(x); });
+    if (r.nueva) hojaActualizar(); else { const e2 = $('#act-estado'); if (e2) e2.textContent = 'Ya tienes la versión más nueva.'; }
+  },
   copia: () => hacerCopia(),
   restaurar: () => restaurarCopia(),
 };
@@ -951,3 +1040,9 @@ const ACC = {
 cargar();
 render();
 enviarAgenda();
+// revisa actualizaciones sola (máximo cada 6 horas y solo con internet)
+setTimeout(async () => {
+  if (!Nativo.hay || !Nativo.enLinea() || Date.now() - (DB.config.ultimaRevision || 0) < 6 * 3600e3) return;
+  const r = await buscarActualizacion();
+  if (r.ok && r.nueva && !UI.hojas.length && DB.config.listo) render();
+}, 2500);

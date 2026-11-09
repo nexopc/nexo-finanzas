@@ -33,7 +33,14 @@ const Nativo = {
   },
   agenda(obj) { try { if (this.hay) window.Android.setAgenda(JSON.stringify(obj)); } catch (e) { } },
   pedirAvisos() { try { if (this.hay) window.Android.askNotifications(); } catch (e) { } },
-  version() { try { return this.hay ? window.Android.version() : '__APP_VERSION__'; } catch (e) { return ''; } },
+  version() { try { return this.hay ? window.Android.version() : window.APP_VERSION; } catch (e) { return ''; } },
+  versionCode() { try { return this.hay ? window.Android.versionCode() : (parseInt(window.APP_CODE, 10) || 0); } catch (e) { return 0; } },
+  async texto(url) {
+    if (this.hay) return this.llamar('fetchText', url);
+    try { const r = await fetch(url, { cache: 'no-store' }); return r.ok ? { ok: true, text: await r.text() } : { ok: false, error: 'http_' + r.status }; }
+    catch (e) { return { ok: false, error: 'sin_internet' }; }
+  },
+  instalar(url) { if (this.hay) return this.llamar('installApk', url); window.open(url, '_blank'); return Promise.resolve({ ok: true }); },
 };
 window.tfNative = (id, json) => { const f = Nativo._cb[id]; if (!f) return; delete Nativo._cb[id]; try { f(JSON.parse(json)); } catch (e) { f({ ok: false }); } };
 
@@ -51,6 +58,7 @@ function dbNueva() {
     config: {
       listo: false, nombre: '', capitalInicial: 0, fechaInicio: hoy(),
       mapa: 'offline', salida: null, avisos: true, horaAviso: '07:00', reinvertir: 50, ultimaCopia: null,
+      tasaMensual: 10, ultimaRevision: 0,
     },
     clientes: [], prestamos: [], movs: [], fijos: [],
     cats: { gasto: CATS_GASTO.slice(), ingreso: CATS_INGRESO.slice() },
@@ -136,6 +144,22 @@ function generarFechas(primera, frec, n) {
   }
   return f;
 }
+
+/* Interés automático: tasa mensual × meses que dura el préstamo, según la frecuencia y el número de cuotas.
+   Diario: 26 cuotas ≈ 1 mes (sin domingos ni festivos) · Semanal: 4 cuotas = 1 mes · Quincenal: 2 = 1 mes
+   Mensual: 1 = 1 mes · Trimestral: 1 = 3 meses · Semestral: 1 = 6 meses. Se redondea a medio mes. */
+const MESES_POR_CUOTA = { diario: 1 / 26, semanal: 1 / 4, quincenal: 1 / 2, mensual: 1, trimestral: 3, semestral: 6 };
+function mesesPrestamo(cuotas, frec) { return Math.max(0.5, Math.round(cuotas * (MESES_POR_CUOTA[frec] || 1) * 2) / 2); }
+function interesAuto(monto, cuotas, frec, tasa = DB.config.tasaMensual) {
+  if (!monto || !cuotas) return { meses: 0, interes: 0, tasa };
+  const meses = mesesPrestamo(cuotas, frec);
+  return { meses, interes: Math.round(monto * tasa / 100 * meses / 100) * 100, tasa };
+}
+/* Primera cuota sugerida: un periodo después de hoy */
+function primeraSugerida(frec, d = hoy()) {
+  return siguienteHabil(({ diario: addDays(d, 1), semanal: addDays(d, 7), quincenal: addDays(d, 15), mensual: addMonths(d, 1), trimestral: addMonths(d, 3), semestral: addMonths(d, 6) })[frec] || addDays(d, 1));
+}
+const mesesTexto = m => (Number.isInteger(m) ? m : String(m).replace('.', ',')) + (m === 1 ? ' mes' : ' meses');
 
 function registrarCobro(p, conMora = true, fecha = hoy()) {
   const i = proximaCuota(p); if (i < 0) return null;

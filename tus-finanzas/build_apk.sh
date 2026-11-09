@@ -31,7 +31,7 @@ fi
 rm -rf "$OUT" && mkdir -p "$OUT"/{res,gen,classes,assets}
 # 1) la app web va en assets/
 cp -r web/. "$OUT/assets/"
-sed -i "s/__APP_VERSION__/$VERSION_NAME/g" "$OUT/assets/index.html"
+sed -i "s/__APP_VERSION__/$VERSION_NAME/g; s/__APP_CODE__/$VERSION_CODE/g" "$OUT/assets/index.html"
 
 # 2) recursos y manifiesto
 "$TOOLS/aapt2" compile --dir android/res -o "$OUT/res/res.zip"
