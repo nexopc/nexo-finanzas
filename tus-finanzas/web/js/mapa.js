@@ -97,8 +97,17 @@ function grafo() {
       prev = i;
     }
   }
+  // red principal: el grupo de calles conectadas más grande (en OSM hay pedazos sueltos)
+  const comp = new Int32Array(xs.length).fill(-1), tam = [];
+  for (let i = 0; i < xs.length; i++) {
+    if (comp[i] >= 0) continue;
+    const c = tam.length, pila = [i]; comp[i] = c; let n = 0;
+    while (pila.length) { const u = pila.pop(); n++; const ad = adj[u]; for (let k = 0; k < ad.length; k += 2) if (comp[ad[k]] < 0) { comp[ad[k]] = c; pila.push(ad[k]); } }
+    tam.push(n);
+  }
+  const principal = tam.indexOf(Math.max(...tam));
   const celda = new Map(), C = 150;
-  for (let i = 0; i < xs.length; i++) { if (!adj[i].length) continue; const k = Math.floor(xs[i] / C) + ',' + Math.floor(ys[i] / C); (celda.get(k) || celda.set(k, []).get(k)).push(i); }
+  for (let i = 0; i < xs.length; i++) { if (!adj[i].length || comp[i] !== principal) continue; const k = Math.floor(xs[i] / C) + ',' + Math.floor(ys[i] / C); (celda.get(k) || celda.set(k, []).get(k)).push(i); }
   const kx = Math.cos(m.lat0 * Math.PI / 180) * 111320, ky = 110540;
   GRAFO = { m, xs, ys, adj, celda, C, kx, ky, cache: new Map() };
   return GRAFO;
@@ -134,7 +143,9 @@ function rutaCalles(a, b) {
       const pts = [];
       for (let u = nb.i; u >= 0; u = prev[u]) pts.push({ lat: g.m.lat0 - g.ys[u] / g.ky, lon: g.m.lon0 + g.xs[u] / g.kx });
       pts.reverse();
-      res = { pts: [a].concat(pts, [b]), m: dist[nb.i] + na.d + nb.d };
+      const m = dist[nb.i] + na.d + nb.d;
+      // si el camino da una vuelta absurda (calles mal conectadas en el mapa), mejor línea recta
+      if (m <= distM(a, b) * 2.6 + 400) res = { pts: [a].concat(pts, [b]), m };
     }
   }
   g.cache.set(key, res);
