@@ -24,9 +24,11 @@ Clientes, préstamos por cuotas, cobros, ruta del día con minimapa, gastos, rep
 
 - **Ruta de hoy** (pantalla principal): quién toca cobrar hoy y quién está atrasado, ordenados por el horario de
   atención de cada cliente y por cercanía. Minimapa con los puntos numerados y la ruta.
-- **Mapa sin internet**: en Ajustes se descargan una vez (con wifi) las calles de Quibdó desde OpenStreetMap.
-  Se puede cambiar a *En línea* (abre Google Maps para guiar calle por calle) o *Apagado* (solo lista).
-- **Préstamos**: monto, interés en pesos, número de cuotas, frecuencia (diario, semanal, quincenal, mensual,
+- **Mapa sin internet**: las calles de Quibdó (OpenStreetMap) vienen dentro de la app (`web/js/mapa-quibdo.js`)
+  y la ruta se marca por las calles con A* sin internet. Botón **Google Maps** para la guía calle por calle con datos.
+  En Ajustes se pueden actualizar las calles con wifi o apagar el mapa.
+- **Préstamos**: monto, interés en **% mensual** (10 % por defecto, se cambia en Ajustes y en cada préstamo)
+  o en **pesos**, número de cuotas, frecuencia (diario, semanal, quincenal, mensual,
   trimestral, semestral), mora en % de la cuota y fechas fijas sin domingos ni festivos de Colombia
   (cada fecha se puede cambiar). Opción "Ya venía del cuaderno" para pasar los préstamos que ya existían.
 - **Cobrar** en 2 toques, recibo como imagen por WhatsApp, recordatorio por WhatsApp, deshacer un cobro.
@@ -36,6 +38,8 @@ Clientes, préstamos por cuotas, cobros, ruta del día con minimapa, gastos, rep
 - **Reportes** del día, semana, mes y año, y descarga en PDF.
 - **Aviso diario** a la hora que se elija: "Hoy tienes 7 cobros por $410.000 · 2 atrasados".
 - **Copia de seguridad** a Google Drive y restauración.
+- **Clave de 4 números** para abrir la app (se guarda solo una huella; la copia de seguridad no la lleva).
+- **Actualizar la app**: revisa `tus-finanzas/version.json` en la rama `main` y descarga el APK nuevo.
 
 ## Cómo está hecha
 

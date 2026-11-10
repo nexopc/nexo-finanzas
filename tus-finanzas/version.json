@@ -1,8 +1,18 @@
 {
-  "version": "1.1.0",
-  "code": 2,
+  "version": "1.2.0",
+  "code": 3,
   "apk": "TusFinanzas.apk",
   "notas": [
+    {
+      "v": "1.2.0",
+      "fecha": "10 nov 2026",
+      "cambios": [
+        "Interés a tu manera en cada préstamo: % mensual (10 % por defecto, pon el que quieras) o $ en pesos.",
+        "El mapa de Quibdó con sus calles viene dentro de la app: la ruta se marca por las calles sin internet.",
+        "Nuevo botón Google Maps en cada cliente para que te guíe calle por calle cuando tengas datos.",
+        "Clave de 4 números para abrir la app (Ajustes → Clave de la app)."
+      ]
+    },
     {
       "v": "1.1.0",
       "fecha": "9 nov 2026",

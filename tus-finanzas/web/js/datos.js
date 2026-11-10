@@ -58,7 +58,7 @@ function dbNueva() {
     config: {
       listo: false, nombre: '', capitalInicial: 0, fechaInicio: hoy(),
       mapa: 'offline', salida: null, avisos: true, horaAviso: '07:00', reinvertir: 50, ultimaCopia: null,
-      tasaMensual: 10, ultimaRevision: 0,
+      tasaMensual: 10, ultimaRevision: 0, pin: null, pinSal: '',
     },
     clientes: [], prestamos: [], movs: [], fijos: [],
     cats: { gasto: CATS_GASTO.slice(), ingreso: CATS_INGRESO.slice() },
@@ -73,6 +73,7 @@ function migrar(d) {
   d.cats = Object.assign(dbNueva().cats, d.cats || {});
   ['clientes', 'prestamos', 'movs', 'fijos'].forEach(k => { if (!Array.isArray(d[k])) d[k] = []; });
   d.prestamos.forEach(p => { p.pagos = p.pagos || []; p.moraPct = p.moraPct ?? 0; });
+  if (d.config.mapa === 'online') d.config.mapa = 'offline'; // la opción En línea ahora es el botón Google Maps
   return d;
 }
 function cargar() {
@@ -89,6 +90,16 @@ function guardar() {
   if (Nativo.hay) Nativo.escribir('datos.json', txt);
   enviarAgenda();
 }
+
+/* ---------- clave de 4 números (se guarda solo una huella, no la clave) ---------- */
+function huellaPin(pin, sal) {
+  let h = 2166136261 >>> 0;
+  const t = 'tusfinanzas|' + sal + '|' + pin;
+  for (let r = 0; r < 500; r++) for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i) + r; h = Math.imul(h, 16777619) >>> 0; }
+  return h.toString(36);
+}
+function ponerPin(pin) { DB.config.pinSal = uid(); DB.config.pin = huellaPin(pin, DB.config.pinSal); guardar(); }
+function pinCorrecto(pin) { return !!DB.config.pin && huellaPin(pin, DB.config.pinSal) === DB.config.pin; }
 
 /* ---------- préstamos y cuotas ---------- */
 const cliente = id => DB.clientes.find(c => c.id === id);

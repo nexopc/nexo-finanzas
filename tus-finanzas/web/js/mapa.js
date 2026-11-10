@@ -72,10 +72,73 @@ function compactarMapa(raw) {
 }
 
 let MAPA = null;
+/* Primero el mapa que se actualizó desde Ajustes; si no hay, el de Quibdó que viene dentro de la app */
 function cargarMapa() {
   if (MAPA) return MAPA;
   try { const t = Nativo.leer('mapa.json'); if (t) MAPA = JSON.parse(t); } catch (e) { MAPA = null; }
+  if (!MAPA && window.MAPA_QUIBDO) MAPA = window.MAPA_QUIBDO;
   return MAPA;
+}
+const mapaIncluido = () => !!window.MAPA_QUIBDO && MAPA === window.MAPA_QUIBDO;
+
+/* ---------- ruta por las calles, sin internet (A* sobre las calles del mapa) ---------- */
+let GRAFO = null;
+function grafo() {
+  const m = cargarMapa(); if (!m) return null;
+  if (GRAFO && GRAFO.m === m) return GRAFO;
+  const id = new Map(), xs = [], ys = [], adj = [];
+  const nodo = (x, y) => { const k = x + ',' + y; let i = id.get(k); if (i === undefined) { i = xs.length; id.set(k, i); xs.push(x); ys.push(y); adj.push([]); } return i; };
+  for (const [cls, pts] of m.ways) {
+    if (cls > 2) continue;
+    let prev = -1;
+    for (let k = 0; k < pts.length; k += 2) {
+      const i = nodo(pts[k], pts[k + 1]);
+      if (prev >= 0 && prev !== i) { const d = Math.hypot(xs[i] - xs[prev], ys[i] - ys[prev]); adj[i].push(prev, d); adj[prev].push(i, d); }
+      prev = i;
+    }
+  }
+  const celda = new Map(), C = 150;
+  for (let i = 0; i < xs.length; i++) { if (!adj[i].length) continue; const k = Math.floor(xs[i] / C) + ',' + Math.floor(ys[i] / C); (celda.get(k) || celda.set(k, []).get(k)).push(i); }
+  const kx = Math.cos(m.lat0 * Math.PI / 180) * 111320, ky = 110540;
+  GRAFO = { m, xs, ys, adj, celda, C, kx, ky, cache: new Map() };
+  return GRAFO;
+}
+function nodoCercano(g, p) {
+  const x = (p.lon - g.m.lon0) * g.kx, y = (g.m.lat0 - p.lat) * g.ky;
+  const cx = Math.floor(x / g.C), cy = Math.floor(y / g.C);
+  let mejor = -1, md = Infinity;
+  for (let r = 0; r <= 4 && mejor < 0; r++) for (let a = cx - r; a <= cx + r; a++) for (let b = cy - r; b <= cy + r; b++) {
+    for (const i of (g.celda.get(a + ',' + b) || [])) { const d = Math.hypot(g.xs[i] - x, g.ys[i] - y); if (d < md) { md = d; mejor = i; } }
+  }
+  return mejor >= 0 && md < 600 ? { i: mejor, d: md } : null;
+}
+function rutaCalles(a, b) {
+  const g = grafo(); if (!g || !a || !b) return null;
+  const key = a.lat.toFixed(5) + ',' + a.lon.toFixed(5) + '>' + b.lat.toFixed(5) + ',' + b.lon.toFixed(5);
+  if (g.cache.has(key)) return g.cache.get(key);
+  const na = nodoCercano(g, a), nb = nodoCercano(g, b);
+  let res = null;
+  if (na && nb) {
+    const N = g.xs.length, dist = new Float64Array(N).fill(Infinity), prev = new Int32Array(N).fill(-1), cerrado = new Uint8Array(N);
+    const h = i => Math.hypot(g.xs[i] - g.xs[nb.i], g.ys[i] - g.ys[nb.i]);
+    const heap = [[h(na.i), na.i]]; dist[na.i] = 0;
+    const push = it => { heap.push(it); let c = heap.length - 1; while (c > 0) { const p = (c - 1) >> 1; if (heap[p][0] <= heap[c][0]) break; [heap[p], heap[c]] = [heap[c], heap[p]]; c = p; } };
+    const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let c = 0; for (;;) { const l = 2 * c + 1, r = l + 1; let m = c; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === c) break; [heap[m], heap[c]] = [heap[c], heap[m]]; c = m; } } return top; };
+    while (heap.length) {
+      const [, u] = pop(); if (cerrado[u]) continue; cerrado[u] = 1;
+      if (u === nb.i) break;
+      const ad = g.adj[u];
+      for (let k = 0; k < ad.length; k += 2) { const v = ad[k], nd = dist[u] + ad[k + 1]; if (nd < dist[v]) { dist[v] = nd; prev[v] = u; push([nd + h(v), v]); } }
+    }
+    if (dist[nb.i] < Infinity) {
+      const pts = [];
+      for (let u = nb.i; u >= 0; u = prev[u]) pts.push({ lat: g.m.lat0 - g.ys[u] / g.ky, lon: g.m.lon0 + g.xs[u] / g.kx });
+      pts.reverse();
+      res = { pts: [a].concat(pts, [b]), m: dist[nb.i] + na.d + nb.d };
+    }
+  }
+  g.cache.set(key, res);
+  return res;
 }
 async function descargarMapa(progreso) {
   if (!Nativo.hay) {

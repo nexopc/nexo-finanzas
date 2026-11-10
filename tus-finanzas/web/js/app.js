@@ -31,6 +31,7 @@ const ICO = {
   idea: '<path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V16h8v-1.3A7 7 0 0 0 12 2z"/>',
   sube: '<path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
   baja: '<path d="m3 7 6 6 4-4 8 8"/><path d="M15 17h6v-6"/>',
+  candado: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
 };
 const I = (n, cls = 'i', extra = '') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true" ${extra}>${ICO[n] || ''}</svg>`;
@@ -65,11 +66,16 @@ function cerrarTodas() { while (UI.hojas.length) cerrarHoja(); }
 function refrescarHoja(h, html) { const ag = h.querySelector('.agarre'); h.innerHTML = (ag ? '<div class="agarre"></div>' : '') + html; }
 $('#capa').addEventListener('click', cerrarHoja);
 window.tfBack = () => {
+  if (bloqueada) return false;
   if (UI.hojas.length) { cerrarHoja(); return true; }
   if (DB.config.listo && UI.tab !== 'ruta') { irA('ruta'); return true; }
   return false;
 };
-window.tfResume = () => { if (!UI.hojas.length && DB.config.listo) render(); };
+window.tfResume = () => {
+  if (DB.config.pin && !bloqueada && pausaDesde && Date.now() - pausaDesde > 60000) bloquear();
+  pausaDesde = 0;
+  if (!UI.hojas.length && DB.config.listo) render();
+};
 
 function confirmar(titulo, texto, boton = 'Sí', color = 'rojo') {
   return new Promise(res => {
@@ -160,6 +166,14 @@ function vistaRuta() {
   const { paradas, cobrados } = paradasDeHoy(d);
   const inicio = puntoDeInicio(cobrados);
   const plan = planearRuta(paradas, inicio, minutosAhora());
+  // trazado por las calles (sin internet); si no hay calle cerca, línea recta
+  const tramos = [], puntosRuta = [inicio].concat(plan.orden.map(s => s.pos)).filter(Boolean);
+  let mCalles = 0, todasPorCalle = puntosRuta.length > 1;
+  for (let k = 1; k < puntosRuta.length; k++) {
+    const r = DB.config.mapa !== 'off' ? rutaCalles(puntosRuta[k - 1], puntosRuta[k]) : null;
+    if (r) { tramos.push(...r.pts); mCalles += r.m; } else { tramos.push(puntosRuta[k - 1], puntosRuta[k]); mCalles += distM(puntosRuta[k - 1], puntosRuta[k]) * FACTOR_CALLE; todasPorCalle = false; }
+  }
+  if (puntosRuta.length > 1) plan.totalM = mCalles;
   const todos = plan.orden.concat(plan.sinPos);
   const total = paradas.reduce((s, p) => s + p.deuda, 0);
   if (!todos.some(s => s.c.id === UI.sel)) UI.sel = todos[0] ? todos[0].c.id : null;
@@ -181,7 +195,7 @@ function vistaRuta() {
   }
 
   if (modo !== 'off') {
-    const chip = hayMapa ? `${I('check', 'i', 'style="width:14px;height:14px;color:var(--verde);stroke-width:3.2"')}Sin internet`
+    const chip = hayMapa ? `${I('check', 'i', 'style="width:14px;height:14px;color:var(--verde);stroke-width:3.2"')}Sin internet${todasPorCalle ? ' · ruta por calles' : ''}`
       : `Mapa básico · <button data-acc="ajustes" style="border:0;background:none;padding:0;color:var(--azul);font-weight:800;font-size:11px">descargar calles</button>`;
     h += `<div class="mapa-box"><canvas id="mapa" aria-label="Mapa de la ruta de cobro"></canvas><div class="mapa-chip">${chip}</div>
       <div class="mapa-ctrl"><button data-acc="zoomMas" aria-label="Acercar">+</button><button data-acc="zoomMenos" aria-label="Alejar">−</button>
@@ -204,7 +218,9 @@ function vistaRuta() {
       </div>
       <div class="botones" style="margin-top:8px">
         <button class="btn morado bajo" data-acc="recordar" data-id="${sel.c.id}">${I('chat')}Recordar</button>
-        <button class="btn borde bajo" data-acc="ficha" data-id="${sel.c.id}">Ver cliente ${I('sig', 'i', 'style="width:18px;height:18px"')}</button>
+        <button class="btn borde bajo" data-acc="googleMaps" data-id="${sel.c.id}">${I('pin')}Google Maps</button>
+      </div>
+      <div style="margin-top:8px"><button class="btn borde bajo" data-acc="ficha" data-id="${sel.c.id}">Ver cliente ${I('sig', 'i', 'style="width:18px;height:18px"')}</button>
       </div></div>`;
   } else {
     h += `<div class="card vacio"><b>¡Terminaste la ruta de hoy!</b>Cobraste ${money(cobrados.reduce((s, o) => s + o.total, 0))} en ${nCob} ${nCob === 1 ? 'cobro' : 'cobros'}.</div>`;
@@ -235,7 +251,7 @@ function vistaRuta() {
     const pins = cobrados.filter(o => o.c.lat != null).map(o => ({ id: o.c.id, pos: { lat: o.c.lat, lon: o.c.lon }, color: '#0E7A45', texto: '#fff', label: '✓' }))
       .concat(plan.orden.map((s, k) => ({ id: s.c.id, pos: s.pos, color: s.atrasado ? '#C62828' : '#F5A524', texto: s.atrasado ? '#fff' : '#111827', label: String(nCob + k + 1) })));
     mapa.sel = pins.find(p => p.id === UI.sel) || null;
-    mapa.poner(pins, [inicio].concat(plan.orden.map(s => s.pos)), UI.yo || (DB.config.salida && !cobrados.length ? DB.config.salida : null));
+    mapa.poner(pins, tramos.length ? tramos : puntosRuta, UI.yo || (DB.config.salida && !cobrados.length ? DB.config.salida : null));
     if (UI.mapaVista && UI.mapaVista.dia === d) Object.assign(mapa, UI.mapaVista.v), mapa.dibujar();
     else mapa.encuadrar(pins.map(p => p.pos).concat(inicio ? [inicio] : []));
     if (!vistaPrev) guardarVistaMapa();
@@ -478,11 +494,14 @@ function hojaPrestamo(cid) {
       <div class="chips" id="p-frec">${FRECUENCIAS.map(([k, t]) => `<button type="button" data-f="${k}" class="${k === F.frec ? 'on' : ''}">${t}</button>`).join('')}</div>
       <div class="grid2"><label class="campo">Número de cuotas<input id="p-cuotas" type="number" inputmode="numeric" min="1" max="400" placeholder="Ej: 24"></label>
       <label class="campo">Mora por atraso (%)<input id="p-mora" type="number" inputmode="decimal" min="0" max="100" value="5"></label></div>
+      <span class="b" style="font-size:13px;color:#374151">¿Cómo cobras el interés?</span>
+      <div class="chips" id="p-modo" style="grid-template-columns:repeat(2,minmax(0,1fr))"><button type="button" data-m="pct" class="on">% mensual</button><button type="button" data-m="pesos">$ en pesos</button></div>
+      <div class="grid2" id="p-pct-box"><label class="campo">Interés mensual (%)<input id="p-tasa" type="number" inputmode="decimal" min="0" max="100" step="0.5" value="${DB.config.tasaMensual}" style="font-size:19px;font-weight:800;color:var(--verde)"></label>
+        <div style="display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:6px"><span class="muted peq" id="p-meses">Escribe las cuotas</span></div></div>
+      <label class="campo oculto" id="p-pesos-box">Interés en pesos<input id="p-interes" class="plata" inputmode="numeric" placeholder="$0" style="color:var(--verde)"></label>
       <div class="total-box form" style="gap:10px">
-        <div class="fila"><div><span>Gano (interés)</span><span class="peq" id="p-int-txt" style="color:var(--suave)">${pct(DB.config.tasaMensual, DB.config.tasaMensual % 1 ? 1 : 0)} % mensual · se calcula solo</span></div><b id="p-int" class="verde">$0</b></div>
+        <div class="fila"><div><span>Gano (interés)</span><span class="peq" id="p-int-txt" style="color:var(--suave)"></span></div><b id="p-int" class="verde">$0</b></div>
         <div class="grid2"><div><span>Me debe en total</span><b id="p-total">$0</b></div><div><span>Cada cuota</span><b id="p-cuota" class="verde">$0</b></div></div>
-        <button type="button" class="btn gris bajo" id="p-manual-btn" style="height:40px;font-size:13px">${I('lapiz', 'i', 'style="width:16px;height:16px"')}Cambiar el interés solo para este préstamo</button>
-        <label class="campo oculto" id="p-manual-box">Interés de este préstamo<input id="p-interes" class="plata" inputmode="numeric" placeholder="$0" style="color:var(--verde)"></label>
       </div>
       <label class="switch"><span><b style="font-size:14px">Ya venía del cuaderno</b><br><span class="muted peq">Es un préstamo que hiciste antes de usar la app</span></span><input type="checkbox" id="p-previo"></label>
       <label class="campo oculto" id="p-pagadas-box">¿Cuántas cuotas ya pagó?<input id="p-pagadas" type="number" inputmode="numeric" min="0" value="0"></label></div>
@@ -498,14 +517,16 @@ function hojaPrestamo(cid) {
       const n = () => Math.min(400, Math.max(0, parseInt(q('#p-cuotas').value, 10) || 0));
       const interes = () => {
         const monto = valorDe(h, '#p-monto');
-        if (F.manual) return { interes: valorDe(h, '#p-interes'), manual: true };
-        return interesAuto(monto, n(), F.frec);
+        if (F.modo === 'pesos') return { interes: valorDe(h, '#p-interes'), manual: true };
+        const tasa = Math.min(100, Math.max(0, parseFloat(String(q('#p-tasa').value).replace(',', '.')) || 0));
+        return interesAuto(monto, n(), F.frec, tasa);
       };
       const totales = () => {
         const monto = valorDe(h, '#p-monto'), k = n(), it = interes(), inter = it.interes;
         q('#p-int').textContent = money(inter);
-        const tasaTxt = pct(DB.config.tasaMensual, DB.config.tasaMensual % 1 ? 1 : 0) + ' % mensual';
-        q('#p-int-txt').textContent = it.manual ? 'Escrito a mano para este préstamo' : (it.meses ? tasaTxt + ' × ' + mesesTexto(it.meses) : tasaTxt + ' · se calcula solo');
+        const tasaTxt = it.manual ? '' : pct(it.tasa, it.tasa % 1 ? 1 : 0) + ' % mensual';
+        q('#p-int-txt').textContent = it.manual ? 'Valor fijo en pesos' : (it.meses ? tasaTxt + ' × ' + mesesTexto(it.meses) : tasaTxt);
+        q('#p-meses').textContent = it.meses ? '× ' + mesesTexto(it.meses) + ' (' + FREC_TXT[F.frec].toLowerCase() + ', ' + k + ' cuotas)' : 'Escribe las cuotas';
         q('#p-total').textContent = money(monto + inter);
         q('#p-cuota').textContent = k ? money(Math.floor((monto + inter) / k)) : '$0';
       };
@@ -523,12 +544,16 @@ function hojaPrestamo(cid) {
           if (!inp.value) return; F.fechas[+inp.dataset.i] = inp.value; pintarFechas(); totales();
         }));
       };
-      ['#p-monto', '#p-interes'].forEach(s => q(s).addEventListener('input', () => recalc(false)));
-      q('#p-manual-btn').onclick = () => {
-        F.manual = true; q('#p-manual-btn').classList.add('oculto'); q('#p-manual-box').classList.remove('oculto');
-        const it = interesAuto(valorDe(h, '#p-monto'), n(), F.frec);
-        q('#p-interes').value = plataAttr(it.interes); q('#p-interes').focus(); totales();
-      };
+      ['#p-monto', '#p-interes', '#p-tasa'].forEach(s => q(s).addEventListener('input', () => recalc(false)));
+      F.modo = 'pct';
+      q('#p-modo').addEventListener('click', e => {
+        const b = e.target.closest('[data-m]'); if (!b || b.dataset.m === F.modo) return;
+        const antes = interes().interes;
+        F.modo = b.dataset.m; q('#p-modo').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+        q('#p-pct-box').classList.toggle('oculto', F.modo !== 'pct'); q('#p-pesos-box').classList.toggle('oculto', F.modo !== 'pesos');
+        if (F.modo === 'pesos' && !valorDe(h, '#p-interes') && antes) q('#p-interes').value = plataAttr(antes);
+        totales();
+      });
       q('#p-cuotas').addEventListener('input', () => recalc());
       q('#p-primera').addEventListener('change', () => { F.primeraManual = true; recalc(); });
       q('#p-pagadas').addEventListener('input', pintarFechas);
@@ -786,11 +811,11 @@ function pintarAjustes(h) {
   refrescarHoja(h, `<div class="top" style="align-items:center"><button class="atras" data-acc="cerrar" aria-label="Volver">${I('atras', 'i', 'style="width:26px;height:26px"')}</button><h1 style="flex:1;font-size:21px">Ajustes</h1></div>
     <div class="card form" style="gap:10px"><div class="tit" style="margin:0">${I('pin', 'i', 'style="width:20px;height:20px"')}<h2>Mapa de la ruta</h2></div>
       <p class="muted">Puedes cambiar esto cuando quieras. Tus clientes y cobros no se pierden.</p>
-      ${radio('offline', 'Sin internet', m ? 'Calles de Quibdó guardadas en el celular · ' + tamano(JSON.stringify(m).length) : 'Mapa básico hasta que descargues las calles')}
-      ${radio('online', 'En línea', 'Mismo mapa, y "Cómo llegar" abre Google Maps para guiarte calle por calle (usa datos)')}
+      ${radio('offline', 'Mostrar mapa (sin internet)', m ? (mapaIncluido() ? 'Calles de Quibdó incluidas en la app' : 'Calles actualizadas el ' + fechaSimple(m.fecha)) + ' · la ruta se marca por las calles' : 'Mapa básico (solo puntos)')}
       ${radio('off', 'Apagado', 'La ruta se ve solo como lista')}
-      <button class="btn gris bajo" data-acc="bajarMapa">${I('nube')}${m ? 'Actualizar mapa guardado (con wifi)' : 'Descargar calles de Quibdó (una vez, con wifi)'}</button>
-      <p class="muted peq" id="mapa-estado">${m ? 'Descargado el ' + fechaSimple(m.fecha) + '. Datos © colaboradores de OpenStreetMap.' : 'Pesa unos pocos MB. Datos © colaboradores de OpenStreetMap.'}</p></div>
+      <p class="muted peq">El botón <b>Google Maps</b> de cada cliente siempre está: abre la guía calle por calle cuando tengas datos.</p>
+      <button class="btn gris bajo" data-acc="bajarMapa">${I('nube')}Actualizar calles de Quibdó (con wifi)</button>
+      <p class="muted peq" id="mapa-estado">Solo hace falta si abren calles nuevas. Datos © colaboradores de OpenStreetMap.</p></div>
     <div class="card form" style="gap:10px"><div class="tit" style="margin:0">${I('casa', 'i', 'style="width:20px;height:20px"')}<h2>Punto de salida</h2></div>
       <p class="muted">Desde dónde arranca la ruta cada mañana (tu casa).</p>
       <button class="btn gris bajo" data-acc="salida">${I('pin')}${c.salida ? 'Guardada ✓ · cambiar a donde estoy' : 'Estoy en mi casa: guardar'}</button></div>
@@ -805,6 +830,10 @@ function pintarAjustes(h) {
       <label class="campo">Tu nombre<input id="a-nombre" value="${esc(c.nombre)}"></label>
       <div class="fila"><span class="muted">Plata en mano según la app</span><b>${money(plataEnMano())}</b></div>
       <button class="btn gris bajo" data-acc="corregirMano">${I('lapiz')}Corregir plata en mano</button></div>
+    <div class="card form" style="gap:10px"><div class="tit" style="margin:0">${I('candado', 'i', 'style="width:20px;height:20px"')}<h2>Clave de la app</h2></div>
+      <p class="muted">${c.pin ? 'La app pide tu clave de 4 números al abrirla y si la dejas más de 1 minuto.' : 'Pon una clave de 4 números para que nadie más vea tus cuentas.'}</p>
+      ${c.pin ? `<div class="botones"><button class="btn gris bajo" data-acc="pin" data-id="cambiar">${I('lapiz')}Cambiar clave</button><button class="btn borde-rojo bajo" data-acc="pin" data-id="quitar">Quitar clave</button></div>`
+        : `<button class="btn azul" data-acc="pin" data-id="nueva">${I('candado')}Poner clave de 4 números</button>`}</div>
     <div class="card form" style="gap:10px"><div class="tit" style="margin:0">${I('nube', 'i', 'style="width:20px;height:20px"')}<h2>Copia de seguridad</h2></div>
       <p class="muted">${c.ultimaCopia ? 'Última copia: ' + fechaLarga(c.ultimaCopia) : 'Aún no has hecho ninguna copia'}. Guárdala en Google Drive: si pierdes o cambias el celular, la restauras y no pierdes nada.</p>
       <button class="btn morado" data-acc="copia">${I('nube')}Hacer copia ahora</button>
@@ -846,7 +875,8 @@ function hojaCorregirMano() {
 const b64utf8 = s => btoa(unescape(encodeURIComponent(s)));
 function hacerCopia() {
   DB.config.ultimaCopia = hoy();
-  const txt = JSON.stringify({ app: 'tusfinanzas', v: 1, fecha: hoy(), db: DB });
+  const copia = JSON.parse(JSON.stringify(DB)); copia.config.pin = null; copia.config.pinSal = '';
+  const txt = JSON.stringify({ app: 'tusfinanzas', v: 1, fecha: hoy(), db: copia });
   const ok = Nativo.compartir(b64utf8(txt), 'tusfinanzas-copia-' + hoy() + '.json', 'application/json', 'Copia de seguridad de Tus Finanzas (' + fechaSimple(hoy()) + ')');
   if (ok) { guardar(); toast('Elige "Drive" para guardar la copia'); } else toast('No se pudo crear la copia');
   UI.hojas.forEach(x => { if (x.querySelector('#a-reinv')) pintarAjustes(x); }); if (!UI.hojas.length) render();
@@ -863,12 +893,81 @@ function restaurarCopia() {
       if (!data || data.app !== 'tusfinanzas' || !data.db) { toast('Ese archivo no es una copia de Tus Finanzas'); return; }
       const n = (data.db.clientes || []).length;
       if (!await confirmar('¿Restaurar la copia?', `Copia del ${esc(fechaSimple(data.fecha || hoy()))} con ${n} ${n === 1 ? 'cliente' : 'clientes'}. Reemplaza lo que hay ahora en la app.`, 'Sí, restaurar', 'morado')) return;
-      DB = migrar(data.db); DB.config.listo = true; guardar(); cerrarTodas(); UI.tab = 'ruta'; render(); toast('Copia restaurada');
+      const pin = DB.config.pin, sal = DB.config.pinSal;
+      DB = migrar(data.db); DB.config.listo = true; DB.config.pin = pin; DB.config.pinSal = sal; guardar(); cerrarTodas(); UI.tab = 'ruta'; render(); toast('Copia restaurada');
     };
     rd.readAsText(f);
   };
   inp.click();
 }
+
+/* ======================================================================
+   CLAVE DE 4 NÚMEROS
+   ====================================================================== */
+const teclado = () => `<div class="teclado">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button type="button" data-n="${n}">${n}</button>`).join('')}
+  <button type="button" class="vacio" tabindex="-1" aria-hidden="true"></button><button type="button" data-n="0">0</button><button type="button" class="borrar" data-n="x" aria-label="Borrar">Borrar</button></div>`;
+const puntos = n => [0, 1, 2, 3].map(i => `<i class="${i < n ? 'lleno' : ''}"></i>`).join('');
+/* Pide 4 números en un contenedor; cuando se completan llama a listo(pin) y si devuelve false tiembla y limpia */
+function pedirPin(el, listo) {
+  let v = '';
+  const dots = el.querySelector('.pin-puntos');
+  el.querySelector('.teclado').addEventListener('click', e => {
+    const b = e.target.closest('[data-n]'); if (!b || el.dataset.espera) return;
+    if (b.dataset.n === 'x') v = v.slice(0, -1); else if (v.length < 4) v += b.dataset.n;
+    dots.innerHTML = puntos(v.length); dots.classList.remove('mal');
+    if (v.length === 4) {
+      const pin = v;
+      setTimeout(() => { if (listo(pin) === false) { dots.classList.add('mal'); v = ''; dots.innerHTML = puntos(0); } }, 120);
+    }
+  });
+}
+let bloqueada = false, fallos = 0, pausaDesde = 0;
+function bloquear() {
+  if (!DB.config.pin) return;
+  bloqueada = true;
+  const el = $('#bloqueo');
+  el.innerHTML = `<div class="logo"><span>$</span></div><h1 style="font-size:22px;font-weight:800">Tus Finanzas</h1>
+    <p class="muted" id="pin-msg" style="font-size:15px">Escribe tu clave</p><div class="pin-puntos">${puntos(0)}</div>${teclado()}
+    <button type="button" class="btn gris bajo" style="width:auto;margin-top:6px" id="pin-olvide">¿Olvidaste la clave?</button>`;
+  el.classList.remove('oculto');
+  pedirPin(el, pin => {
+    if (pinCorrecto(pin)) { fallos = 0; bloqueada = false; el.classList.add('oculto'); el.innerHTML = ''; return true; }
+    fallos++;
+    const msg = $('#pin-msg');
+    if (fallos >= 5) {
+      el.dataset.espera = '1'; let s = 30;
+      const t = setInterval(() => { msg.textContent = 'Demasiados intentos. Espera ' + s + ' s'; if (--s < 0) { clearInterval(t); delete el.dataset.espera; fallos = 3; msg.textContent = 'Escribe tu clave'; } }, 1000);
+    } else msg.innerHTML = '<b class="rojo">Clave incorrecta</b>';
+    return false;
+  });
+  $('#pin-olvide').onclick = () => {
+    $('#pin-msg').innerHTML = 'Por seguridad la clave no se puede ver. Para entrar sin ella: en el celular ve a <b>Ajustes → Aplicaciones → Tus Finanzas → Almacenamiento → Borrar datos</b> y luego restaura tu copia de seguridad de Drive (la copia no guarda la clave).';
+    $('#pin-msg').style.cssText = 'font-size:13px;text-align:center;max-width:340px;line-height:1.45';
+  };
+}
+window.tfPause = () => { pausaDesde = Date.now(); };
+function hojaPin(modo) { // modo: 'nueva' | 'cambiar' | 'quitar'
+  let paso = modo === 'nueva' ? 'nueva' : 'actual', primera = '';
+  const titulos = { actual: 'Escribe tu clave actual', nueva: 'Escribe la clave nueva (4 números)', repetir: 'Repite la clave nueva' };
+  const h = abrirHoja('');
+  const pintar = (msg = '') => {
+    refrescarHoja(h, `<div class="card" style="margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:14px">
+      <h2 style="font-size:19px;font-weight:800;text-align:center">${titulos[paso]}</h2><p class="muted" style="min-height:18px">${msg}</p>
+      <div class="pin-puntos">${puntos(0)}</div>${teclado()}<button class="btn gris bajo" data-acc="cerrar">Cancelar</button></div>`);
+    pedirPin(h, pin => {
+      if (paso === 'actual') {
+        if (!pinCorrecto(pin)) return false;
+        if (modo === 'quitar') { DB.config.pin = null; DB.config.pinSal = ''; guardar(); cerrarHoja(); toast('Clave quitada'); refrescarAjustes(); return true; }
+        paso = 'nueva'; pintar(); return true;
+      }
+      if (paso === 'nueva') { primera = pin; paso = 'repetir'; pintar(); return true; }
+      if (pin !== primera) { paso = 'nueva'; pintar('<b class="rojo">No coinciden. Empieza otra vez.</b>'); return true; }
+      ponerPin(pin); cerrarHoja(); toast('Clave guardada: la app la pedirá al abrir'); refrescarAjustes(); return true;
+    });
+  };
+  pintar();
+}
+function refrescarAjustes() { UI.hojas.forEach(x => { if (x.querySelector('#a-reinv')) pintarAjustes(x); }); }
 
 /* ======================================================================
    ACTUALIZAR LA APP (se publica en GitHub: carpeta tus-finanzas/ de la rama main)
@@ -1006,13 +1105,20 @@ const ACC = {
   comoLlegar: id => {
     const c = cliente(id);
     if (c.lat == null) { toast('Este cliente no tiene ubicación. Cuando estés en su casa toca el botón del pin para guardarla.', 4000); return; }
-    if (DB.config.mapa === 'online') {
-      Nativo.abrir(`https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lon}&travelmode=two-wheeler`);
-      return;
-    }
-    if (mapa) { mapa.centrarEn({ lat: c.lat, lon: c.lon }, 1.8); guardarVistaMapa(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
     const desde = UI.yo || DB.config.salida;
-    toast(desde ? 'Está a ' + km(distM(desde, c) * FACTOR_CALLE) + ' hacia ' + rumbo(desde, c) + (DB.config.mapa === 'offline' ? ' (en línea recta ' + km(distM(desde, c)) + ')' : '') : 'Toca el botón de ubicación del mapa para saber qué tan lejos está', 4000);
+    const r = desde ? rutaCalles(desde, c) : null;
+    if (mapa) {
+      if (r) { mapa.ruta = r.pts; mapa.encuadrar(r.pts); } else mapa.centrarEn({ lat: c.lat, lon: c.lon }, 1.8);
+      guardarVistaMapa(); window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    if (!desde) { toast('Toca el botón de ubicación del mapa para trazar el camino desde donde estás', 4000); return; }
+    toast((r ? 'Camino marcado: ' + km(r.m) + ' por calles' : 'Está a ' + km(distM(desde, c) * FACTOR_CALLE)) + ' hacia ' + rumbo(desde, c) + '. Para guía calle por calle usa Google Maps.', 4500);
+  },
+  googleMaps: id => {
+    const c = cliente(id);
+    const q = c.lat != null ? c.lat + ',' + c.lon : encodeURIComponent((c.dir || c.nombre) + ', Quibdó, Chocó');
+    if (!Nativo.enLinea()) toast('Google Maps necesita internet para guiarte', 3500);
+    Nativo.abrir(`https://www.google.com/maps/dir/?api=1&destination=${q}&travelmode=two-wheeler`);
   },
   bajarMapa: async (_, btn) => {
     btn.disabled = true;
@@ -1023,6 +1129,7 @@ const ACC = {
     else if (est) est.textContent = r.error === 'sin_internet' ? 'Sin internet. Conéctate a wifi o datos e intenta otra vez.' : 'No se pudo descargar ahora (' + r.error + '). Intenta más tarde.';
   },
   corregirMano: () => hojaCorregirMano(),
+  pin: modo => hojaPin(modo),
   actualizar: () => hojaActualizar(),
   buscarAct: async (_, btn) => {
     btn.disabled = true; const est = $('#act-estado'); if (est) est.textContent = 'Buscando…';
@@ -1039,6 +1146,7 @@ const ACC = {
 /* ---------- arranque ---------- */
 cargar();
 render();
+bloquear();
 enviarAgenda();
 // revisa actualizaciones sola (máximo cada 6 horas y solo con internet)
 setTimeout(async () => {
