@@ -6,7 +6,7 @@
   --rojo: #C62828; --rojo-t: #B91C1C; --rojo-bg: #FEF2F2;
   --ambar: #F5A524; --ambar-t: #92400E; --ambar-bg: #FEF3C7;
   --azul: #1D4ED8; --azul-bg: #EFF6FF;
-  --morado: #6D28D9; --morado-bg: #F5F3FF;
+  --morado: #6D28D9; --morado-bg: #F5F3FF; --naranja: #F97316;
   --gris: #E5E7EB; --oscuro: #111827;
   --nav: 68px;
 }
@@ -242,3 +242,23 @@ button.dia:active { transform: scale(.94); }
 .paso-btn { width: 44px; height: 44px; border-radius: 22px; border: 1px solid var(--borde); background: #fff; font-size: 24px; font-weight: 700; padding: 0; }
 .paso-btn.on { background: var(--oscuro); color: #fff; border: 0; }
 .leyenda-cal i.dia.futura { border: 1px solid #D1D5DB; }
+
+/* ---------- v1.5: colores del calendario ---------- */
+.dia.tarde { background: var(--naranja); color: var(--texto); }
+.dia.hoy { background: var(--azul); color: #fff; border: 0; }
+.barrita.tarde { background: var(--naranja); } .barrita.hoy { background: var(--azul); }
+.cuaderno { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.cuaderno .dia { height: 52px; border-radius: 12px; }
+.cuaderno .dia small { font-size: 10px; font-weight: 600; }
+.sobre { background: #fff; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 4px; }
+.sobre.azul { border-top: 6px solid var(--azul); } .sobre.verde { border-top: 6px solid var(--verde); }
+.sobre .eti { font-size: 11px; font-weight: 800; letter-spacing: .4px; }
+.sobre.azul .eti { color: var(--azul); } .sobre.verde .eti { color: var(--verde); }
+.sobre b { font-size: 23px; font-weight: 800; }
+.sobre span:last-child { font-size: 12px; color: var(--suave); }
+.cierre-fila { display: grid; grid-template-columns: minmax(0, 1fr) 82px 78px; gap: 6px; padding: 10px 0; border-bottom: 1px solid #F1F2F4; align-items: center; font-size: 13px; text-align: right; }
+.cierre-fila:last-child { border-bottom: 0; }
+.cierre-fila > span:first-child { text-align: left; display: flex; flex-direction: column; min-width: 0; }
+.cierre-fila b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cierre-fila small { font-size: 11px; color: var(--suave); }
+.cierre-fila.cab { font-size: 11px; font-weight: 800; color: #6B7280; border-bottom: 1px solid var(--linea); }

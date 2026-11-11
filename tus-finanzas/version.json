@@ -1,8 +1,19 @@
 {
-  "version": "1.4.0",
-  "code": 5,
+  "version": "1.5.0",
+  "code": 6,
   "apk": "TusFinanzas.apk",
   "notas": [
+    {
+      "v": "1.5.0",
+      "fecha": "13 nov 2026",
+      "cambios": [
+        "Nuevo: ¿Qué día le prestaste? Las cuotas diarias empiezan al día siguiente; las quincenales el 15 y el último día del mes.",
+        "Cliente del cuaderno: dices cuántas cuotas ya pagó y tocas cada día para ponerlo verde, naranja o rojo.",
+        "Calendario con colores nuevos: verde pagó, rojo no pagó, naranja pagó tarde, azul le toca hoy.",
+        "Se quitaron los abonos: cada cuota está pagada o no pagada.",
+        "Gastos se cambió por Cierre del día: lo que recogiste, separado en capital e intereses."
+      ]
+    },
     {
       "v": "1.4.0",
       "fecha": "11 nov 2026",

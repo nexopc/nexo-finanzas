@@ -60,7 +60,7 @@ function dbNueva() {
       mapa: 'offline', salida: null, avisos: true, horaAviso: '07:00', reinvertir: 50, ultimaCopia: null,
       tasaMensual: 10, ultimaRevision: 0, cobraDomingos: true, cobraFestivos: true, pin: null, pinSal: '',
     },
-    clientes: [], prestamos: [], movs: [], fijos: [],
+    clientes: [], prestamos: [], movs: [], fijos: [], cierres: {},
     cats: { gasto: CATS_GASTO.slice(), ingreso: CATS_INGRESO.slice() },
   };
 }
@@ -73,6 +73,12 @@ function migrar(d) {
   d.cats = Object.assign(dbNueva().cats, d.cats || {});
   ['clientes', 'prestamos', 'movs', 'fijos'].forEach(k => { if (!Array.isArray(d[k])) d[k] = []; });
   d.prestamos.forEach(p => { p.pagos = p.pagos || []; p.moraPct = 0; p.pagos.forEach(x => { if (!x.g) x.g = 't' + (x.ts || 0) + (x.previo ? 'p' : ''); }); });
+  d.prestamos.forEach(p => { // v1.5: ya no hay abonos; las cuotas a medias quedan sin pagar
+    const v = valores(p), suma = {};
+    p.pagos.forEach(x => { suma[x.i] = (suma[x.i] || 0) + x.valor; });
+    p.pagos = p.pagos.filter(x => suma[x.i] >= v[x.i].valor);
+  });
+  d.cierres = d.cierres || {};
   if (d.config.mapa === 'online') d.config.mapa = 'offline'; // la opción En línea ahora es el botón Google Maps
   return d;
 }
@@ -133,8 +139,10 @@ function fechaPagoCuota(p, i) { let f = ''; for (const x of p.pagos) if (x.i ===
 /* Estado de una cuota para colores: pagada (a tiempo), tarde (pagó otro día), abono, vencida, hoy, futura */
 function estadoCuota(p, i, d = hoy()) {
   const f = p.fechas[i], pag = pagadoCuota(p, i), v = valores(p)[i].valor;
-  if (pag >= v) { const fp = fechaPagoCuota(p, i); return p.pagos.some(x => x.i === i && x.previo) || fp <= f ? 'pagada' : 'tarde'; }
-  if (pag > 0) return 'abono';
+  if (pag >= v) {
+    if (p.pagos.some(x => x.i === i && x.tarde)) return 'tarde';
+    const fp = fechaPagoCuota(p, i); return p.pagos.some(x => x.i === i && x.previo) || fp <= f ? 'pagada' : 'tarde';
+  }
   if (f < d) return 'vencida';
   if (f === d) return 'hoy';
   return 'futura';
@@ -159,15 +167,23 @@ const diasCobro = () => ({ domingos: !!DB.config.cobraDomingos, festivos: !!DB.c
 const esDiaCobro = (s, o) => (o.domingos || !esDomingo(s)) && (o.festivos || !esFestivo(s));
 function siguienteCobro(s, o) { while (!esDiaCobro(s, o)) s = addDays(s, 1); return s; }
 const opcionesDe = p => ({ domingos: !!p.domingos, festivos: !!p.festivos });
+/* Quincenas: el 15 y el último día de cada mes (la siguiente después de la fecha dada) */
+function siguienteQuincena(s) {
+  const d = fromISO(s), ult = fromISO(monthEnd(s)).getDate();
+  if (d.getDate() < 15) return s.slice(0, 8) + '15';
+  if (d.getDate() < ult) return monthEnd(s);
+  return addMonths(s.slice(0, 8) + '01', 1).slice(0, 8) + '15';
+}
 function generarFechas(primera, frec, n, o = diasCobro()) {
   const f = [];
+  let ultQ = null;
   const siguienteHabil = s => siguienteCobro(s, o);
   let d = siguienteHabil(primera);
   for (let k = 0; k < n; k++) {
     if (frec === 'diario') { if (k > 0) d = siguienteHabil(addDays(d, 1)); f.push(d); continue; }
     let base;
     if (frec === 'semanal') base = addDays(primera, 7 * k);
-    else if (frec === 'quincenal') base = addDays(primera, 15 * k);
+    else if (frec === 'quincenal') { base = k ? siguienteQuincena(ultQ) : primera; ultQ = base; }
     else if (frec === 'mensual') base = addMonths(primera, k);
     else if (frec === 'trimestral') base = addMonths(primera, 3 * k);
     else base = addMonths(primera, 6 * k);
@@ -190,26 +206,21 @@ function interesAuto(monto, cuotas, frec, tasa = DB.config.tasaMensual) {
 }
 /* Primera cuota sugerida: un periodo después de hoy */
 function primeraSugerida(frec, d = hoy(), o = diasCobro()) {
-  return siguienteCobro(({ diario: addDays(d, 1), semanal: addDays(d, 7), quincenal: addDays(d, 15), mensual: addMonths(d, 1), trimestral: addMonths(d, 3), semestral: addMonths(d, 6) })[frec] || addDays(d, 1), o);
+  return siguienteCobro(({ diario: addDays(d, 1), semanal: addDays(d, 7), quincenal: siguienteQuincena(d), mensual: addMonths(d, 1), trimestral: addMonths(d, 3), semestral: addMonths(d, 6) })[frec] || addDays(d, 1), o);
 }
 const mesesTexto = m => (Number.isInteger(m) ? m : String(m).replace('.', ',')) + (m === 1 ? ' mes' : ' meses');
 
-/* Registra lo que pagó el cliente: reparte "monto" entre las cuotas elegidas (en orden);
-   si sobra, sigue con las siguientes cuotas pendientes; si falta, la última queda como abono. */
-function registrarPago(p, indices, monto, fecha = hoy()) {
+/* Registra el pago de las cuotas elegidas (siempre completas: ya no hay abonos) */
+function registrarPago(p, indices, fecha = hoy()) {
   const g = uid(), ts = Date.now(), regs = [];
-  const orden = indices.slice().sort((a, b) => a - b).concat(cuotasPendientes(p).filter(i => !indices.includes(i)));
-  let resto = monto;
-  for (const i of orden) {
-    if (resto <= 0) break;
+  for (const i of indices.slice().sort((a, b) => a - b)) {
     const falta = faltaCuota(p, i); if (!falta) continue;
-    const v = Math.min(falta, resto); resto -= v;
-    const r = { i, fecha, valor: v, g, ts }; p.pagos.push(r); regs.push(r);
+    const r = { i, fecha, valor: falta, g, ts }; p.pagos.push(r); regs.push(r);
   }
   guardar();
-  return { g, regs, total: monto - resto, sobra: resto };
+  return { g, regs, total: regs.reduce((a, r) => a + r.valor, 0) };
 }
-function pagarCuota(p, i, fecha = hoy()) { const f = faltaCuota(p, i); if (!f) return null; return registrarPago(p, [i], f, fecha); }
+function pagarCuota(p, i, fecha = hoy()) { return faltaCuota(p, i) ? registrarPago(p, [i], fecha) : null; }
 function desmarcarCuota(p, i) { p.pagos = p.pagos.filter(x => x.i !== i); guardar(); }
 function cambiarFechaPago(p, i, fecha) { p.pagos.forEach(x => { if (x.i === i) x.fecha = fecha; }); guardar(); }
 function grupos(p) { // pagos agrupados por cada vez que se registró un pago (sin los del cuaderno)
@@ -289,11 +300,34 @@ function interesesMes(d = hoy()) {
 function fijoPagado(f, d = hoy()) { return DB.movs.some(x => x.fijoId === f.id && x.fecha >= monthStart(d) && x.fecha <= monthEnd(d)); }
 function fijosPendientes(d = hoy()) { return DB.fijos.filter(f => !fijoPagado(f, d)).reduce((s, f) => s + f.valor, 0); }
 function consejo(d = hoy()) {
-  const real = interesesMes(d).real, F = fijosPendientes(d);
+  const real = interesesMes(d).real, F = 0; // la sección de gastos se quitó en la versión 1.5
   const reinv = Math.round(real * DB.config.reinvertir / 100);
   const libre = real - reinv - F;
   const diasRest = diffDays(monthEnd(d), d) + 1;
   return { real, reinv, F, libre, porDia: libre > 0 ? Math.floor(libre / diasRest / 100) * 100 : 0, diasRest };
+}
+
+/* ---------- cierre del día: lo que se recogió, separado en capital e intereses ---------- */
+function cierreDelDia(d) {
+  const filas = [];
+  let capital = 0, interes = 0;
+  for (const c of DB.clientes) {
+    let cap = 0, int = 0, n = 0;
+    for (const p of prestamosDe(c.id)) {
+      const v = valores(p);
+      for (const x of p.pagos) if (!x.previo && x.fecha === d) { const parte = x.valor / v[x.i].valor; cap += v[x.i].capital * parte; int += v[x.i].interes * parte; n++; }
+    }
+    if (n) { cap = Math.round(cap); int = Math.round(int); filas.push({ c, n, cap, int, total: cap + int }); capital += cap; interes += int; }
+  }
+  // cuotas de ese día que no se pagaron ese día
+  let faltaN = 0, faltaV = 0;
+  for (const p of DB.prestamos) p.fechas.forEach((f, i) => {
+    if (f !== d) return;
+    const pagadaEseDia = pagada(p, i) && p.pagos.filter(x => x.i === i).every(x => x.previo ? !x.tarde : x.fecha <= d);
+    if (!pagadaEseDia) { faltaN++; faltaV += valores(p)[i].valor; }
+  });
+  filas.sort((a, b) => b.total - a.total);
+  return { filas, capital, interes, total: capital + interes, faltaN, faltaV, cerrado: DB.cierres[d] || null };
 }
 
 /* ---------- ruta del día ---------- */
