@@ -489,7 +489,7 @@ function hojaCuota(p, i) {
         registrarPago(p, [i], m); listo('Abono de ' + money(m) + ' guardado');
       };
       if (q('#q-fpago')) q('#q-fpago').onchange = ev => { if (!ev.target.value) return; cambiarFechaPago(p, i, ev.target.value); listo('Pago de la cuota ' + (i + 1) + ': ' + fechaCorta(ev.target.value)); };
-      q('#q-fcobro').onchange = ev => { if (!ev.target.value) return; p.fechas[i] = ev.target.value; guardar(); listo('Cuota ' + (i + 1) + ' ahora se cobra el ' + fechaCorta(ev.target.value).toLowerCase() + (esHabil(ev.target.value) ? '' : ' (no es día hábil)')); };
+      q('#q-fcobro').onchange = ev => { if (!ev.target.value) return; p.fechas[i] = ev.target.value; guardar(); listo('Cuota ' + (i + 1) + ' ahora se cobra el ' + fechaCorta(ev.target.value).toLowerCase() + (esDiaCobro(ev.target.value, opcionesDe(p)) ? '' : (esDomingo(ev.target.value) ? ' (es domingo)' : ' (es festivo)'))); };
       if (q('#q-desmarcar')) q('#q-desmarcar').onclick = async () => {
         if (!await confirmar('¿Desmarcar el pago de la cuota ' + (i + 1) + '?', 'Se borra lo que pagó en esta cuota (' + money(pag) + ') y vuelve a quedar sin pagar.', 'Sí, desmarcar')) return;
         desmarcarCuota(p, i); listo('Cuota ' + (i + 1) + ' sin pagar');
@@ -551,7 +551,7 @@ function hojaEditarCliente(cid) {
 function hojaPrestamo(cid) {
   const existente = cid ? cliente(cid) : null;
   if (existente && prestamoActivo(cid)) { toast('Este cliente ya tiene un préstamo activo'); return; }
-  const F = { frec: 'diario', primera: primeraSugerida('diario'), fechas: [], previo: false, gps: {}, modo: DB.config.modoCalculo || 'cuota' };
+  const F = { frec: 'diario', primera: primeraSugerida('diario'), fechas: [], previo: false, gps: {}, modo: DB.config.modoCalculo || 'cuota', dias: diasCobro() };
   const tasaIni = DB.config.tasaMensual;
   const html = `<div class="top" style="align-items:center"><button class="atras" data-acc="cerrar" aria-label="Volver">${I('atras', 'i', 'style="width:26px;height:26px"')}</button><h1 style="flex:1;font-size:20px">Nuevo préstamo</h1></div>
     <div class="card form"><div class="tit" style="margin:0"><span class="paso">1</span><h2>¿A quién le prestas?</h2></div>
@@ -575,8 +575,10 @@ function hojaPrestamo(cid) {
       <label class="switch"><span><b style="font-size:14px">Ya venía del cuaderno</b><br><span class="muted peq">Es un préstamo que hiciste antes de usar la app</span></span><input type="checkbox" id="p-previo"></label>
       <label class="campo oculto" id="p-pagadas-box">¿Cuántas cuotas ya pagó?<input id="p-pagadas" type="number" inputmode="numeric" min="0" value="0"></label></div>
     <div class="card form"><div class="tit" style="margin:0"><span class="paso">3</span><h2>Fechas de pago</h2></div>
+      <label class="switch"><span><b style="font-size:14px">Cobrar los domingos</b></span><input type="checkbox" id="p-dom" ${F.dias.domingos ? 'checked' : ''}></label>
+      <label class="switch"><span><b style="font-size:14px">Cobrar los festivos</b></span><input type="checkbox" id="p-fest" ${F.dias.festivos ? 'checked' : ''}></label>
       <label class="campo" id="p-primera-l">Primera cuota<input id="p-primera" type="date" value="${F.primera}"></label>
-      <p class="muted" style="line-height:1.4">Sin domingos ni festivos. Puedes cambiar cualquier fecha tocándola.</p>
+      <p class="muted" style="line-height:1.4" id="p-dias-txt"></p>
       <div class="fechas-lista" id="p-fechas"><p class="muted">Escribe el número de cuotas para ver las fechas.</p></div></div>
     <div style="margin:14px 16px 24px" class="form"><p class="error" id="p-err"></p><button class="btn azul alto" id="p-ok">${I('mas', 'i', 'style="stroke-width:2.8"')}Crear préstamo</button></div>`;
   abrirHoja(html, {
@@ -606,9 +608,19 @@ function hojaPrestamo(cid) {
         q('#p-total').textContent = money(r.total);
       };
       const recalc = (regen = true) => {
-        if (regen) { F.fechas = n() ? generarFechas(q('#p-primera').value || F.primera, F.frec, n()) : []; pintarFechas(); }
+        if (regen) { F.fechas = n() ? generarFechas(q('#p-primera').value || F.primera, F.frec, n(), F.dias) : []; pintarFechas(); }
         totales();
       };
+      const textoDias = () => {
+        const { domingos: d, festivos: f } = F.dias;
+        q('#p-dias-txt').textContent = (d && f ? 'Cobra todos los días' : d ? 'Sin festivos' : f ? 'Sin domingos' : 'Sin domingos ni festivos') + '. Puedes cambiar cualquier fecha tocándola.';
+      };
+      textoDias();
+      ['#p-dom', '#p-fest'].forEach(id => q(id).addEventListener('change', () => {
+        F.dias = { domingos: q('#p-dom').checked, festivos: q('#p-fest').checked };
+        if (!F.primeraManual && !F.previo) q('#p-primera').value = primeraSugerida(F.frec, hoy(), F.dias);
+        textoDias(); recalc();
+      }));
       const pintarFechas = () => {
         const box = q('#p-fechas'), pag = F.previo ? (parseInt(q('#p-pagadas').value, 10) || 0) : 0;
         if (!F.fechas.length) { box.innerHTML = '<p class="muted">Escribe el número de cuotas para ver las fechas.</p>'; return; }
@@ -636,7 +648,7 @@ function hojaPrestamo(cid) {
       q('#p-frec').addEventListener('click', e => {
         const b = e.target.closest('[data-f]'); if (!b) return;
         F.frec = b.dataset.f; q('#p-frec').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
-        if (!F.primeraManual && !F.previo) q('#p-primera').value = primeraSugerida(F.frec);
+        if (!F.primeraManual && !F.previo) q('#p-primera').value = primeraSugerida(F.frec, hoy(), F.dias);
         recalc();
       });
       q('#p-previo').addEventListener('change', e => {
@@ -661,7 +673,7 @@ function hojaPrestamo(cid) {
         }
         let c = existente;
         if (!c) { c = leerCliente(h, { id: uid(), creado: hoy() }); Object.assign(c, F.gps); DB.clientes.push(c); }
-        const p = { id: uid(), clienteId: c.id, monto: r.monto, interes: r.interes, cuotas: k, frecuencia: F.frec, moraPct: 0, fechas: F.fechas.slice().sort(), creado: hoy(), previo: F.previo, pagos: [], modo: F.modo, tasa: r.tasa, meses: r.meses };
+        const p = { id: uid(), clienteId: c.id, monto: r.monto, interes: r.interes, cuotas: k, frecuencia: F.frec, moraPct: 0, fechas: F.fechas.slice().sort(), creado: hoy(), previo: F.previo, pagos: [], modo: F.modo, tasa: r.tasa, meses: r.meses, domingos: F.dias.domingos, festivos: F.dias.festivos };
         const v = valores(p);
         for (let i = 0; i < pag; i++) p.pagos.push({ i, fecha: p.fechas[i] < hoy() ? p.fechas[i] : hoy(), valor: v[i].valor, previo: true, g: 'previo', ts: 0 });
         DB.config.modoCalculo = F.modo;
@@ -930,6 +942,10 @@ function pintarAjustes(h) {
     <div class="card form" style="gap:10px"><div class="tit" style="margin:0">${I('reloj', 'i', 'style="width:20px;height:20px"')}<h2>Aviso diario</h2></div>
       <label class="switch"><span><b style="font-size:14px">Avisarme los cobros del día</b><br><span class="muted peq">"Hoy tienes 7 cobros · 2 atrasados"</span></span><input type="checkbox" id="a-avisos" ${c.avisos ? 'checked' : ''}></label>
       <label class="campo">Hora del aviso<input type="time" id="a-hora" value="${c.horaAviso || '07:00'}"></label></div>
+    <div class="card form" style="gap:10px"><div class="tit" style="margin:0">${I('cal', 'i', 'style="width:20px;height:20px"')}<h2>Días de cobro</h2></div>
+      <p class="muted">Así vienen marcados los préstamos nuevos. En cada préstamo lo puedes cambiar.</p>
+      <label class="switch"><span><b style="font-size:14px">Cobrar los domingos</b></span><input type="checkbox" id="a-dom" ${c.cobraDomingos ? 'checked' : ''}></label>
+      <label class="switch"><span><b style="font-size:14px">Cobrar los festivos</b></span><input type="checkbox" id="a-fest" ${c.cobraFestivos ? 'checked' : ''}></label></div>
     <div class="card form" style="gap:10px"><div class="tit" style="margin:0">${I('sube', 'i', 'style="width:20px;height:20px"')}<h2>Interés de los préstamos</h2></div>
       <label class="campo">Interés mensual (%)<input type="number" id="a-tasa" min="0" max="100" step="0.5" inputmode="decimal" value="${c.tasaMensual}"></label>
       <p class="muted" id="a-tasa-ej">Ejemplo: ${money(1000000)} a 1 mes = ${money(Math.round(1000000 * c.tasaMensual / 100))} de interés. Solo cambia los préstamos nuevos; los que ya tienes siguen igual.</p></div>
@@ -954,6 +970,8 @@ function pintarAjustes(h) {
   h.querySelectorAll('input[name=mapa]').forEach(r => r.addEventListener('change', () => { c.mapa = r.value; guardar(); pintarAjustes(h); render(); }));
   h.querySelector('#a-avisos').addEventListener('change', e => { c.avisos = e.target.checked; guardar(); if (c.avisos) Nativo.pedirAvisos(); });
   h.querySelector('#a-hora').addEventListener('change', e => { c.horaAviso = e.target.value || '07:00'; guardar(); toast('Aviso a las ' + horaTexto(c.horaAviso)); });
+  h.querySelector('#a-dom').addEventListener('change', e => { c.cobraDomingos = e.target.checked; guardar(); toast(c.cobraDomingos ? 'Los préstamos nuevos cobran los domingos' : 'Los préstamos nuevos no cobran los domingos'); });
+  h.querySelector('#a-fest').addEventListener('change', e => { c.cobraFestivos = e.target.checked; guardar(); toast(c.cobraFestivos ? 'Los préstamos nuevos cobran los festivos' : 'Los préstamos nuevos no cobran los festivos'); });
   h.querySelector('#a-tasa').addEventListener('change', e => {
     const t = Math.min(100, Math.max(0, parseFloat(String(e.target.value).replace(',', '.')) || 0));
     c.tasaMensual = Math.round(t * 10) / 10; e.target.value = c.tasaMensual; guardar();
@@ -1080,15 +1098,24 @@ function refrescarAjustes() { UI.hojas.forEach(x => { if (x.querySelector('#a-re
 /* ======================================================================
    ACTUALIZAR LA APP (se publica en GitHub: carpeta tus-finanzas/ de la rama main)
    ====================================================================== */
-const URL_ACT = 'https://raw.githubusercontent.com/nexopc/nexo-finanzas/main/tus-finanzas/';
+const URLS_ACT = ['https://raw.githubusercontent.com/nexopc/nexo-finanzas/main/tus-finanzas/',
+  'https://raw.githubusercontent.com/nexopc/nexo-finanzas/claude/wonderful-tesla-5lvy1c/tus-finanzas/'];
+let URL_ACT = URLS_ACT[0];
+const errorAct = e => e === 'sin_internet' ? 'Sin internet. Conéctate a wifi o datos e intenta otra vez.'
+  : /^http_404/.test(e) ? 'No se encontró la versión publicada. Avísale a quien te instaló la app.'
+  : 'No se pudo revisar ahora (' + e + '). Intenta más tarde.';
 function avisoActualizacion() {
   if (!UI.nueva) return '';
   return `<div class="aviso azul">${I('nube', 'i', 'style="transform:rotate(180deg)"')}<span><b>Hay una versión nueva (${esc(UI.nueva.version)})</b><br>Tus datos no se borran.</span><button class="btn azul bajo" style="width:auto" data-acc="actualizar">Actualizar</button></div>`;
 }
 async function buscarActualizacion() {
-  const r = await Nativo.texto(URL_ACT + 'version.json?t=' + Date.now());
-  if (!r.ok) return { ok: false, error: r.error };
-  let v; try { v = JSON.parse(r.text); } catch (e) { return { ok: false, error: 'archivo' }; }
+  let r = null, v = null;
+  for (const base of URLS_ACT) {
+    r = await Nativo.texto(base + 'version.json?t=' + Date.now());
+    if (r.ok) { try { v = JSON.parse(r.text); URL_ACT = base; break; } catch (e) { r = { ok: false, error: 'archivo' }; } }
+    if (r.error === 'sin_internet') break; // si no hay internet no tiene caso probar la otra
+  }
+  if (!v) return { ok: false, error: r ? r.error : 'sin_internet' };
   DB.config.ultimaRevision = Date.now();
   try { localStorage.setItem('tf_db', JSON.stringify(DB)); } catch (e) { }
   UI.nueva = (v && v.code > Nativo.versionCode()) ? v : null;
@@ -1113,7 +1140,7 @@ function hojaActualizar() {
         if (r.ok) { cerrarHoja(); return; }
         h.querySelector('#act-err').innerHTML = r.error === 'permiso_instalar'
           ? 'Android pide permiso: activa <b>"Permitir de esta fuente"</b> para Tus Finanzas, vuelve aquí y toca otra vez <b>Actualizar ahora</b>.'
-          : 'No se pudo descargar. Revisa el internet e intenta otra vez.';
+          : errorAct(r.error);
       };
     }
   });
@@ -1242,7 +1269,7 @@ const ACC = {
     btn.disabled = true; const est = $('#act-estado'); if (est) est.textContent = 'Buscando…';
     const r = await buscarActualizacion();
     btn.disabled = false;
-    if (!r.ok) { if (est) est.textContent = r.error === 'sin_internet' ? 'Sin internet. Conéctate e intenta otra vez.' : 'No se pudo revisar ahora (' + r.error + '). Intenta más tarde.'; return; }
+    if (!r.ok) { if (est) est.textContent = errorAct(r.error); return; }
     UI.hojas.forEach(x => { if (x.querySelector('#a-reinv')) pintarAjustes(x); });
     if (r.nueva) hojaActualizar(); else { const e2 = $('#act-estado'); if (e2) e2.textContent = 'Ya tienes la versión más nueva.'; }
   },

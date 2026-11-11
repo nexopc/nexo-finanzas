@@ -177,7 +177,8 @@ public class Bridge {
                     o.put("text", t);
                     callback(cb, o.toString());
                 } catch (Exception e) {
-                    callback(cb, "{\"ok\":false,\"error\":\"sin_internet\"}");
+                    String m = e.getMessage() != null && e.getMessage().startsWith("http_") ? e.getMessage() : "sin_internet";
+                    callback(cb, "{\"ok\":false,\"error\":\"" + m + "\"}");
                 }
             }
         }).start();
@@ -218,7 +219,8 @@ public class Bridge {
                         }
                     });
                 } catch (Exception e) {
-                    callback(cb, "{\"ok\":false,\"error\":\"sin_internet\"}");
+                    String m = e.getMessage() != null && (e.getMessage().startsWith("http_") || e.getMessage().equals("archivo_invalido")) ? e.getMessage() : "sin_internet";
+                    callback(cb, "{\"ok\":false,\"error\":\"" + m + "\"}");
                 }
             }
         }).start();

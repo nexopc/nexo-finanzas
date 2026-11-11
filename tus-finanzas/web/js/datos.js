@@ -58,7 +58,7 @@ function dbNueva() {
     config: {
       listo: false, nombre: '', capitalInicial: 0, fechaInicio: hoy(),
       mapa: 'offline', salida: null, avisos: true, horaAviso: '07:00', reinvertir: 50, ultimaCopia: null,
-      tasaMensual: 10, ultimaRevision: 0, pin: null, pinSal: '',
+      tasaMensual: 10, ultimaRevision: 0, cobraDomingos: true, cobraFestivos: true, pin: null, pinSal: '',
     },
     clientes: [], prestamos: [], movs: [], fijos: [],
     cats: { gasto: CATS_GASTO.slice(), ingreso: CATS_INGRESO.slice() },
@@ -154,9 +154,14 @@ function estadoCliente(c) {
   return Object.assign({ p }, estadoPrestamo(p));
 }
 
-/* Fechas de pago: sin domingos ni festivos */
-function generarFechas(primera, frec, n) {
+/* Días de cobro: se puede escoger si se cobra los domingos y los festivos */
+const diasCobro = () => ({ domingos: !!DB.config.cobraDomingos, festivos: !!DB.config.cobraFestivos });
+const esDiaCobro = (s, o) => (o.domingos || !esDomingo(s)) && (o.festivos || !esFestivo(s));
+function siguienteCobro(s, o) { while (!esDiaCobro(s, o)) s = addDays(s, 1); return s; }
+const opcionesDe = p => ({ domingos: !!p.domingos, festivos: !!p.festivos });
+function generarFechas(primera, frec, n, o = diasCobro()) {
   const f = [];
+  const siguienteHabil = s => siguienteCobro(s, o);
   let d = siguienteHabil(primera);
   for (let k = 0; k < n; k++) {
     if (frec === 'diario') { if (k > 0) d = siguienteHabil(addDays(d, 1)); f.push(d); continue; }
@@ -184,8 +189,8 @@ function interesAuto(monto, cuotas, frec, tasa = DB.config.tasaMensual) {
   return { meses, interes: Math.round(monto * tasa / 100 * meses / 100) * 100, tasa };
 }
 /* Primera cuota sugerida: un periodo después de hoy */
-function primeraSugerida(frec, d = hoy()) {
-  return siguienteHabil(({ diario: addDays(d, 1), semanal: addDays(d, 7), quincenal: addDays(d, 15), mensual: addMonths(d, 1), trimestral: addMonths(d, 3), semestral: addMonths(d, 6) })[frec] || addDays(d, 1));
+function primeraSugerida(frec, d = hoy(), o = diasCobro()) {
+  return siguienteCobro(({ diario: addDays(d, 1), semanal: addDays(d, 7), quincenal: addDays(d, 15), mensual: addMonths(d, 1), trimestral: addMonths(d, 3), semestral: addMonths(d, 6) })[frec] || addDays(d, 1), o);
 }
 const mesesTexto = m => (Number.isInteger(m) ? m : String(m).replace('.', ',')) + (m === 1 ? ' mes' : ' meses');
 

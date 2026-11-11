@@ -1,8 +1,17 @@
 {
-  "version": "1.3.0",
-  "code": 4,
+  "version": "1.4.0",
+  "code": 5,
   "apk": "TusFinanzas.apk",
   "notas": [
+    {
+      "v": "1.4.0",
+      "fecha": "11 nov 2026",
+      "cambios": [
+        "Puedes cobrar también los domingos y los festivos: se escoge en cada préstamo y en Ajustes → Días de cobro.",
+        "Arreglado: Buscar actualización decía 'Sin internet' aunque hubiera internet.",
+        "Los avisos ahora dicen la causa real cuando no se puede actualizar."
+      ]
+    },
     {
       "v": "1.3.0",
       "fecha": "11 nov 2026",
