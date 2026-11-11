@@ -1,8 +1,19 @@
 {
-  "version": "1.2.0",
-  "code": 3,
+  "version": "1.3.0",
+  "code": 4,
   "apk": "TusFinanzas.apk",
   "notas": [
+    {
+      "v": "1.3.0",
+      "fecha": "11 nov 2026",
+      "cambios": [
+        "Nuevo préstamo: calcula por valor de cuota o por porcentaje; lo demás se llena solo.",
+        "Las cuotas del cliente se ven en un calendario con colores: verde a tiempo, naranja pagó otro día, rojo no pagó, abono a medias.",
+        "Registrar pago: eliges cuántas cuotas te pagó (o cuáles) y cuánto recibiste; si es menos, queda como abono.",
+        "Toca una cuota para cambiar el día en que pagó, mover la fecha de cobro o desmarcar el pago.",
+        "Se quitaron el horario de atención y la mora: la ruta va primero a los atrasados y luego por cercanía."
+      ]
+    },
     {
       "v": "1.2.0",
       "fecha": "10 nov 2026",

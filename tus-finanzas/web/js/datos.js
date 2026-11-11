@@ -72,7 +72,7 @@ function migrar(d) {
   d.config = Object.assign(dbNueva().config, d.config || {});
   d.cats = Object.assign(dbNueva().cats, d.cats || {});
   ['clientes', 'prestamos', 'movs', 'fijos'].forEach(k => { if (!Array.isArray(d[k])) d[k] = []; });
-  d.prestamos.forEach(p => { p.pagos = p.pagos || []; p.moraPct = p.moraPct ?? 0; });
+  d.prestamos.forEach(p => { p.pagos = p.pagos || []; p.moraPct = 0; p.pagos.forEach(x => { if (!x.g) x.g = 't' + (x.ts || 0) + (x.previo ? 'p' : ''); }); });
   if (d.config.mapa === 'online') d.config.mapa = 'offline'; // la opción En línea ahora es el botón Google Maps
   return d;
 }
@@ -115,13 +115,30 @@ function valores(p) { // valor, capital e interés de cada cuota (en pesos enter
   Object.defineProperty(p, '_vk', { value: p.monto + '|' + p.interes + '|' + p.cuotas, writable: true, enumerable: false, configurable: true });
   return v;
 }
-const pagada = (p, i) => p.pagos.some(x => x.i === i);
-const prestamoPagado = p => p.pagos.length >= p.cuotas;
+/* Pagos: cada registro es { i: cuota, fecha, valor (lo que se abonó a esa cuota), g: grupo del pago, ts }.
+   Una cuota está pagada cuando la suma de sus registros llega a su valor; si llega a menos, es un abono. */
+function pagadoCuota(p, i) { let s = 0; for (const x of p.pagos) if (x.i === i) s += x.valor; return s; }
+const pagada = (p, i) => pagadoCuota(p, i) >= valores(p)[i].valor;
+const faltaCuota = (p, i) => Math.max(0, valores(p)[i].valor - pagadoCuota(p, i));
+const prestamoPagado = p => { for (let i = 0; i < p.cuotas; i++) if (!pagada(p, i)) return false; return true; };
 function proximaCuota(p) { for (let i = 0; i < p.cuotas; i++) if (!pagada(p, i)) return i; return -1; }
-function cuotasPendientesHasta(p, d) { const r = []; for (let i = 0; i < p.cuotas; i++) if (!pagada(p, i) && p.fechas[i] <= d) r.push(i); return r; }
-function moraDe(p, i, fechaPago) { return fechaPago > p.fechas[i] && p.moraPct > 0 ? Math.round(valores(p)[i].valor * p.moraPct / 100) : 0; }
-function saldo(p) { const v = valores(p); let s = 0; for (let i = 0; i < p.cuotas; i++) if (!pagada(p, i)) s += v[i].valor; return s; }
-function pagadoTotal(p) { const v = valores(p); return p.pagos.reduce((s, x) => s + v[x.i].valor, 0); }
+function cuotasPendientes(p) { const r = []; for (let i = 0; i < p.cuotas; i++) if (!pagada(p, i)) r.push(i); return r; }
+function cuotasPendientesHasta(p, d) { return cuotasPendientes(p).filter(i => p.fechas[i] <= d); }
+function moraDe() { return 0; } // la mora se quitó en la versión 1.3.0
+function saldo(p) { let s = 0; for (let i = 0; i < p.cuotas; i++) s += faltaCuota(p, i); return s; }
+function pagadoTotal(p) { return p.pagos.reduce((s, x) => s + x.valor, 0); }
+function cuotasCompletas(p) { let n = 0; for (let i = 0; i < p.cuotas; i++) if (pagada(p, i)) n++; return n; }
+/* Fecha en que se completó una cuota (o del último abono) */
+function fechaPagoCuota(p, i) { let f = ''; for (const x of p.pagos) if (x.i === i && x.fecha > f) f = x.fecha; return f; }
+/* Estado de una cuota para colores: pagada (a tiempo), tarde (pagó otro día), abono, vencida, hoy, futura */
+function estadoCuota(p, i, d = hoy()) {
+  const f = p.fechas[i], pag = pagadoCuota(p, i), v = valores(p)[i].valor;
+  if (pag >= v) { const fp = fechaPagoCuota(p, i); return p.pagos.some(x => x.i === i && x.previo) || fp <= f ? 'pagada' : 'tarde'; }
+  if (pag > 0) return 'abono';
+  if (f < d) return 'vencida';
+  if (f === d) return 'hoy';
+  return 'futura';
+}
 
 function estadoPrestamo(p, d = hoy()) {
   if (prestamoPagado(p)) return { tipo: 'pagado' };
@@ -172,19 +189,33 @@ function primeraSugerida(frec, d = hoy()) {
 }
 const mesesTexto = m => (Number.isInteger(m) ? m : String(m).replace('.', ',')) + (m === 1 ? ' mes' : ' meses');
 
-function registrarCobro(p, conMora = true, fecha = hoy()) {
-  const i = proximaCuota(p); if (i < 0) return null;
-  const mora = conMora ? moraDe(p, i, fecha) : 0;
-  const pago = { i, fecha, valor: valores(p)[i].valor, mora, ts: Date.now() };
-  p.pagos.push(pago);
+/* Registra lo que pagó el cliente: reparte "monto" entre las cuotas elegidas (en orden);
+   si sobra, sigue con las siguientes cuotas pendientes; si falta, la última queda como abono. */
+function registrarPago(p, indices, monto, fecha = hoy()) {
+  const g = uid(), ts = Date.now(), regs = [];
+  const orden = indices.slice().sort((a, b) => a - b).concat(cuotasPendientes(p).filter(i => !indices.includes(i)));
+  let resto = monto;
+  for (const i of orden) {
+    if (resto <= 0) break;
+    const falta = faltaCuota(p, i); if (!falta) continue;
+    const v = Math.min(falta, resto); resto -= v;
+    const r = { i, fecha, valor: v, g, ts }; p.pagos.push(r); regs.push(r);
+  }
   guardar();
-  return pago;
+  return { g, regs, total: monto - resto, sobra: resto };
+}
+function pagarCuota(p, i, fecha = hoy()) { const f = faltaCuota(p, i); if (!f) return null; return registrarPago(p, [i], f, fecha); }
+function desmarcarCuota(p, i) { p.pagos = p.pagos.filter(x => x.i !== i); guardar(); }
+function cambiarFechaPago(p, i, fecha) { p.pagos.forEach(x => { if (x.i === i) x.fecha = fecha; }); guardar(); }
+function grupos(p) { // pagos agrupados por cada vez que se registró un pago (sin los del cuaderno)
+  const m = new Map();
+  for (const x of p.pagos) { if (x.previo) continue; const k = x.g || ('t' + x.ts); if (!m.has(k)) m.set(k, []); m.get(k).push(x); }
+  return [...m.values()].sort((a, b) => (a[0].ts || 0) - (b[0].ts || 0));
 }
 function deshacerCobro(p) {
-  const reales = p.pagos.filter(x => !x.previo);
-  if (!reales.length) return false;
-  const ult = reales.reduce((a, b) => (b.ts || 0) > (a.ts || 0) ? b : a);
-  p.pagos.splice(p.pagos.indexOf(ult), 1);
+  const gs = grupos(p); if (!gs.length) return false;
+  const ult = gs[gs.length - 1];
+  p.pagos = p.pagos.filter(x => !ult.includes(x));
   guardar();
   return true;
 }
@@ -206,14 +237,14 @@ function enLaCalle(d = hoy()) {
     if (!p.previo && p.creado > d) continue;
     const v = valores(p);
     let rec = 0;
-    for (const x of p.pagos) if (x.previo || x.fecha <= d) rec += v[x.i].capital;
-    s += Math.max(0, p.monto - rec);
+    for (const x of p.pagos) if (x.previo || x.fecha <= d) rec += x.valor * v[x.i].capital / v[x.i].valor;
+    s += Math.max(0, Math.round(p.monto - rec));
   }
   return s;
 }
 const capitalTotal = (d = hoy()) => plataEnMano(d) + enLaCalle(d);
 function porCobrarTotal() { return DB.prestamos.reduce((s, p) => s + saldo(p), 0); }
-function interesFuturo() { let s = 0; for (const p of DB.prestamos) { const v = valores(p); for (let i = 0; i < p.cuotas; i++) if (!pagada(p, i)) s += v[i].interes; } return s; }
+function interesFuturo() { let s = 0; for (const p of DB.prestamos) { const v = valores(p); for (let i = 0; i < p.cuotas; i++) s += faltaCuota(p, i) * v[i].interes / v[i].valor; } return Math.round(s); }
 
 /* ---------- resumen de un periodo [a, b] ---------- */
 function resumenPeriodo(a, b) {
@@ -223,13 +254,15 @@ function resumenPeriodo(a, b) {
     if (!p.previo && p.creado >= a && p.creado <= b) { r.prestado += p.monto; r.nuevos++; }
     for (const x of p.pagos) {
       if (x.previo || x.fecha < a || x.fecha > b) continue;
-      r.intereses += v[x.i].interes; r.mora += x.mora || 0; r.capital += v[x.i].capital;
+      const parte = x.valor / v[x.i].valor;
+      r.intereses += v[x.i].interes * parte; r.mora += x.mora || 0; r.capital += v[x.i].capital * parte;
       r.cobrado += x.valor + (x.mora || 0); r.nCobros++;
       r.cobros.push({ fecha: x.fecha, p, x });
     }
     if (prestamoPagado(p)) { const ult = p.pagos.reduce((m, x) => x.fecha > m ? x.fecha : m, ''); if (ult >= a && ult <= b && p.pagos.some(x => !x.previo)) r.terminados++; }
   }
   for (const x of DB.movs) if (x.tipo !== 'ajuste' && x.fecha >= a && x.fecha <= b) { r.movs.push(x); if (x.tipo === 'gasto') r.gastos += x.valor; else r.ingresos += x.valor; }
+  r.intereses = Math.round(r.intereses); r.capital = Math.round(r.capital);
   r.ganancia = r.intereses + r.mora;
   r.resultado = r.ganancia + r.ingresos - r.gastos;
   r.cobros.sort((m, n) => (m.x.ts || 0) - (n.x.ts || 0));
@@ -272,12 +305,11 @@ function paradasDeHoy(d = hoy()) {
     if (!p) continue;
     const pend = cuotasPendientesHasta(p, d);
     if (!pend.length) continue;
-    const v = valores(p);
-    const deuda = pend.reduce((s, i) => s + v[i].valor + moraDe(p, i, d), 0);
+    const deuda = pend.reduce((s, i) => s + faltaCuota(p, i), 0);
     const est = estadoPrestamo(p, d);
     paradas.push({
-      c, p, pend, deuda, cuota: v[pend[0]].valor + moraDe(p, pend[0], d), atrasado: est.tipo === 'atrasado', dias: est.dias || 0,
-      desde: hhmmToMin(c.horaDesde || '08:00'), hasta: hhmmToMin(c.horaHasta || '18:00'),
+      c, p, pend, deuda, cuota: faltaCuota(p, pend[0]), atrasado: est.tipo === 'atrasado', dias: est.dias || 0,
+      desde: 0, hasta: 24 * 60, // sin horario de atención: se ordena por atrasados y cercanía
       pos: (c.lat != null && c.lon != null) ? { lat: c.lat, lon: c.lon } : null,
     });
   }
@@ -295,7 +327,7 @@ function planearRuta(paradas, inicio, ahoraMin) {
       const dm = pos ? distM(pos, s.pos) * FACTOR_CALLE : 0;
       const llega = t + dm / VEL_M_MIN, empieza = Math.max(llega, s.desde);
       if (empieza > s.hasta) continue;
-      const puntaje = empieza + (s.atrasado ? -10 : 0) + dm / VEL_M_MIN * 0.5;
+      const puntaje = dm + (s.atrasado ? -2500 : 0); // primero los atrasados (hasta ~2,5 km de desvío), luego el más cercano
       if (!mejor || puntaje < mejor.puntaje) mejor = { s, dm, empieza, puntaje };
     }
     if (!mejor) break;

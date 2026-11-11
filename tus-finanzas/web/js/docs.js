@@ -2,8 +2,9 @@
 'use strict';
 
 /* ---------- recibo como imagen PNG ---------- */
-function reciboPNG(c, p, pago) {
-  const W = 720, H = 980, cv = document.createElement('canvas');
+function reciboPNG(c, p, grupo) {
+  const filas = grupo.slice().sort((a, b) => a.i - b.i), v = valores(p);
+  const W = 720, H = 760 + filas.length * 52, cv = document.createElement('canvas');
   cv.width = W; cv.height = H;
   const x = cv.getContext('2d');
   x.fillStyle = '#FFFFFF'; x.fillRect(0, 0, W, H);
@@ -13,32 +14,38 @@ function reciboPNG(c, p, pago) {
   x.textAlign = 'left'; x.textBaseline = 'alphabetic';
   x.font = '800 40px system-ui, sans-serif'; x.fillText('Recibo de pago', 150, 80);
   x.font = '500 26px system-ui, sans-serif'; x.fillStyle = '#D1D5DB'; x.fillText((DB.config.nombre || 'Tus Finanzas') + ' · Tus Finanzas', 150, 122);
-
-  const v = valores(p);
   const fila = (y, a, b, color = '#111827', peso = 600) => {
     x.font = '500 28px system-ui, sans-serif'; x.fillStyle = '#4B5563'; x.fillText(a, 56, y);
     x.font = peso + ' 30px system-ui, sans-serif'; x.fillStyle = color; x.textAlign = 'right'; x.fillText(b, W - 56, y); x.textAlign = 'left';
   };
-  let y = 250;
-  fila(y, 'Cliente', c.nombre, '#111827', 800); y += 60;
-  fila(y, 'Fecha', fechaLarga(pago.fecha)); y += 60;
-  fila(y, 'Cuota', (pago.i + 1) + ' de ' + p.cuotas); y += 60;
-  fila(y, 'Valor de la cuota', money(pago.valor)); y += 60;
-  if (pago.mora) { fila(y, 'Mora por atraso', money(pago.mora), '#B91C1C'); y += 60; }
+  let y = 240;
+  fila(y, 'Cliente', c.nombre, '#111827', 800); y += 56;
+  fila(y, 'Fecha del pago', fechaLarga(grupo[0].fecha)); y += 64;
+  x.font = '700 24px system-ui, sans-serif'; x.fillStyle = '#6B7280'; x.fillText('CUOTAS', 56, y); y += 44;
+  const ts = grupo[0].ts || 0;
+  for (const r of filas) {
+    const antes = p.pagos.filter(q => q.i === r.i && (q.previo || (q.ts || 0) <= ts)).reduce((s, q) => s + q.valor, 0);
+    const completa = antes >= v[r.i].valor;
+    fila(y, 'Cuota ' + (r.i + 1) + ' · ' + fechaCorta(p.fechas[r.i]) + (completa ? '' : ' (abono)'), money(r.valor), completa ? '#111827' : '#92400E');
+    y += 52;
+  }
+  const total = grupo.reduce((s, r) => s + r.valor, 0);
   x.strokeStyle = '#E5E7EB'; x.lineWidth = 2; x.beginPath(); x.moveTo(56, y - 20); x.lineTo(W - 56, y - 20); x.stroke(); y += 30;
   x.font = '600 28px system-ui, sans-serif'; x.fillStyle = '#4B5563'; x.fillText('Total pagado', 56, y);
-  x.font = '800 54px system-ui, sans-serif'; x.fillStyle = '#0E7A45'; x.textAlign = 'right'; x.fillText(money(pago.valor + (pago.mora || 0)), W - 56, y + 8); x.textAlign = 'left';
-  y += 90;
-  x.fillStyle = '#F3F4F6'; x.fillRect(40, y, W - 80, 190);
-  y += 55;
-  const pend = p.cuotas - p.pagos.filter(q => q.ts <= pago.ts || q.previo).length;
-  const saldoTras = p.fechas.reduce((s, f, i) => s + (p.pagos.some(q => q.i === i && (q.previo || q.ts <= pago.ts)) ? 0 : v[i].valor), 0);
+  x.font = '800 54px system-ui, sans-serif'; x.fillStyle = '#0E7A45'; x.textAlign = 'right'; x.fillText(money(total), W - 56, y + 8); x.textAlign = 'left';
+  y += 80;
+  // saldo justo después de este pago
+  let saldoTras = 0, faltan = 0, sig = null;
+  for (let i = 0; i < p.cuotas; i++) {
+    const pag = p.pagos.filter(q => q.i === i && (q.previo || (q.ts || 0) <= ts)).reduce((s, q) => s + q.valor, 0);
+    const f = Math.max(0, v[i].valor - pag); saldoTras += f; if (f) { faltan++; if (!sig) sig = p.fechas[i]; }
+  }
+  x.fillStyle = '#F3F4F6'; x.fillRect(40, y, W - 80, 190); y += 55;
   fila(y, 'Le falta pagar', money(saldoTras), '#111827', 800); y += 55;
-  fila(y, 'Cuotas que faltan', String(pend)); y += 55;
-  const sig = p.fechas.find((f, i) => !p.pagos.some(q => q.i === i && (q.previo || q.ts <= pago.ts)));
+  fila(y, 'Cuotas que faltan', String(faltan)); y += 55;
   fila(y, 'Próxima cuota', sig ? fechaCorta(sig) : '¡Préstamo pagado!', sig ? '#111827' : '#0E7A45');
   x.font = '500 22px system-ui, sans-serif'; x.fillStyle = '#6B7280'; x.textAlign = 'center';
-  x.fillText('Gracias por tu pago.', W / 2, H - 50);
+  x.fillText('Gracias por tu pago.', W / 2, H - 40);
   return cv.toDataURL('image/png').split(',')[1];
 }
 
@@ -97,8 +104,7 @@ function reportePDF(titulo, a, b, r) {
   const fila = (a1, b1, color = '#111827', bold = false) => { const y = d.espacio(20); d.texto(L, y, a1, 11, false, '#374151'); d.texto(R, y, b1, 11, bold, color, 'right'); d.linea(L, y - 6, R, y - 6); };
   d.texto(L, d.y, 'Resumen', 13, true); d.espacio(8);
   fila('Intereses cobrados', money(r.intereses), '#0E7A45');
-  fila('Mora cobrada', money(r.mora), '#0E7A45');
-  fila('Capital recuperado', money(r.capital));
+    fila('Capital recuperado', money(r.capital));
   fila('Total cobrado', money(r.cobrado), '#111827', true);
   fila('Prestado nuevo', money(r.prestado), '#1D4ED8');
   fila('Otros ingresos', money(r.ingresos), '#0E7A45');
@@ -116,7 +122,7 @@ function reportePDF(titulo, a, b, r) {
   }
   d.espacio(26); d.texto(L, d.y, 'Cobros (' + r.nCobros + ')', 13, true); d.espacio(6);
   if (!r.cobros.length) fila('Sin cobros en este periodo', '');
-  for (const o of r.cobros) { const c = cliente(o.p.clienteId); fila(fechaSimple(o.fecha) + ' · ' + (c ? c.nombre : '—') + ' · cuota ' + (o.x.i + 1) + '/' + o.p.cuotas + (o.x.mora ? ' (+mora ' + money(o.x.mora) + ')' : ''), money(o.x.valor + (o.x.mora || 0))); }
+  for (const o of r.cobros) { const c = cliente(o.p.clienteId); fila(fechaSimple(o.fecha) + ' · ' + (c ? c.nombre : '—') + ' · cuota ' + (o.x.i + 1) + '/' + o.p.cuotas + (o.x.valor < valores(o.p)[o.x.i].valor ? ' (abono)' : ''), money(o.x.valor + (o.x.mora || 0))); }
   if (r.movs.length) {
     d.espacio(26); d.texto(L, d.y, 'Gastos e ingresos (' + r.movs.length + ')', 13, true); d.espacio(6);
     for (const m of r.movs) fila(fechaSimple(m.fecha) + ' · ' + m.cat + (m.nota ? ' · ' + m.nota : ''), (m.tipo === 'gasto' ? '-' : '+') + money(m.valor), m.tipo === 'gasto' ? '#B91C1C' : '#0E7A45');

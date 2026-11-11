@@ -31,7 +31,10 @@ Clientes, préstamos por cuotas, cobros, ruta del día con minimapa, gastos, rep
   o en **pesos**, número de cuotas, frecuencia (diario, semanal, quincenal, mensual,
   trimestral, semestral), mora en % de la cuota y fechas fijas sin domingos ni festivos de Colombia
   (cada fecha se puede cambiar). Opción "Ya venía del cuaderno" para pasar los préstamos que ya existían.
-- **Cobrar** en 2 toques, recibo como imagen por WhatsApp, recordatorio por WhatsApp, deshacer un cobro.
+- **Registrar pago**: una o varias cuotas (en orden o las que se elijan) y abonos parciales; recibo como imagen por WhatsApp,
+  recordatorio por WhatsApp y deshacer el último pago.
+- **Calendario de cuotas** en la ficha: verde a tiempo, naranja pagó otro día, rojo no pagó, mitad verde abono, amarillo hoy.
+  Al tocar un día se cambia la fecha de pago, se mueve la fecha de cobro o se desmarca el pago.
 - **Resumen**: capital total (prestado en la calle + plata en mano), ganancia frente al 1 del mes,
   consejo de cuánto volver a prestar y cuánto gastar, y gráfica de intereses (potencial, lo que debería llevar y lo real).
 - **Gastos fijos e ingresos** con categorías propias.

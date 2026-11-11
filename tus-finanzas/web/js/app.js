@@ -211,7 +211,7 @@ function vistaRuta() {
         <h2 style="font-size:20px;font-weight:800;margin-top:3px">${esc(sel.c.nombre)}</h2>
         <p class="muted">${esc(sel.c.dir || 'Sin dirección')}</p>${deb}</div>
         <div style="text-align:right"><b style="font-size:20px">${money(sel.cuota)}</b>${sel.cuota > valores(sel.p)[sel.pend[0]].valor ? '<p class="peq rojo">con mora</p>' : ''}</div></div>
-      <div class="horario">${I('reloj', 'i', 'style="width:18px;height:18px;color:var(--ambar-t)"')}<span><b>Atiende de ${horaTexto(sel.c.horaDesde || '08:00')} a ${horaTexto(sel.c.horaHasta || '18:00')}</b>${sel.eta != null ? ' · llegas ' + minToHora(sel.eta) : ''}${sel.fuera ? ' <b class="rojo">(fuera de horario)</b>' : ''}</span></div>
+      <div style="height:12px"></div>
       <div class="botones">
         <button class="btn verde" data-acc="cobrar" data-id="${sel.c.id}">${I('check', 'i', 'style="stroke-width:3"')}Cobrar</button>
         <button class="btn gris" data-acc="comoLlegar" data-id="${sel.c.id}">${I('ir')}Cómo llegar</button>
@@ -230,10 +230,7 @@ function vistaRuta() {
   h += '<div class="lista">';
   for (const o of cobrados) h += `<button class="item" data-acc="ficha" data-id="${o.c.id}"><span class="num verde">${I('check', 'i', 'style="width:15px;height:15px;stroke-width:3.4"')}</span>
       <span class="cuerpo"><b style="text-decoration:line-through;color:var(--suave)">${esc(o.c.nombre)}</b><span>${esc(o.c.dir || '')}</span></span><span class="der verde">Cobrado<br><small>${money(o.total)}</small></span></button>`;
-  let tarde = false, fuera = false;
   plan.orden.forEach((s, k) => {
-    if (!s.fuera && !tarde && s.eta >= 12 * 60 && k > 0) { tarde = true; h += '<div class="separador">Tarde</div>'; }
-    if (s.fuera && !fuera) { fuera = true; h += '<div class="separador">Ya pasó su horario</div>'; }
     h += itemParada(s, nCob + k + 1, false);
   });
   if (plan.sinPos.length) {
@@ -263,9 +260,9 @@ window.addEventListener('resize', () => { if (mapa) mapa.resize(); });
 
 function itemParada(s, num, sinPos) {
   const color = s.atrasado ? 'rojo' : 'ambar';
-  const det = esc(s.c.dir || 'Sin dirección') + ' · ' + horaTexto(s.c.horaDesde || '08:00') + '–' + horaTexto(s.c.horaHasta || '18:00') + (s.atrasado ? ' · <b class="rojo">atrasado</b>' : '');
+  const det = esc(s.c.dir || 'Sin dirección') + (s.atrasado ? ' · <b class="rojo">atrasado</b>' : '') + (s.pend.length > 1 ? ' · ' + s.pend.length + ' cuotas' : '');
   const der = sinPos ? `<span class="der"><button class="icono-btn" style="width:40px;height:40px" data-acc="ubicar" data-id="${s.c.id}" aria-label="Guardar ubicación de ${esc(s.c.nombre)}">${I('pin', 'i', 'style="width:19px;height:19px"')}</button></span>`
-    : `<span class="der">${minToHora(s.eta)}<br><small class="muted">${money(s.cuota)}</small></span>`;
+    : `<span class="der">${money(s.deuda)}${s.legM ? '<br><small class="muted">' + km(s.legM) + '</small>' : ''}</span>`;
   return `<div class="item" style="${s.c.id === UI.sel ? 'background:#FFFBEB;margin:0 -12px;padding:11px 12px;width:calc(100% + 24px)' : ''}">
     <span class="num ${color}">${num}</span>
     <button class="cuerpo" style="border:0;background:none;padding:0;text-align:left" data-acc="elegir" data-id="${s.c.id}"><b>${esc(s.c.nombre)}</b><span>${det}</span></button>${der}</div>`;
@@ -366,44 +363,38 @@ function hojaFicha(cid) {
 function pintarFicha(h, cid) {
   const c = cliente(cid); if (!c) { cerrarHoja(); return; }
   const p = prestamoActivo(cid), d = hoy();
+  h._cal = h._cal || {};
   let x = `<div class="top" style="align-items:center"><button class="atras" data-acc="cerrar" aria-label="Volver">${I('atras', 'i', 'style="width:26px;height:26px"')}</button>
     <div style="flex:1;min-width:0"><h1 style="font-size:21px">${esc(c.nombre)}</h1><p class="sub">${esc(telBonito(c.cel) || 'Sin celular')}${c.dir ? ' · ' + esc(c.dir) : ''}</p></div>
     <button class="icono-btn" style="background:var(--gris);border:0" data-acc="editarCliente" data-id="${cid}" aria-label="Editar datos del cliente">${I('lapiz')}</button></div>`;
   if (p) {
-    const v = valores(p), est = estadoPrestamo(p, d), prox = proximaCuota(p);
-    const venceHoy = p.fechas[prox] <= d;
+    const v = valores(p), completas = cuotasCompletas(p);
+    const pend = cuotasPendientesHasta(p, d), abonos = cuotasPendientes(p).filter(i => pagadoCuota(p, i) > 0);
     x += `<div class="card"><div class="fila" style="align-items:flex-end"><div><span class="muted">Le falta pagar</span><div style="font-size:28px;font-weight:800">${money(saldo(p))}</div></div>
-      <b class="verde" style="font-size:14px">${p.pagos.length} de ${p.cuotas} cuotas</b></div>
-      <div class="barra" style="height:12px"><div style="width:${Math.round(p.pagos.length / p.cuotas * 100)}%;background:var(--verde)"></div></div>
+      <b class="verde" style="font-size:14px">${completas} de ${p.cuotas} cuotas</b></div>
+      <div class="barra" style="height:12px"><div style="width:${Math.round(pagadoTotal(p) / (p.monto + p.interes) * 100)}%;background:var(--verde)"></div></div>
       <div class="grid3" style="margin-top:12px"><div><span class="muted peq">Le presté</span><br><b style="font-size:14px">${money(p.monto)}</b></div>
       <div><span class="muted peq">Ya pagó</span><br><b class="verde" style="font-size:14px">${money(pagadoTotal(p))}</b></div>
       <div><span class="muted peq">Ganancia total</span><br><b style="font-size:14px">${money(p.interes)}</b></div></div>
-      <p class="muted peq" style="margin-top:10px">${FREC_TXT[p.frecuencia]} · ${money(v[prox].valor)} por cuota${p.tasa != null ? ' · interés ' + pct(p.tasa, p.tasa % 1 ? 1 : 0) + ' % mensual × ' + mesesTexto(p.meses) : ''} · mora ${pct(p.moraPct, 0)} %${p.previo ? ' · venía del cuaderno' : ''}</p></div>
+      <p class="muted peq" style="margin-top:10px">${FREC_TXT[p.frecuencia]} · ${money(v[0].valor)} por cuota${p.tasa != null ? ' · ' + pct(p.tasa, p.tasa % 1 ? 1 : 0) + ' % mensual × ' + mesesTexto(p.meses) : ''}${p.previo ? ' · venía del cuaderno' : ''}</p>
+      ${pend.length ? `<div class="aviso" style="margin:10px 0 0;background:var(--rojo-bg);color:#450a0a">${I('reloj', 'i', 'style="color:var(--rojo-t);width:18px;height:18px"')}<span><b class="rojo">Debe ${pend.length} ${pend.length === 1 ? 'cuota' : 'cuotas'}</b> · ${money(pend.reduce((s, i) => s + faltaCuota(p, i), 0))}</span></div>` : ''}
+      ${abonos.length ? `<p class="muted peq" style="margin-top:6px">Tiene ${abonos.length === 1 ? 'un abono' : abonos.length + ' abonos'}: falta completar ${abonos.map(i => fechaSimple(p.fechas[i])).join(', ')}.</p>` : ''}</div>
       <div style="margin:12px 16px 0" class="form">
-        <button class="btn verde alto" data-acc="cobrar" data-id="${cid}">${I('check', 'i', 'style="stroke-width:3"')}${venceHoy ? (est.tipo === 'atrasado' ? 'Cobrar cuota atrasada · ' : 'Cobrar cuota de hoy · ') + money(v[prox].valor + moraDe(p, prox, d)) : 'Cobrar próxima · vence ' + fechaCorta(p.fechas[prox])}</button>
+        <button class="btn verde alto" data-acc="cobrar" data-id="${cid}">${I('check', 'i', 'style="stroke-width:3"')}Registrar pago</button>
         <div class="botones"><button class="btn morado bajo" data-acc="recordar" data-id="${cid}">${I('chat')}Recordar</button>
-        <button class="btn morado bajo" data-acc="recibo" data-id="${cid}" ${p.pagos.some(q => !q.previo) ? '' : 'disabled'}>${I('recibo')}Enviar recibo</button></div></div>`;
-    x += `<div class="card"><div class="fila" style="margin-bottom:8px"><h2>Cuotas</h2><span class="muted peq">Toca el lápiz para cambiar una fecha</span></div><div class="form" style="gap:6px">`;
-    for (let i = 0; i < p.cuotas; i++) {
-      const pg = p.pagos.find(q => q.i === i), f = p.fechas[i];
-      let cls, ic, der;
-      if (pg) { cls = 'pagada'; ic = I('check', 'i', 'style="width:19px;height:19px;color:var(--verde);stroke-width:3"'); der = `<b class="verde">${pg.previo ? 'Pagada' : 'Pagada ' + fechaSimple(pg.fecha)}</b>`; }
-      else if (f < d) { cls = 'atr'; ic = I('reloj', 'i', 'style="width:19px;height:19px;color:var(--rojo-t)"'); der = `<b class="rojo">${money(v[i].valor)}</b>`; }
-      else if (f === d) { cls = 'hoy'; ic = I('reloj', 'i', 'style="width:19px;height:19px;color:var(--ambar-t)"'); der = `<b class="ambar">HOY ${money(v[i].valor)}</b>`; }
-      else { cls = 'fut'; ic = I('cal', 'i', 'style="width:19px;height:19px;color:var(--suave)"'); der = `<span>${money(v[i].valor)}</span>`; }
-      const lap = pg ? '' : `<label class="lapiz" aria-label="Cambiar fecha de la cuota ${i + 1}">${I('lapiz', 'i', 'style="width:17px;height:17px"')}<input type="date" value="${f}" data-cuota="${i}" style="position:absolute;opacity:0;width:1px;height:1px"></label>`;
-      x += `<div class="cuota ${cls}">${ic}<span class="c1">${i + 1} · ${fechaCorta(f)}</span>${der}${lap}</div>`;
+        <button class="btn morado bajo" data-acc="recibo" data-id="${cid}" ${grupos(p).length ? '' : 'disabled'}>${I('recibo')}Enviar recibo</button></div></div>`;
+    // calendario (o lista completa)
+    if (!h._cal.mes || h._cal.cid !== cid) {
+      const ref = pend[0] != null ? p.fechas[pend[0]] : (proximaCuota(p) >= 0 ? p.fechas[proximaCuota(p)] : d);
+      h._cal = { cid, mes: monthStart(ref < p.fechas[0] ? p.fechas[0] : (ref > p.fechas[p.cuotas - 1] ? p.fechas[p.cuotas - 1] : (d >= p.fechas[0] && d <= p.fechas[p.cuotas - 1] ? d : ref))), todas: false };
     }
-    x += '</div>';
-    if (p.pagos.some(q => !q.previo)) x += `<button class="btn gris bajo" style="margin-top:12px" data-acc="deshacer" data-id="${cid}">${I('deshacer')}Deshacer el último cobro</button>`;
-    x += '</div>';
+    x += `<div class="card">${h._cal.todas ? listaCuotas(p, d) : calendarioCuotas(p, h._cal.mes, d)}
+      ${grupos(p).length ? `<button class="btn gris bajo" style="margin-top:10px" data-acc="deshacer" data-id="${cid}">${I('deshacer')}Deshacer el último pago</button>` : ''}</div>`;
   } else {
     x += `<div class="card vacio"><b>${prestamosDe(cid).length ? 'Terminó de pagar' : 'No tiene préstamo'}</b>¿Le vas a prestar otra vez?</div>
       <div style="margin:12px 16px 0"><button class="btn azul alto" data-acc="prestarA" data-id="${cid}">${I('mas', 'i', 'style="stroke-width:2.8"')}Nuevo préstamo para ${esc(c.nombre.split(' ')[0])}</button></div>`;
   }
-  // datos
   x += `<div class="card"><h2 style="margin-bottom:10px">Datos</h2><div class="form" style="gap:10px;font-size:14px">
-    <div class="fila"><span class="muted">Horario para cobrarle</span><b>${horaTexto(c.horaDesde || '08:00')} – ${horaTexto(c.horaHasta || '18:00')}</b></div>
     ${c.cedula ? `<div class="fila"><span class="muted">Cédula</span><b>${esc(c.cedula)}</b></div>` : ''}
     <div class="fila"><span class="muted">Ubicación</span><b class="${c.lat != null ? 'verde' : 'rojo'}">${c.lat != null ? 'Guardada' + (c.acc ? ' (±' + c.acc + ' m)' : '') : 'Sin guardar'}</b></div>
     ${c.notas ? `<div><span class="muted">Notas</span><p style="margin-top:2px">${esc(c.notas)}</p></div>` : ''}
@@ -412,16 +403,98 @@ function pintarFicha(h, cid) {
   const viejos = prestamosDe(cid).filter(q => q !== p);
   if (viejos.length) x += `<div class="card"><h2 style="margin-bottom:8px">Préstamos anteriores</h2>${viejos.map(q => `<div class="fila" style="font-size:14px;padding:6px 0"><span>${fechaSimple(q.creado)} · ${money(q.monto)} en ${q.cuotas} cuotas</span><b class="verde">+${money(q.interes)}</b></div>`).join('')}</div>`;
   x += `<div style="margin:16px 16px 24px"><button class="btn borde-rojo bajo" data-acc="borrarCliente" data-id="${cid}">${I('basura')}Eliminar cliente</button></div>`;
+  const y = h.scrollTop;
   refrescarHoja(h, x);
+  h.scrollTop = y;
   h.dataset.ficha = cid;
-  h.querySelectorAll('input[data-cuota]').forEach(inp => {
-    inp.closest('.lapiz').addEventListener('click', () => { try { inp.showPicker(); } catch (e) { inp.focus(); inp.click(); } });
-    inp.addEventListener('change', () => {
-      if (!inp.value) return;
-      p.fechas[+inp.dataset.cuota] = inp.value; guardar();
-      toast('Fecha de la cuota ' + (+inp.dataset.cuota + 1) + ': ' + fechaCorta(inp.value) + (esHabil(inp.value) ? '' : ' (ojo: no es día hábil)'));
-      pintarFicha(h, cid);
-    });
+  h.onclick = e => {
+    const b = e.target.closest('[data-cal]'); if (!b || !p) return;
+    const a = b.dataset.cal;
+    if (a === 'ant') h._cal.mes = addMonths(h._cal.mes, -1);
+    else if (a === 'sig') h._cal.mes = addMonths(h._cal.mes, 1);
+    else if (a === 'todas') h._cal.todas = true;
+    else if (a === 'cal') h._cal.todas = false;
+    else { hojaCuota(p, +a); return; }
+    pintarFicha(h, cid);
+  };
+}
+const ESTADO_TXT = { pagada: 'Pagó a tiempo', tarde: 'Pagó otro día (tarde)', vencida: 'No pagó', abono: 'Abono (pagó una parte)', hoy: 'Hoy', futura: 'Falta (próximas)' };
+function leyendaCuotas() {
+  return `<div class="leyenda-cal">${['pagada', 'tarde', 'vencida', 'abono', 'hoy', 'futura'].map(k => `<span><i class="dia ${k}"></i>${ESTADO_TXT[k]}</span>`).join('')}</div>`;
+}
+function calendarioCuotas(p, mes, d) {
+  const porDia = {};
+  p.fechas.forEach((f, i) => { if (f.slice(0, 7) === mes.slice(0, 7)) (porDia[f] = porDia[f] || []).push(i); });
+  const primero = fromISO(mes), vacios = (primero.getDay() + 6) % 7, dias = fromISO(monthEnd(mes)).getDate();
+  const hayAntes = p.fechas[0] < mes, hayDespues = p.fechas[p.cuotas - 1] > monthEnd(mes);
+  let g = '';
+  for (let k = 0; k < vacios; k++) g += '<span></span>';
+  for (let n = 1; n <= dias; n++) {
+    const f = mes.slice(0, 8) + pad2(n), idx = porDia[f];
+    if (idx) {
+      const i = idx[0], e = estadoCuota(p, i, d);
+      g += `<button type="button" class="dia ${e}" data-cal="${i}" aria-label="Cuota ${i + 1}, ${fechaCorta(f)}: ${ESTADO_TXT[e]}"><span>${n}</span>${idx.length > 1 ? '<small>×' + idx.length + '</small>' : ''}</button>`;
+    } else g += `<span class="dia nada">${n}${esFestivo(f) ? '<small>festivo</small>' : ''}</span>`;
+  }
+  return `<div class="fila" style="margin-bottom:8px"><button class="icono-btn" style="width:40px;height:40px" data-cal="ant" ${hayAntes ? '' : 'disabled style="width:40px;height:40px;opacity:.3"'} aria-label="Mes anterior">${I('atras', 'i', 'style="width:20px;height:20px"')}</button>
+    <b style="font-size:16px">${cap(MESES[primero.getMonth()])} ${primero.getFullYear()}</b>
+    <button class="icono-btn" style="width:40px;height:40px" data-cal="sig" ${hayDespues ? '' : 'disabled style="width:40px;height:40px;opacity:.3"'} aria-label="Mes siguiente">${I('sig', 'i', 'style="width:20px;height:20px"')}</button></div>
+    <div class="cal cab"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+    <div class="cal">${g}</div>${leyendaCuotas()}
+    <p class="muted peq" style="margin:8px 0">Toca un día para editar esa cuota.</p>
+    <button class="btn borde bajo" data-cal="todas">Mostrar todas las cuotas (${p.cuotas})</button>`;
+}
+function listaCuotas(p, d) {
+  const v = valores(p);
+  let x = `<div class="fila" style="margin-bottom:8px"><h2>Todas las cuotas</h2><button class="btn borde bajo" style="width:auto;height:38px" data-cal="cal">${I('cal', 'i', 'style="width:18px;height:18px"')}Calendario</button></div><div class="form" style="gap:6px">`;
+  for (let i = 0; i < p.cuotas; i++) {
+    const e = estadoCuota(p, i, d), pag = pagadoCuota(p, i), fp = fechaPagoCuota(p, i);
+    const der = { pagada: 'Pagada' + (fp && !p.pagos.some(q => q.i === i && q.previo) ? ' ' + fechaSimple(fp) : ''), tarde: 'Pagó ' + fechaSimple(fp), abono: 'Abonó ' + money(pag), vencida: 'Debe ' + money(v[i].valor), hoy: 'HOY ' + money(v[i].valor), futura: money(v[i].valor) }[e];
+    x += `<button type="button" class="cuota-fila" data-cal="${i}"><i class="dia ${e}" style="width:30px;height:30px;font-size:12px"><span>${fromISO(p.fechas[i]).getDate()}</span></i>
+      <span class="c1"><b>${i + 1} · ${fechaCorta(p.fechas[i])}</b></span><span class="b">${der}</span>${I('sig', 'i', 'style="width:16px;height:16px;color:var(--suave)"')}</button>`;
+  }
+  return x + '</div>';
+}
+/* Al tocar una cuota: botones con formas distintas para cada acción */
+function hojaCuota(p, i) {
+  const d = hoy(), e = estadoCuota(p, i, d), v = valores(p)[i], pag = pagadoCuota(p, i), fp = fechaPagoCuota(p, i);
+  const color = { pagada: 'var(--verde)', tarde: '#C2410C', vencida: 'var(--rojo)', abono: 'var(--verde)', hoy: 'var(--ambar)', futura: 'var(--gris)' }[e];
+  const estado = {
+    pagada: `<b class="verde">Pagada</b>${fp && !p.pagos.some(q => q.i === i && q.previo) ? ' el ' + fechaCorta(fp).toLowerCase() : ''}`,
+    tarde: `<b style="color:#9A3412">Pagada tarde:</b> no pagó ese día, pagó el ${fechaCorta(fp).toLowerCase()}`,
+    abono: `<b class="verde">Abonó ${money(pag)}</b> · falta ${money(v.valor - pag)}`,
+    vencida: '<b class="rojo">No pagó</b>', hoy: '<b class="ambar">Le toca hoy</b>', futura: 'Próxima cuota',
+  }[e];
+  const btnFecha = (id, cls, icono, titulo, sub, valor) => `<label class="btn-accion ${cls}">${I(icono)}<span class="t"><b>${titulo}</b><span>${sub}</span></span><input type="date" id="${id}" value="${valor}" tabindex="-1"></label>`;
+  abrirHoja(`<div class="card" style="margin-top:14px">
+      <div style="display:flex;align-items:center;gap:12px"><span class="dia ${e}" style="width:52px;height:52px;font-size:22px;flex-shrink:0"><span>${fromISO(p.fechas[i]).getDate()}</span></span>
+      <div><h2 style="font-size:19px;font-weight:800">Cuota ${i + 1} · ${fechaCorta(p.fechas[i]).toLowerCase()}</h2><span class="muted" style="font-size:14px">${money(v.valor)}</span></div></div>
+      <div class="aviso" style="margin:12px 0 0;background:#F9FAFB;border-left:4px solid ${color}"><span>${estado}</span></div></div>
+    <p class="b muted" style="margin:14px 20px 6px;font-size:13px">¿Qué quieres hacer?</p>
+    <div class="form" style="margin:0 16px 20px;gap:10px">
+      ${pag < v.valor ? `<div class="botones"><button class="btn verde" id="q-pagar">${I('check', 'i', 'style="stroke-width:3"')}Marcar pagada</button><button class="btn borde-verde" id="q-abono">Registrar abono</button></div>
+        <div id="q-abono-box" class="card form oculto" style="margin:0"><label class="campo">¿Cuánto abonó?<input id="q-abono-v" class="plata" inputmode="numeric" placeholder="$0"></label><button class="btn verde bajo" id="q-abono-ok">Guardar abono</button></div>` : ''}
+      ${pag > 0 ? btnFecha('q-fpago', 'gris', 'cal', 'Cambiar el día en que pagó', 'Ahora: ' + fechaCorta(fp).toLowerCase(), fp) : ''}
+      ${btnFecha('q-fcobro', 'punteado', 'ir', 'Mover la fecha de cobro', 'El día en que le toca pagar esta cuota', p.fechas[i])}
+      ${pag > 0 ? `<button class="btn-accion rojo" id="q-desmarcar">${I('deshacer')}<span class="t"><b>Desmarcar el pago</b><span>La cuota vuelve a quedar sin pagar</span></span></button>` : ''}
+      <button class="btn gris bajo" data-acc="cerrar">Cerrar</button></div>`, {
+    montar: h => {
+      const listo = msg => { cerrarHoja(); toast(msg); refrescarTodo(); };
+      h.querySelectorAll('label.btn-accion').forEach(l => l.addEventListener('click', ev => { const inp = l.querySelector('input'); ev.preventDefault(); try { inp.showPicker(); } catch (er) { inp.focus(); } }));
+      const q = s => h.querySelector(s);
+      if (q('#q-pagar')) q('#q-pagar').onclick = () => { pagarCuota(p, i); listo('Cuota ' + (i + 1) + ' marcada pagada'); };
+      if (q('#q-abono')) q('#q-abono').onclick = () => { q('#q-abono-box').classList.remove('oculto'); q('#q-abono-v').focus(); };
+      if (q('#q-abono-ok')) q('#q-abono-ok').onclick = () => {
+        const m = Math.min(valorDe(h, '#q-abono-v'), v.valor - pag); if (!m) return;
+        registrarPago(p, [i], m); listo('Abono de ' + money(m) + ' guardado');
+      };
+      if (q('#q-fpago')) q('#q-fpago').onchange = ev => { if (!ev.target.value) return; cambiarFechaPago(p, i, ev.target.value); listo('Pago de la cuota ' + (i + 1) + ': ' + fechaCorta(ev.target.value)); };
+      q('#q-fcobro').onchange = ev => { if (!ev.target.value) return; p.fechas[i] = ev.target.value; guardar(); listo('Cuota ' + (i + 1) + ' ahora se cobra el ' + fechaCorta(ev.target.value).toLowerCase() + (esHabil(ev.target.value) ? '' : ' (no es día hábil)')); };
+      if (q('#q-desmarcar')) q('#q-desmarcar').onclick = async () => {
+        if (!await confirmar('¿Desmarcar el pago de la cuota ' + (i + 1) + '?', 'Se borra lo que pagó en esta cuota (' + money(pag) + ') y vuelve a quedar sin pagar.', 'Sí, desmarcar')) return;
+        desmarcarCuota(p, i); listo('Cuota ' + (i + 1) + ' sin pagar');
+      };
+    }
   });
 }
 function refrescarTodo() {
@@ -436,10 +509,6 @@ function camposCliente(c = {}) {
     <label class="campo">Cédula<input id="c-ced" inputmode="numeric" value="${esc(c.cedula || '')}" placeholder="Opcional"></label></div>
     <label class="campo">Dirección o barrio<input id="c-dir" value="${esc(c.dir || '')}" placeholder="Barrio, casa, referencia"></label>
     <button type="button" class="btn gris bajo" id="c-gps">${I('pin')}<span id="c-gps-t">${c.lat != null ? 'Ubicación guardada ✓ · tocar para cambiar' : 'Marcar su casa en el mapa (estando allá)'}</span></button>
-    <div style="background:var(--ambar-bg);border-radius:14px;padding:12px" class="form">
-      <span class="b" style="font-size:13px;display:flex;align-items:center;gap:6px">${I('reloj', 'i', 'style="width:18px;height:18px;color:var(--ambar-t)"')}¿A qué hora le puedo cobrar?</span>
-      <div class="grid2"><label class="campo">Desde<input id="c-desde" type="time" value="${c.horaDesde || '08:00'}"></label><label class="campo">Hasta<input id="c-hasta" type="time" value="${c.horaHasta || '18:00'}"></label></div>
-      <span class="peq">Con esto la app arma tu ruta del día.</span></div>
     <label class="campo">Notas (opcional)<input id="c-notas" value="${esc(c.notas || '')}" placeholder="Ej: cobrar en el negocio"></label>`;
 }
 function leerCliente(h, c) {
@@ -447,8 +516,6 @@ function leerCliente(h, c) {
   c.cel = h.querySelector('#c-cel').value.trim();
   c.cedula = h.querySelector('#c-ced').value.trim();
   c.dir = h.querySelector('#c-dir').value.trim();
-  c.horaDesde = h.querySelector('#c-desde').value || '08:00';
-  c.horaHasta = h.querySelector('#c-hasta').value || '18:00';
   c.notas = h.querySelector('#c-notas').value.trim();
   return c;
 }
@@ -484,25 +551,27 @@ function hojaEditarCliente(cid) {
 function hojaPrestamo(cid) {
   const existente = cid ? cliente(cid) : null;
   if (existente && prestamoActivo(cid)) { toast('Este cliente ya tiene un préstamo activo'); return; }
-  const F = { frec: 'diario', primera: primeraSugerida('diario'), fechas: [], previo: false, gps: {} };
+  const F = { frec: 'diario', primera: primeraSugerida('diario'), fechas: [], previo: false, gps: {}, modo: DB.config.modoCalculo || 'cuota' };
+  const tasaIni = DB.config.tasaMensual;
   const html = `<div class="top" style="align-items:center"><button class="atras" data-acc="cerrar" aria-label="Volver">${I('atras', 'i', 'style="width:26px;height:26px"')}</button><h1 style="flex:1;font-size:20px">Nuevo préstamo</h1></div>
     <div class="card form"><div class="tit" style="margin:0"><span class="paso">1</span><h2>¿A quién le prestas?</h2></div>
       ${existente ? `<div class="fila"><b style="font-size:17px">${esc(existente.nombre)}</b><span class="muted">${esc(existente.dir || '')}</span></div>` : camposCliente()}</div>
     <div class="card form"><div class="tit" style="margin:0"><span class="paso">2</span><h2>¿Cuánto y cómo paga?</h2></div>
-      <label class="campo">Le presto<input id="p-monto" class="plata" inputmode="numeric" placeholder="$0"></label>
+      <label class="campo">Le presto<input id="p-monto" class="plata tuyo" inputmode="numeric" placeholder="$0"></label>
       <span class="b" style="font-size:13px;color:#374151">Cada cuánto paga</span>
       <div class="chips" id="p-frec">${FRECUENCIAS.map(([k, t]) => `<button type="button" data-f="${k}" class="${k === F.frec ? 'on' : ''}">${t}</button>`).join('')}</div>
-      <div class="grid2"><label class="campo">Número de cuotas<input id="p-cuotas" type="number" inputmode="numeric" min="1" max="400" placeholder="Ej: 24"></label>
-      <label class="campo">Mora por atraso (%)<input id="p-mora" type="number" inputmode="decimal" min="0" max="100" value="5"></label></div>
-      <span class="b" style="font-size:13px;color:#374151">¿Cómo cobras el interés?</span>
-      <div class="chips" id="p-modo" style="grid-template-columns:repeat(2,minmax(0,1fr))"><button type="button" data-m="pct" class="on">% mensual</button><button type="button" data-m="pesos">$ en pesos</button></div>
-      <div class="grid2" id="p-pct-box"><label class="campo">Interés mensual (%)<input id="p-tasa" type="number" inputmode="decimal" min="0" max="100" step="0.5" value="${DB.config.tasaMensual}" style="font-size:19px;font-weight:800;color:var(--verde)"></label>
-        <div style="display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:6px"><span class="muted peq" id="p-meses">Escribe las cuotas</span></div></div>
-      <label class="campo oculto" id="p-pesos-box">Interés en pesos<input id="p-interes" class="plata" inputmode="numeric" placeholder="$0" style="color:var(--verde)"></label>
+      <label class="campo">Número de cuotas<input id="p-cuotas" class="tuyo" type="number" inputmode="numeric" min="1" max="400" placeholder="Ej: 24"></label>
+      <span class="b" style="font-size:13px;color:#374151">¿Cómo lo calculas?</span>
+      <div class="segmento" id="p-modo"><button type="button" data-m="cuota" class="${F.modo === 'cuota' ? 'on' : ''}">Por valor de cuota</button><button type="button" data-m="pct" class="${F.modo === 'pct' ? 'on' : ''}">Por porcentaje</button></div>
+      <label class="campo ${F.modo === 'cuota' ? '' : 'oculto'}" id="p-cuota-box">Valor de cada cuota<input id="p-valcuota" class="plata tuyo" inputmode="numeric" placeholder="$0" style="color:var(--verde)"></label>
+      <label class="campo ${F.modo === 'pct' ? '' : 'oculto'}" id="p-pct-box">Interés mensual (%)<input id="p-tasa" class="tuyo" type="number" inputmode="decimal" min="0" max="100" step="0.5" value="${tasaIni}" style="color:var(--verde)"></label>
       <div class="total-box form" style="gap:10px">
-        <div class="fila"><div><span>Gano (interés)</span><span class="peq" id="p-int-txt" style="color:var(--suave)"></span></div><b id="p-int" class="verde">$0</b></div>
-        <div class="grid2"><div><span>Me debe en total</span><b id="p-total">$0</b></div><div><span>Cada cuota</span><b id="p-cuota" class="verde">$0</b></div></div>
+        <span class="calculado">${I('check', 'i', 'style="width:16px;height:16px;stroke-width:3"')}CALCULADO SOLO</span>
+        <div class="fila"><span id="p-otro-l">${F.modo === 'cuota' ? 'Interés mensual' : 'Valor de cada cuota'}</span><b id="p-otro">—</b></div>
+        <div class="fila"><span>Gano</span><b id="p-int" class="verde">—</b></div>
+        <div class="fila"><span>Me debe en total</span><b id="p-total">—</b></div>
       </div>
+      <p class="muted peq" style="line-height:1.45">Los recuadros con borde negro los llenas tú. Lo verde lo calcula la app.</p>
       <label class="switch"><span><b style="font-size:14px">Ya venía del cuaderno</b><br><span class="muted peq">Es un préstamo que hiciste antes de usar la app</span></span><input type="checkbox" id="p-previo"></label>
       <label class="campo oculto" id="p-pagadas-box">¿Cuántas cuotas ya pagó?<input id="p-pagadas" type="number" inputmode="numeric" min="0" value="0"></label></div>
     <div class="card form"><div class="tit" style="margin:0"><span class="paso">3</span><h2>Fechas de pago</h2></div>
@@ -515,20 +584,26 @@ function hojaPrestamo(cid) {
       if (!existente) montarGPS(h, F.gps);
       const q = s => h.querySelector(s);
       const n = () => Math.min(400, Math.max(0, parseInt(q('#p-cuotas').value, 10) || 0));
-      const interes = () => {
-        const monto = valorDe(h, '#p-monto');
-        if (F.modo === 'pesos') return { interes: valorDe(h, '#p-interes'), manual: true };
-        const tasa = Math.min(100, Math.max(0, parseFloat(String(q('#p-tasa').value).replace(',', '.')) || 0));
-        return interesAuto(monto, n(), F.frec, tasa);
+      const tasaCampo = () => Math.min(100, Math.max(0, parseFloat(String(q('#p-tasa').value).replace(',', '.')) || 0));
+      /* Calcula lo que falta con lo que ya se llenó */
+      const calc = () => {
+        const monto = valorDe(h, '#p-monto'), k = n();
+        if (!monto || !k) return null;
+        const meses = mesesPrestamo(k, F.frec);
+        if (F.modo === 'cuota') {
+          const vc = valorDe(h, '#p-valcuota'); if (!vc) return null;
+          const interes = vc * k - monto;
+          return { monto, k, meses, cuota: vc, interes, total: vc * k, tasa: Math.round(interes / monto / meses * 1000) / 10 };
+        }
+        const tasa = tasaCampo(), it = interesAuto(monto, k, F.frec, tasa);
+        return { monto, k, meses, cuota: Math.ceil((monto + it.interes) / k), interes: it.interes, total: monto + it.interes, tasa };
       };
       const totales = () => {
-        const monto = valorDe(h, '#p-monto'), k = n(), it = interes(), inter = it.interes;
-        q('#p-int').textContent = money(inter);
-        const tasaTxt = it.manual ? '' : pct(it.tasa, it.tasa % 1 ? 1 : 0) + ' % mensual';
-        q('#p-int-txt').textContent = it.manual ? 'Valor fijo en pesos' : (it.meses ? tasaTxt + ' × ' + mesesTexto(it.meses) : tasaTxt);
-        q('#p-meses').textContent = it.meses ? '× ' + mesesTexto(it.meses) + ' (' + FREC_TXT[F.frec].toLowerCase() + ', ' + k + ' cuotas)' : 'Escribe las cuotas';
-        q('#p-total').textContent = money(monto + inter);
-        q('#p-cuota').textContent = k ? money(Math.floor((monto + inter) / k)) : '$0';
+        const r = calc();
+        if (!r) { ['#p-otro', '#p-int', '#p-total'].forEach(s => q(s).textContent = '—'); return; }
+        q('#p-otro').innerHTML = F.modo === 'cuota' ? `${pct(r.tasa, r.tasa % 1 ? 1 : 0)} % <span class="muted peq" style="font-weight:500">(${mesesTexto(r.meses)})</span>` : money(r.cuota);
+        q('#p-int').textContent = money(r.interes); q('#p-int').className = r.interes < 0 ? 'rojo' : 'verde';
+        q('#p-total').textContent = money(r.total);
       };
       const recalc = (regen = true) => {
         if (regen) { F.fechas = n() ? generarFechas(q('#p-primera').value || F.primera, F.frec, n()) : []; pintarFechas(); }
@@ -541,17 +616,18 @@ function hojaPrestamo(cid) {
           <input type="date" value="${f}" data-i="${i}" aria-label="Fecha de la cuota ${i + 1}"><span class="peq ${i < pag ? 'verde b' : 'muted'}" style="width:66px;text-align:right">${i < pag ? 'Pagada' : DIAS_C[fromISO(f).getDay()]}</span>${I('lapiz', 'i', 'style="width:17px;height:17px;color:var(--suave);margin-right:8px"')}</div>`).join('')
           + `<p class="muted peq" style="padding:4px 2px">Última cuota: ${fechaLarga(F.fechas[F.fechas.length - 1])}</p>`;
         box.querySelectorAll('input[type=date]').forEach(inp => inp.addEventListener('change', () => {
-          if (!inp.value) return; F.fechas[+inp.dataset.i] = inp.value; pintarFechas(); totales();
+          if (!inp.value) return; F.fechas[+inp.dataset.i] = inp.value; pintarFechas();
         }));
       };
-      ['#p-monto', '#p-interes', '#p-tasa'].forEach(s => q(s).addEventListener('input', () => recalc(false)));
-      F.modo = 'pct';
+      ['#p-monto', '#p-valcuota', '#p-tasa'].forEach(s => q(s).addEventListener('input', () => recalc(false)));
       q('#p-modo').addEventListener('click', e => {
         const b = e.target.closest('[data-m]'); if (!b || b.dataset.m === F.modo) return;
-        const antes = interes().interes;
+        const r = calc(); // lo calculado pasa al otro modo para no volver a escribir
         F.modo = b.dataset.m; q('#p-modo').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
-        q('#p-pct-box').classList.toggle('oculto', F.modo !== 'pct'); q('#p-pesos-box').classList.toggle('oculto', F.modo !== 'pesos');
-        if (F.modo === 'pesos' && !valorDe(h, '#p-interes') && antes) q('#p-interes').value = plataAttr(antes);
+        q('#p-cuota-box').classList.toggle('oculto', F.modo !== 'cuota'); q('#p-pct-box').classList.toggle('oculto', F.modo !== 'pct');
+        q('#p-otro-l').textContent = F.modo === 'cuota' ? 'Interés mensual' : 'Valor de cada cuota';
+        if (r && F.modo === 'cuota') q('#p-valcuota').value = plataAttr(Math.ceil(r.cuota / 100) * 100);
+        if (r && F.modo === 'pct' && r.tasa >= 0) q('#p-tasa').value = r.tasa;
         totales();
       });
       q('#p-cuotas').addEventListener('input', () => recalc());
@@ -566,28 +642,29 @@ function hojaPrestamo(cid) {
       q('#p-previo').addEventListener('change', e => {
         F.previo = e.target.checked; q('#p-pagadas-box').classList.toggle('oculto', !F.previo);
         q('#p-primera-l').firstChild.textContent = F.previo ? 'Fecha de la primera cuota (aunque ya haya pasado)' : 'Primera cuota';
-        pintarFechas(); totales();
+        pintarFechas();
       });
       q('#p-ok').onclick = async () => {
         const err = m => { q('#p-err').textContent = m; q('#p-err').scrollIntoView({ block: 'center' }); };
-        const monto = valorDe(h, '#p-monto'), k = n(), it = interes(), inter = it.interes;
-        const mora = Math.max(0, Math.min(100, parseFloat(String(q('#p-mora').value).replace(',', '.')) || 0));
+        const k = n(), r = calc();
         const pag = F.previo ? Math.max(0, parseInt(q('#p-pagadas').value, 10) || 0) : 0;
         if (!existente && !q('#c-nombre').value.trim()) return err('Escribe el nombre del cliente.');
-        if (!monto) return err('Escribe cuánto le vas a prestar.');
+        if (!valorDe(h, '#p-monto')) return err('Escribe cuánto le vas a prestar.');
         if (!k) return err('Escribe en cuántas cuotas va a pagar.');
+        if (!r) return err(F.modo === 'cuota' ? 'Escribe el valor de cada cuota.' : 'Escribe el porcentaje.');
+        if (r.interes < 0) return err('Con esas cuotas no alcanza a devolver lo que le prestas. Sube el valor de la cuota.');
         if (F.fechas.length !== k) return err('Revisa las fechas de pago.');
         if (pag >= k) return err('Las cuotas pagadas deben ser menos que el total.');
-        if (!F.previo && monto > plataEnMano()) {
-          const ok = await confirmar('No te alcanza la plata en mano', `Tienes ${money(plataEnMano())} en mano y vas a prestar ${money(monto)}. ¿Igual lo creas?`, 'Sí, crear préstamo', 'azul');
+        if (!F.previo && r.monto > plataEnMano()) {
+          const ok = await confirmar('No te alcanza la plata en mano', `Tienes ${money(plataEnMano())} en mano y vas a prestar ${money(r.monto)}. ¿Igual lo creas?`, 'Sí, crear préstamo', 'azul');
           if (!ok) return;
         }
         let c = existente;
         if (!c) { c = leerCliente(h, { id: uid(), creado: hoy() }); Object.assign(c, F.gps); DB.clientes.push(c); }
-        const p = { id: uid(), clienteId: c.id, monto, interes: inter, cuotas: k, frecuencia: F.frec, moraPct: mora, fechas: F.fechas.slice().sort(), creado: hoy(), previo: F.previo, pagos: [] };
-        if (!it.manual) { p.tasa = it.tasa; p.meses = it.meses; }
+        const p = { id: uid(), clienteId: c.id, monto: r.monto, interes: r.interes, cuotas: k, frecuencia: F.frec, moraPct: 0, fechas: F.fechas.slice().sort(), creado: hoy(), previo: F.previo, pagos: [], modo: F.modo, tasa: r.tasa, meses: r.meses };
         const v = valores(p);
-        for (let i = 0; i < pag; i++) p.pagos.push({ i, fecha: p.fechas[i] < hoy() ? p.fechas[i] : hoy(), valor: v[i].valor, mora: 0, previo: true, ts: 0 });
+        for (let i = 0; i < pag; i++) p.pagos.push({ i, fecha: p.fechas[i] < hoy() ? p.fechas[i] : hoy(), valor: v[i].valor, previo: true, g: 'previo', ts: 0 });
+        DB.config.modoCalculo = F.modo;
         DB.prestamos.push(p); guardar();
         cerrarTodas(); toast('Préstamo creado para ' + c.nombre.split(' ')[0]);
         UI.tab = 'clientes'; render(); hojaFicha(c.id);
@@ -602,36 +679,67 @@ function hojaPrestamo(cid) {
 function hojaCobro(cid) {
   const c = cliente(cid), p = prestamoActivo(cid);
   if (!p) { toast('Este cliente no tiene cuotas pendientes'); return; }
-  const i = proximaCuota(p), v = valores(p)[i], d = hoy(), mora = moraDe(p, i, d);
-  const adelantada = p.fechas[i] > d;
-  abrirHoja(`<div class="card" style="margin-top:14px;text-align:center">
-      <p class="muted">Cobrar a</p><h2 style="font-size:21px;font-weight:800">${esc(c.nombre)}</h2>
-      <div class="cobro-grande" id="k-total">${money(v.valor + mora)}</div>
-      <p class="muted">Cuota ${i + 1} de ${p.cuotas} · ${adelantada ? 'vence ' + fechaCorta(p.fechas[i]) + ' (adelantada)' : p.fechas[i] < d ? '<b class="rojo">vencía ' + fechaCorta(p.fechas[i]) + '</b>' : 'vence hoy'}</p>
-      ${mora ? `<label class="switch" style="margin-top:14px;text-align:left"><span><b>Cobrar mora</b><br><span class="muted peq">${pct(p.moraPct, 0)} % de la cuota = ${money(mora)}</span></span><input type="checkbox" id="k-mora" checked></label>` : ''}
-      <div class="form" style="margin-top:16px"><button class="btn verde alto" id="k-ok">${I('check', 'i', 'style="stroke-width:3"')}Confirmar cobro</button>
-      <button class="btn gris bajo" data-acc="cerrar">Cancelar</button></div></div>`, {
-    montar: h => {
-      const m = h.querySelector('#k-mora');
-      if (m) m.onchange = () => { h.querySelector('#k-total').textContent = money(v.valor + (m.checked ? mora : 0)); };
-      h.querySelector('#k-ok').onclick = () => {
-        const pago = registrarCobro(p, m ? m.checked : true);
-        cerrarHoja(); refrescarTodo(); hojaCobrado(c, p, pago);
-      };
-    }
-  });
+  const d = hoy(), pend = cuotasPendientes(p);
+  let n = Math.min(pend.length, Math.max(1, cuotasPendientesHasta(p, d).length));
+  let sel = new Set(pend.slice(0, n)), verTodas = false;
+  const h = abrirHoja('');
+  const total = () => [...sel].reduce((s, i) => s + faltaCuota(p, i), 0);
+  const pintar = () => {
+    const mostrar = verTodas ? pend : pend.slice(0, Math.max(6, Math.max(...sel, pend[0]) - pend[0] + 3));
+    const filas = mostrar.map(i => {
+      const e = estadoCuota(p, i, d), pag = pagadoCuota(p, i);
+      const sub = { vencida: '<span class="rojo b">No pagó ese día → quedará naranja</span>', abono: 'Abonó ' + money(pag) + ' · falta el resto', hoy: '<span class="ambar b">Hoy</span>', futura: 'Adelantada' }[e] || '';
+      return `<label class="pago-fila"><input type="checkbox" data-i="${i}" ${sel.has(i) ? 'checked' : ''}><i class="barrita ${e}"></i>
+        <span class="c1"><b>${fechaCorta(p.fechas[i])} · cuota ${i + 1}</b><span>${sub}</span></span><b class="${sel.has(i) ? '' : 'muted'}">${money(faltaCuota(p, i))}</b></label>`;
+    }).join('');
+    refrescarHoja(h, `<div style="padding:4px 16px 20px" class="form">
+      <div style="text-align:center"><p class="muted">Registrar pago de</p><h2 style="font-size:21px;font-weight:800">${esc(c.nombre)}</h2></div>
+      <div class="card fila" style="margin:0"><b style="font-size:15px">¿Cuántas cuotas te pagó?</b>
+        <div style="display:flex;align-items:center;gap:10px"><button type="button" class="paso-btn" id="k-menos" aria-label="Una cuota menos">−</button><b style="font-size:26px;min-width:26px;text-align:center" id="k-n">${sel.size}</b><button type="button" class="paso-btn on" id="k-mas" aria-label="Una cuota más">+</button></div></div>
+      <div class="card" style="margin:0;padding:6px 12px"><p class="muted peq" style="padding:8px 0 4px">Se marcan en orden. Si es un caso especial, toca las que quieras.</p>${filas}
+        ${!verTodas && mostrar.length < pend.length ? `<button type="button" class="btn borde bajo" style="margin:8px 0" id="k-mas-filas">Ver más cuotas (${pend.length - mostrar.length})</button>` : ''}</div>
+      <div class="card form" style="margin:0;gap:8px"><label class="campo">¿Cuánto recibiste?<input id="k-monto" class="plata" inputmode="numeric" value="${plataAttr(total())}" style="height:56px;font-size:24px;border:2px solid var(--verde);color:var(--verde)"></label>
+        <span class="muted peq" id="k-nota">Se llena solo con lo marcado. Si te dio menos, escribe lo que recibiste: lo que falte queda como <b>abono</b>.</span>
+        <label class="campo">Fecha del pago<input id="k-fecha" type="date" value="${d}"></label></div>
+      <p class="error" id="k-err"></p>
+      <button class="btn verde alto" id="k-ok">${I('check', 'i', 'style="stroke-width:3"')}<span id="k-ok-t">Confirmar pago · ${money(total())}</span></button>
+      <button class="btn gris bajo" data-acc="cerrar">Cancelar</button></div>`);
+    const q = s => h.querySelector(s);
+    const nota = () => {
+      const m = valorDe(h, '#k-monto'), t = total();
+      q('#k-ok-t').textContent = 'Confirmar pago · ' + money(m);
+      q('#k-nota').innerHTML = m < t ? `Queda como <b>abono</b>: faltarán ${money(t - m)} de lo marcado.` : m > t ? `Sobran ${money(m - t)}: se abonan a las siguientes cuotas.` : 'Se llena solo con lo marcado. Si te dio menos, escribe lo que recibiste: lo que falte queda como <b>abono</b>.';
+    };
+    q('#k-monto').addEventListener('input', nota);
+    const cambiarN = k => { n = Math.max(1, Math.min(pend.length, k)); sel = new Set(pend.slice(0, n)); pintar(); };
+    q('#k-menos').onclick = () => cambiarN(sel.size - 1);
+    q('#k-mas').onclick = () => cambiarN(sel.size + 1);
+    if (q('#k-mas-filas')) q('#k-mas-filas').onclick = () => { verTodas = true; pintar(); };
+    h.querySelectorAll('input[data-i]').forEach(ch => ch.addEventListener('change', () => {
+      const i = +ch.dataset.i; ch.checked ? sel.add(i) : sel.delete(i); pintar();
+    }));
+    q('#k-ok').onclick = () => {
+      const m = valorDe(h, '#k-monto');
+      if (!m) { q('#k-err').textContent = 'Escribe cuánto recibiste.'; return; }
+      if (!sel.size) { q('#k-err').textContent = 'Marca al menos una cuota.'; return; }
+      const res = registrarPago(p, [...sel], m, q('#k-fecha').value || d);
+      cerrarHoja(); refrescarTodo(); hojaCobrado(c, p, res);
+    };
+  };
+  pintar();
 }
-function hojaCobrado(c, p, pago) {
+function hojaCobrado(c, p, res) {
+  const completas = res.regs.filter(r => pagada(p, r.i)).length, abono = res.regs.find(r => !pagada(p, r.i));
   const quedan = cuotasPendientesHasta(p, hoy()).length, termino = prestamoPagado(p);
   abrirHoja(`<div class="card" style="margin-top:14px;text-align:center">
     <div style="width:64px;height:64px;border-radius:32px;background:var(--verde);display:flex;align-items:center;justify-content:center;margin:0 auto 10px">${I('check', 'i', 'style="width:34px;height:34px;color:#fff;stroke-width:3"')}</div>
-    <h2 style="font-size:20px;font-weight:800">Cobro guardado</h2>
-    <div class="cobro-grande verde">${money(pago.valor + pago.mora)}</div>
-    <p class="muted">${termino ? '<b class="verde">¡' + esc(c.nombre.split(' ')[0]) + ' terminó de pagar!</b>' : 'Le falta ' + money(saldo(p)) + ' · ' + (p.cuotas - p.pagos.length) + ' cuotas'}</p>
-    ${quedan ? `<p class="rojo b" style="margin-top:6px">Todavía debe ${quedan} ${quedan === 1 ? 'cuota vencida' : 'cuotas vencidas'}</p>` : ''}
+    <h2 style="font-size:20px;font-weight:800">Pago guardado</h2>
+    <div class="cobro-grande verde">${money(res.total)}</div>
+    <p class="muted">${completas ? completas + (completas === 1 ? ' cuota pagada' : ' cuotas pagadas') : ''}${completas && abono ? ' + ' : ''}${abono ? 'abono a la cuota ' + (abono.i + 1) : ''}</p>
+    <p class="muted" style="margin-top:4px">${termino ? '<b class="verde">¡' + esc(c.nombre.split(' ')[0]) + ' terminó de pagar!</b>' : 'Le falta ' + money(saldo(p))}</p>
+    ${quedan ? `<p class="rojo b" style="margin-top:6px">Todavía debe ${quedan} ${quedan === 1 ? 'cuota' : 'cuotas'} hasta hoy</p>` : ''}
     <div class="form" style="margin-top:16px">
       <button class="btn morado" data-acc="recibo" data-id="${c.id}">${I('recibo')}Enviar recibo por WhatsApp</button>
-      ${quedan ? `<button class="btn verde" data-acc="cobrarOtra" data-id="${c.id}">${I('check')}Cobrar otra cuota</button>` : ''}
       <button class="btn gris bajo" data-acc="cerrar">Listo</button></div></div>`);
 }
 
@@ -790,7 +898,7 @@ function vistaReportes() {
     <div><b style="font-size:21px" class="rojo">${atr}</b><br><span class="muted peq">atrasados hoy</span></div></div>`;
   if (UI.rep.tipo === 'dia' || UI.rep.tipo === 'semana') {
     h += `<div class="card"><h2 style="margin-bottom:4px">Cobros (${r.nCobros})</h2>${r.cobros.length ? '' : '<p class="muted">No hubo cobros.</p>'}`;
-    for (const o of r.cobros.slice().reverse()) { const c = cliente(o.p.clienteId); h += `<div class="item"><span class="num verde">${I('check', 'i', 'style="width:15px;height:15px;stroke-width:3.4"')}</span><span class="cuerpo"><b>${esc(c ? c.nombre : '—')}</b><span>Cuota ${o.x.i + 1}/${o.p.cuotas} · ${fechaCorta(o.fecha)}${o.x.mora ? ' · mora ' + money(o.x.mora) : ''}</span></span><span class="der verde">${money(o.x.valor + o.x.mora)}</span></div>`; }
+    for (const o of r.cobros.slice().reverse()) { const c = cliente(o.p.clienteId); h += `<div class="item"><span class="num verde">${I('check', 'i', 'style="width:15px;height:15px;stroke-width:3.4"')}</span><span class="cuerpo"><b>${esc(c ? c.nombre : '—')}</b><span>Cuota ${o.x.i + 1}/${o.p.cuotas} · ${fechaCorta(o.fecha)}${o.x.valor < valores(o.p)[o.x.i].valor ? ' · abono' : ''}</span></span><span class="der verde">${money(o.x.valor + (o.x.mora || 0))}</span></div>`; }
     h += '</div>';
   }
   h += `<div style="margin:12px 16px 0"><button class="btn morado" data-acc="pdf">${I('pdf')}Descargar reporte en PDF</button></div>`;
@@ -1051,7 +1159,7 @@ const ACC = {
     const nombre = c.nombre.split(' ')[0];
     let t;
     if (pend.length > 1 || (pend.length && p.fechas[i] < d)) {
-      const deuda = pend.reduce((s, k) => s + v[k].valor + moraDe(p, k, d), 0);
+      const deuda = pend.reduce((s, k) => s + faltaCuota(p, k), 0);
       t = `Hola ${nombre}, te recuerdo que tienes ${pend.length} ${pend.length === 1 ? 'cuota pendiente' : 'cuotas pendientes'} por ${money(deuda)}. ¿Hoy a qué hora paso? Gracias.`;
     } else if (p.fechas[i] === d) t = `Hola ${nombre}, hoy te toca la cuota ${i + 1} de ${p.cuotas} por ${money(v[i].valor)}. ¿A qué hora paso? Gracias.`;
     else t = `Hola ${nombre}, te recuerdo que tu cuota ${i + 1} de ${p.cuotas} por ${money(v[i].valor)} vence el ${fechaLarga(p.fechas[i]).toLowerCase()}. Gracias.`;
@@ -1059,19 +1167,18 @@ const ACC = {
   },
   recibo: id => {
     const c = cliente(id);
-    const ps = prestamosDe(id).map(p => ({ p, x: p.pagos.filter(q => !q.previo).sort((a, b) => b.ts - a.ts)[0] })).filter(o => o.x).sort((a, b) => b.x.ts - a.x.ts);
-    if (!ps.length) { toast('Aún no hay cobros para este cliente'); return; }
-    const { p, x } = ps[0];
-    const ok = Nativo.compartir(reciboPNG(c, p, x), 'recibo-' + x.fecha + '-' + (x.i + 1) + '.png', 'image/png', 'Recibo de pago · cuota ' + (x.i + 1) + ' de ' + p.cuotas, telWA(c.cel));
+    const ps = prestamosDe(id).map(p => ({ p, g: grupos(p).slice(-1)[0] })).filter(o => o.g).sort((a, b) => (b.g[0].ts || 0) - (a.g[0].ts || 0));
+    if (!ps.length) { toast('Aún no hay pagos para este cliente'); return; }
+    const { p, g } = ps[0];
+    const ok = Nativo.compartir(reciboPNG(c, p, g), 'recibo-' + g[0].fecha + '-' + (g[0].i + 1) + '.png', 'image/png', 'Recibo de pago · ' + money(g.reduce((s, x) => s + x.valor, 0)), telWA(c.cel));
     if (!ok) toast('No se pudo crear el recibo');
   },
   deshacer: async id => {
     const p = prestamoActivo(id) || prestamosDe(id).slice(-1)[0];
     if (!p) return;
-    const reales = p.pagos.filter(q => !q.previo); if (!reales.length) return;
-    const ult = reales.reduce((a, b) => (b.ts || 0) > (a.ts || 0) ? b : a);
-    if (!await confirmar('¿Deshacer el último cobro?', `Cuota ${ult.i + 1} · ${money(ult.valor + ult.mora)} del ${fechaSimple(ult.fecha)}. Úsalo solo si lo registraste por error.`, 'Sí, deshacer')) return;
-    deshacerCobro(p); toast('Cobro deshecho'); refrescarTodo();
+    const g = grupos(p).slice(-1)[0]; if (!g) return;
+    if (!await confirmar('¿Deshacer el último pago?', `${money(g.reduce((s, x) => s + x.valor, 0))} del ${fechaSimple(g[0].fecha)} (cuota ${g.map(x => x.i + 1).join(', ')}). Úsalo solo si lo registraste por error.`, 'Sí, deshacer')) return;
+    deshacerCobro(p); toast('Pago deshecho'); refrescarTodo();
   },
   borrarCliente: async id => {
     const c = cliente(id);
