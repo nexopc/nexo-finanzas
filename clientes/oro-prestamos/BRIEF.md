@@ -59,3 +59,11 @@ Fase actual: 4 (código en `app/`, versión 1.0.0). Se publica en `docs/oro/` co
 - Nube: Firebase + cifrado AES-256 en el celular. Pasos en `FIREBASE.md`. Pendiente probar con un proyecto real.
 - Pendiente / no incluido: avisos push a una hora fija (iPhone necesita servidor), aprobación de borrados por el otro socio
   (hoy solo se le avisa), venta de oro a crédito.
+
+## Cómo se publica cada actualización
+1. Cristóbal escribe el cambio en el chat (qué pantalla, qué quiere, captura si puede).
+2. Claude edita `app/index.html` y sube la versión en `APP_VERSION` (index.html) y `VERSION` (sw.js):
+   1.0.1 arreglo · 1.1.0 función nueva · 2.0.0 cambio grande.
+3. Probar en 390×844 con datos de ejemplo → `python3 build.py` → commit en la rama → push a `main` (con permiso de Cristóbal).
+4. En el iPhone: abrir la app con internet; si sale "Hay una versión nueva", cerrarla y abrirla otra vez.
+- Nunca borrar ni renombrar datos guardados (localStorage `oro-prestamos-v1`). Si un dato cambia de forma, convertirlo al cargar.
