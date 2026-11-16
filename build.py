@@ -33,4 +33,7 @@ for f in ['manifest.webmanifest', 'version.json', 'README.md', 'CONTEXTO.md']:
     if (root/f).exists(): shutil.copy(root/f, dist/f)
 shutil.copytree(root/'icons', dist/'icons')
 (dist/'.nojekyll').write_text('')
+# Apps de clientes: se publican en docs/<carpeta> (ej. docs/oro → /nexo-finanzas/oro/)
+for src, dst in [('clientes/oro-prestamos/app', 'oro')]:
+    if (root/src).exists(): shutil.copytree(root/src, dist/dst)
 print('docs/ listo — versión', ver)

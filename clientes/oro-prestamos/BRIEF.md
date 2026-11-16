@@ -1,6 +1,6 @@
 # Brief — App de oro y préstamos (cliente hipotético)
 
-Fase actual: 3 (cuestionario en `cuestionario.html`) → sigue 4 (código) cuando lleguen las respuestas. Formato: ver `/FORMATO-APPS-CLIENTES.md`.
+Fase actual: 4 (código en `app/`, versión 1.0.0). Se publica en `docs/oro/` con `python3 build.py` → https://nexopc.github.io/nexo-finanzas/oro/
 
 ## Usuarios y dispositivos
 - 2 socios, 1 iPhone cada uno (13 Pro Max y 17 Pro Max). Compatibilidad objetivo: iOS 16.4+.
@@ -51,3 +51,11 @@ Fase actual: 3 (cuestionario en `cuestionario.html`) → sigue 4 (código) cuand
 ## Comercial
 - Precio sugerido: $2.000.000 desarrollo (50/50) + $100.000/mes.
 - Plazo: 2 semanas. Todo dato del negocio se llena dentro de la app (nada en el repositorio).
+
+## App 1.0.0 (fase 4)
+- `app/index.html` (toda la app), `app/sw.js` (sin internet), `app/manifest.webmanifest`, `app/icons/`.
+- El cuestionario va dentro de la app como asistente de inicio (6 pasos) y se puede editar en ⚙ → Ajustes del negocio.
+- Botón "Probar con datos de ejemplo" (PIN 1234). ⚙ → Empezar de cero lo borra.
+- Nube: Firebase + cifrado AES-256 en el celular. Pasos en `FIREBASE.md`. Pendiente probar con un proyecto real.
+- Pendiente / no incluido: avisos push a una hora fija (iPhone necesita servidor), aprobación de borrados por el otro socio
+  (hoy solo se le avisa), venta de oro a crédito.
