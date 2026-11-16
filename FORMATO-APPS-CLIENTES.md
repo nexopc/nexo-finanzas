@@ -39,6 +39,12 @@ No se salta ninguna fase. Si falta una respuesta importante, Claude lo dice ante
 - Montos en pesos colombianos con formato `$ 1.250.000`.
 - Datos reales del cliente nunca se suben al repositorio.
 
+## Lo que aprendimos con la app de oro y préstamos
+- El cuestionario de la fase 3 también va **dentro de la app** como asistente de inicio, y se puede editar después en Ajustes.
+- Siempre incluir **"Probar con datos de ejemplo"** para que Cristóbal la pruebe en su iPhone antes de entregarla.
+- **Un color = una acción** (color + ícono + verbo, siempre en el mismo lugar), para que se use de memoria.
+- Publicar para pruebas en `docs/<carpeta>` (GitHub Pages) con `build.py` y pedir permiso antes de subir a main.
+
 ## Entrega al cliente
 - Enlace de la app + video corto (Filmora) mostrando cómo instalarla y usarla.
 - Versión y novedades en `version.json`.
