@@ -37,6 +37,17 @@ Fase actual: 2 (boceto en `boceto.html`) → sigue 3 (cuestionario al cliente). 
 ## Código
 - Va en esta carpeta (`clientes/oro-prestamos/`), no en un repo aparte.
 
+## Boceto v2 (decidido)
+- Un color = una acción (color + ícono + verbo, siempre en el mismo lugar):
+  dorado comprar oro · verde vender oro · azul prestar · turquesa cobrar · morado enviar (WhatsApp/recibo/PDF)
+  · rosa recordatorio · rojo gasto/atraso · gris ver/editar · naranja solo para "vence hoy".
+- Tomado de "Tus Finanzas" (boceto de prestamista): préstamo en 3 pasos que se llena solo (sin domingos ni festivos),
+  calendario de colores por cliente, cobrar varias cuotas o abono, cliente que venía del cuaderno, cierre del día
+  (capital vs. interés), capital total. No se toma la ruta con mapa.
+- Pestañas: Inicio · Oro · (+) · Préstamos · Caja. Botón + con 6 acciones.
+- **Modo prueba** con datos de ejemplo y sin nube para que Cristóbal la pruebe en su iPhone antes de entregar.
+- Guía de primera vez (4 botones) + video corto en Filmora.
+
 ## Comercial
 - Precio sugerido: $2.000.000 desarrollo (50/50) + $100.000/mes.
 - Plazo: 2 semanas. Todo dato del negocio se llena dentro de la app (nada en el repositorio).

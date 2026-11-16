@@ -7,305 +7,514 @@
 <style>
 :root{
   --bg:#F4F1EA;--page-ink:#1D1A14;--muted:#6E675A;
-  --phone:#0F0D0A;--card:#1B1813;--card2:#24201A;--line:#332D24;
-  --ink:#F5EFE2;--sub:#A89F8C;--gold:#D9AE52;--gold2:#F1D58E;
-  --ok:#5BC489;--bad:#EF6B5B;--warn:#F0B44C;--wa:#25D366;--blue:#6FA8FF;
+  --phone:#0F0D0A;--card:#1B1813;--card2:#26221B;--line:#352F25;
+  --ink:#F5EFE2;--sub:#B3AA96;--gold2:#F1D58E;
+  /* UN COLOR = UNA ACCIÓN */
+  --compra:#E0A526;--venta:#22A55B;--presta:#3B7BF6;--cobra:#14B8A6;
+  --enviar:#8B5CF6;--recor:#EC4899;--hoy:#F97316;--mal:#EF4444;--ver:#3A342B;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B0A08;--page-ink:#EDE6D6;--muted:#9B9282}}
 :root[data-theme="dark"]{--bg:#0B0A08;--page-ink:#EDE6D6;--muted:#9B9282}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--page-ink);font:15px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;padding:28px 16px 60px}
-header{max-width:1200px;margin:0 auto 24px}
+header,.part{max-width:1200px;margin:0 auto}
 header h1{font-size:26px;letter-spacing:-.02em}
-header p{color:var(--muted);max-width:720px;margin-top:6px}
+header p{color:var(--muted);max-width:760px;margin-top:6px}
 .tag{display:inline-block;font-size:12px;border:1px solid var(--muted);color:var(--muted);border-radius:99px;padding:2px 10px;margin:10px 6px 0 0}
-.grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:34px 22px;justify-items:center}
+.part{margin-top:44px}
+.part h2{font-size:20px;display:flex;align-items:center;gap:10px}
+.part h2 i{width:14px;height:14px;border-radius:4px;display:inline-block}
+.part>p{color:var(--muted);margin:4px 0 18px;max-width:760px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:34px 22px;justify-items:center}
 figure{width:100%;max-width:330px}
 figcaption{margin-top:12px;font-size:14px;color:var(--muted)}
 figcaption b{color:var(--page-ink);display:block;font-size:15px}
 .phone{position:relative;width:100%;aspect-ratio:390/844;background:var(--phone);border-radius:44px;border:9px solid #2A2621;box-shadow:0 20px 40px -18px rgba(0,0,0,.5);overflow:hidden;color:var(--ink)}
-.island{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:92px;height:26px;background:#000;border-radius:20px;z-index:5}
+.phone.tall{aspect-ratio:390/1060}
+.island{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:92px;height:26px;background:#000;border-radius:20px;z-index:6}
 .status{display:flex;justify-content:space-between;padding:12px 24px 0;font-size:12px;font-weight:600;height:40px}
-.scr{position:absolute;inset:40px 0 0;overflow:hidden;padding:6px 14px 80px}
-.top{display:flex;justify-content:space-between;align-items:center;margin:4px 0 10px}
-.top h2{font-size:22px;letter-spacing:-.02em}
-.av{width:30px;height:30px;border-radius:50%;background:var(--card2);display:grid;place-items:center;font-size:12px;color:var(--gold)}
+.scr{position:absolute;inset:40px 0 0;overflow:hidden;padding:6px 14px 84px}
+.top{display:flex;justify-content:space-between;align-items:center;margin:4px 0 10px;gap:8px}
+.top h3{font-size:21px;letter-spacing:-.02em}
+.back{display:flex;align-items:center;gap:4px}
+.av{width:30px;height:30px;border-radius:50%;background:var(--card2);display:grid;place-items:center;font-size:12px;color:var(--compra)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px;margin-bottom:9px}
 .hero{background:linear-gradient(140deg,#3A2E15,#1B1813 70%);border-color:#4A3B1C}
-.lbl{font-size:11px;color:var(--sub);text-transform:uppercase;letter-spacing:.06em}
-.big{font-size:27px;font-weight:700;letter-spacing:-.02em;color:var(--gold2)}
+.lbl{font-size:10.5px;color:var(--sub);text-transform:uppercase;letter-spacing:.06em}
+.big{font-size:26px;font-weight:750;letter-spacing:-.02em;color:var(--gold2)}
 .mid{font-size:17px;font-weight:650}
 .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.chip{font-size:10.5px;padding:2px 8px;border-radius:99px;background:rgba(91,196,137,.15);color:var(--ok);white-space:nowrap}
-.chip.b{background:rgba(239,107,91,.15);color:var(--bad)}
-.chip.w{background:rgba(240,180,76,.15);color:var(--warn)}
-.chip.g{background:rgba(217,174,82,.15);color:var(--gold)}
-.k3{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
-.k3 div{background:rgba(0,0,0,.25);border-radius:12px;padding:8px}
-.k3 .v{font-size:14px;font-weight:650;margin-top:2px}
-.ok{color:var(--ok)}.bad{color:var(--bad)}.sub{color:var(--sub);font-size:12px}
-.sec{font-size:13px;font-weight:650;margin:12px 2px 6px;display:flex;justify-content:space-between}
-.sec span{color:var(--gold);font-weight:500}
-.pp{display:flex;align-items:center;gap:9px;padding:9px 0;border-top:1px solid var(--line)}
-.pp:first-of-type{border-top:0}
+.chip{font-size:10.5px;padding:2px 8px;border-radius:99px;white-space:nowrap;font-weight:600}
+.c-ok{background:rgba(34,165,91,.18);color:#5FD08E}.c-mal{background:rgba(239,68,68,.18);color:#FF8A80}
+.c-hoy{background:rgba(249,115,22,.18);color:#FFA463}.c-gold{background:rgba(224,165,38,.18);color:var(--compra)}
+.k2{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
+.k2 div{background:rgba(0,0,0,.28);border-radius:12px;padding:7px 8px}
+.k2 .v{font-size:13.5px;font-weight:650;margin-top:1px}
+.ok{color:#5FD08E}.bad{color:#FF8A80}.sub{color:var(--sub);font-size:12px}
+.sec{font-size:13px;font-weight:650;margin:11px 2px 6px;display:flex;justify-content:space-between;align-items:center}
+.pp{display:flex;align-items:center;gap:9px;padding:8px 0;border-top:1px solid var(--line)}
+.pp:first-child{border-top:0}
 .ini{width:32px;height:32px;border-radius:50%;background:var(--card2);display:grid;place-items:center;font-size:12px;font-weight:600;flex:none}
 .pp .t{flex:1;min-width:0}.pp .t b{font-size:13.5px;display:block}
-.wa{background:var(--wa);color:#05230F;font-size:11.5px;font-weight:700;border-radius:10px;padding:6px 9px;white-space:nowrap}
-.msg{background:#0B2A1A;border:1px dashed #2C6B48;border-radius:12px;padding:8px 10px;font-size:11.5px;color:#BDEFD2;margin-top:6px}
-.tabs{position:absolute;left:0;right:0;bottom:0;height:72px;background:rgba(20,18,14,.96);border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:flex-start;padding-top:9px;font-size:10px;color:var(--sub)}
-.tabs div{text-align:center;width:54px}.tabs i{display:block;font-style:normal;font-size:18px;margin-bottom:2px}
-.tabs .on{color:var(--gold)}
-.plus{width:50px!important;height:50px;margin-top:-22px;border-radius:50%;background:var(--gold);color:#1B1300;display:grid;place-items:center;font-size:28px;font-weight:300;box-shadow:0 6px 18px rgba(217,174,82,.4)}
-.bubble{position:absolute;right:0;top:42%;background:var(--blue);color:#06142B;border-radius:14px 0 0 14px;padding:9px 7px 9px 9px;font-size:16px;z-index:4;box-shadow:-4px 4px 14px rgba(0,0,0,.4)}
-.bubble em{position:absolute;top:-6px;left:-6px;background:var(--bad);color:#fff;font-style:normal;font-size:10px;font-weight:700;width:18px;height:18px;border-radius:50%;display:grid;place-items:center}
-.float{position:absolute;right:10px;left:44px;top:30%;background:#162238;border:1px solid #2C4470;border-radius:18px;padding:12px;z-index:4;box-shadow:0 14px 30px rgba(0,0,0,.55)}
-.float .row b{font-size:14px}
-.rm{background:rgba(255,255,255,.05);border-radius:10px;padding:8px;margin-top:7px;font-size:12px}
-.rm small{display:block;color:#9FB4D8;font-size:10.5px;margin-top:2px}
-.min{font-size:11px;color:#9FB4D8;border:1px solid #2C4470;border-radius:8px;padding:2px 8px}
-.dim{position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:3}
-.field{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-bottom:7px}
-.field .v{font-size:17px;font-weight:600;margin-top:1px}
-.field.hl{border-color:var(--gold)}
-.seg{display:flex;background:var(--card2);border-radius:11px;padding:3px;margin-bottom:9px}
-.seg div{flex:1;text-align:center;padding:6px;font-size:12.5px;border-radius:9px;color:var(--sub)}
-.seg .on{background:var(--gold);color:#1B1300;font-weight:650}
-.btn{background:var(--gold);color:#1B1300;text-align:center;font-weight:700;border-radius:14px;padding:12px;margin-top:6px}
-.btn.o{background:transparent;color:var(--gold);border:1px solid var(--gold)}
-.bars{display:flex;align-items:flex-end;gap:7px;height:96px;margin-top:10px}
-.bars div{flex:1;display:flex;gap:2px;align-items:flex-end;height:100%}
-.bars i{flex:1;border-radius:4px 4px 0 0;background:var(--gold)}
-.bars i+i{background:#7A6A47}
-.xl{display:flex;gap:7px;font-size:10px;color:var(--sub);margin-top:4px}.xl span{flex:1;text-align:center}
+svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round;flex:none}
+/* botones de acción por color */
+.act{display:flex;align-items:center;justify-content:center;gap:7px;border-radius:14px;font-weight:700;font-size:13.5px;padding:10px 8px;color:#fff}
+.a-compra{background:var(--compra);color:#231600}.a-venta{background:var(--venta)}.a-presta{background:var(--presta)}
+.a-cobra{background:var(--cobra);color:#042420}.a-enviar{background:var(--enviar)}.a-recor{background:var(--recor)}
+.a-mal{background:var(--mal)}.a-ver{background:var(--ver);color:var(--ink)}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:2px 0 9px}
+.acts .act{flex-direction:column;padding:12px 6px;font-size:13px;gap:5px}
+.acts .act svg.i{width:24px;height:24px}
+.mini{font-size:11.5px;padding:6px 9px;border-radius:10px}
+.tabs{position:absolute;left:0;right:0;bottom:0;height:74px;background:rgba(20,18,14,.97);border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:flex-start;padding-top:9px;font-size:10px;color:var(--sub);z-index:2}
+.tabs div{text-align:center;width:56px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tabs .on{color:var(--gold2)}
+.plus{width:52px!important;height:52px;margin-top:-22px;border-radius:50%;background:var(--ink);color:#1B1300;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.5)}
+.plus svg.i{width:26px;height:26px}
+.bubble{position:absolute;right:0;top:44%;background:var(--recor);color:#fff;border-radius:14px 0 0 14px;padding:10px 7px 10px 9px;z-index:4;box-shadow:-4px 4px 14px rgba(0,0,0,.4)}
+.bubble em{position:absolute;top:-6px;left:-6px;background:#fff;color:#9D174D;font-style:normal;font-size:10px;font-weight:800;width:18px;height:18px;border-radius:50%;display:grid;place-items:center}
+.float{position:absolute;right:10px;left:40px;top:28%;background:#2A1322;border:1px solid #6B2350;border-radius:18px;padding:12px;z-index:5;box-shadow:0 14px 30px rgba(0,0,0,.55)}
+.rm{background:rgba(255,255,255,.06);border-radius:10px;padding:8px;margin-top:7px;font-size:12px;display:flex;gap:8px;align-items:flex-start}
+.rm small{display:block;color:#F3A9CF;font-size:10.5px;margin-top:2px}
+.rm input{margin-top:2px;accent-color:var(--recor)}
+.min{font-size:11px;color:#F3A9CF;border:1px solid #6B2350;border-radius:8px;padding:2px 8px}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:3}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#1A1712;border-radius:24px 24px 0 0;padding:10px 14px 30px;z-index:5;border-top:1px solid var(--line)}
+.grab{width:40px;height:5px;border-radius:3px;background:#4A4235;margin:0 auto 10px}
+.field{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:7px 10px;margin-bottom:7px}
+.field .v{font-size:16px;font-weight:600;margin-top:1px}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.seg{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.seg span{flex:1 0 28%;text-align:center;padding:6px 4px;font-size:12px;border-radius:9px;background:var(--card2);color:var(--sub)}
+.seg .on{background:var(--ink);color:#1B1300;font-weight:700}
+.step{display:flex;align-items:center;gap:7px;font-weight:650;font-size:14px;margin-bottom:8px}
+.step em{font-style:normal;width:22px;height:22px;border-radius:50%;background:var(--presta);color:#fff;display:grid;place-items:center;font-size:12px}
+.sum{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:rgba(34,165,91,.12);border-radius:12px;padding:9px}
+.bigbtn{display:flex;align-items:center;justify-content:center;gap:8px;border-radius:16px;font-weight:750;font-size:15px;padding:13px;margin-top:6px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:6px}
+.cal span{aspect-ratio:1;border-radius:7px;display:grid;place-items:center;font-size:11px;font-weight:600;background:#2A251D;color:var(--sub)}
+.cal .h{background:none;font-size:10px;aspect-ratio:auto}
+.cal .p{background:var(--venta);color:#fff}.cal .t{background:var(--hoy);color:#2A1000}.cal .n{background:var(--mal);color:#fff}
+.cal .ab{background:linear-gradient(180deg,var(--venta) 55%,#7F1D1D 55%);color:#fff}
+.cal .hy{outline:2px solid var(--ink);background:#3A3226;color:var(--ink)}
+.cal .x{opacity:.35}
+.leg{display:flex;flex-wrap:wrap;gap:6px 10px;font-size:10.5px;color:var(--sub);margin-top:8px}
+.leg i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.q{display:flex;align-items:center;gap:9px;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+.q:first-child{border-top:0}
+.q .bar{width:7px;height:30px;border-radius:3px}
+.q input{width:20px;height:20px;accent-color:var(--cobra)}
 .lock{position:absolute;inset:40px 0 0;display:flex;flex-direction:column;align-items:center;padding:50px 24px;text-align:center}
 .logo{width:74px;height:74px;border-radius:22px;background:linear-gradient(135deg,var(--gold2),#9C7426);display:grid;place-items:center;color:#2A1C00;font-weight:800;font-size:24px;margin-bottom:14px}
-.face{width:86px;height:86px;border:3px solid var(--gold);border-radius:26px;margin:36px 0 14px;display:grid;place-items:center;font-size:36px}
-.dots{display:flex;gap:12px;margin:26px 0 18px}.dots i{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--gold)}.dots i.f{background:var(--gold)}
-.lgd{display:flex;gap:12px;font-size:11px;color:var(--sub);margin-top:6px}.lgd i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;background:var(--gold)}.lgd i.c{background:#7A6A47}
-.notes{max-width:1200px;margin:40px auto 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.face{width:86px;height:86px;border:3px solid var(--gold2);border-radius:26px;margin:36px 0 14px;display:grid;place-items:center;color:var(--gold2)}
+.face svg.i{width:46px;height:46px;stroke-width:1.8}
+.dots{display:flex;gap:12px;margin:26px 0 18px}.dots i{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--gold2)}.dots i.f{background:var(--gold2)}
+.bars{display:flex;align-items:flex-end;gap:7px;height:90px;margin-top:10px}
+.bars div{flex:1;display:flex;gap:2px;align-items:flex-end;height:100%}
+.bars i{flex:1;border-radius:4px 4px 0 0;background:var(--venta)}
+.bars i+i{background:var(--compra)}
+.xl{display:flex;gap:7px;font-size:10px;color:var(--sub);margin-top:4px}.xl span{flex:1;text-align:center}
+.env{border-radius:14px;padding:10px;margin-bottom:7px}
+.legend{display:flex;flex-direction:column;gap:8px}
+.lg{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:9px}
+.lg .act{width:46px;height:46px;padding:0;flex:none;border-radius:13px}
+.lg .act svg.i{width:24px;height:24px}
+.lg b{font-size:14px;display:block}
+.notes{max-width:1200px;margin:44px auto 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
 .notes div{border:1px solid color-mix(in srgb,var(--muted) 40%,transparent);border-radius:14px;padding:14px;font-size:14px}
 .notes b{display:block;margin-bottom:4px}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="compra" viewBox="0 0 24 24"><path d="M12 3v11"/><path d="m7 9 5 5 5-5"/><path d="M4 20h16"/></symbol>
+  <symbol id="venta" viewBox="0 0 24 24"><path d="M12 20V9"/><path d="m7 14 5-5 5 5"/><path d="M4 4h16"/></symbol>
+  <symbol id="presta" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></symbol>
+  <symbol id="cobra" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></symbol>
+  <symbol id="enviar" viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></symbol>
+  <symbol id="recor" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21h4"/></symbol>
+  <symbol id="gasto" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M8 12.5h8"/></symbol>
+  <symbol id="editar" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+  <symbol id="home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8v10H3z"/></symbol>
+  <symbol id="oro" viewBox="0 0 24 24"><path d="M3 19h18l-3-7H6z"/><path d="M8 12l2-5h4l2 5"/></symbol>
+  <symbol id="people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M17 4a4 4 0 0 1 0 8M22 21a7 7 0 0 0-4-6.3"/></symbol>
+  <symbol id="caja" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V4h8v3"/><path d="M3 12h18"/></symbol>
+  <symbol id="chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="face" viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M9 9v1M15 9v1M12 9v4h-1"/><path d="M9 16c1.5 1.2 4.5 1.2 6 0"/></symbol>
+  <symbol id="chev" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+</svg>
+
 <header>
-  <h1>Boceto: app de oro y préstamos</h1>
-  <p>Así se vería en el iPhone. Los nombres, cifras y el negocio son de ejemplo; el precio del oro sale del internacional y se calcula en pesos por gramo.</p>
-  <span class="tag">iPhone · iOS 16.4+</span><span class="tag">2 socios en tiempo real</span><span class="tag">Datos cifrados</span><span class="tag">Fase 2 de 4</span>
+  <h1>Boceto v2: app de oro y préstamos</h1>
+  <p>Ahora con <b>un color fijo por acción</b>, tomado del boceto "Tus Finanzas". Cada botón lleva su color, su ícono y un verbo, y siempre está en el mismo lugar. Así, después de unos días, el ojo lo encuentra sin leer. Nombres y cifras de ejemplo.</p>
+  <span class="tag">iPhone · iOS 16.4+</span><span class="tag">2 socios en tiempo real</span><span class="tag">Datos cifrados</span><span class="tag">Modo prueba para tu iPhone</span>
 </header>
 
+<!-- ================= BASE ================= -->
+<section class="part">
+<h2>0 · Lo básico</h2>
+<p>El código de colores, la entrada, el Inicio y el botón +, que es el que más van a usar.</p>
 <div class="grid">
 
-<!-- 1 BLOQUEO -->
 <figure>
-<div class="phone"><div class="island"></div><div class="status"><span>9:41</span><span>●●● 100%</span></div>
+<div class="phone"><div class="island"></div><div class="status"><span>9:41</span><span>100%</span></div>
+<div class="scr" style="padding-bottom:14px">
+  <div class="top"><h3>Un color = una acción</h3></div>
+  <div class="legend">
+    <div class="lg"><div class="act a-compra"><svg class="i"><use href="#compra"/></svg></div><div><b style="color:var(--compra)">DORADO · Comprar oro</b><span class="sub">Entra oro, sale plata</span></div></div>
+    <div class="lg"><div class="act a-venta"><svg class="i"><use href="#venta"/></svg></div><div><b style="color:#5FD08E">VERDE · Vender oro</b><span class="sub">Sale oro, entra plata</span></div></div>
+    <div class="lg"><div class="act a-presta"><svg class="i"><use href="#presta"/></svg></div><div><b style="color:#8DB4FF">AZUL · Prestar</b><span class="sub">Nuevo préstamo o cliente</span></div></div>
+    <div class="lg"><div class="act a-cobra"><svg class="i"><use href="#cobra"/></svg></div><div><b style="color:#5EEAD4">TURQUESA · Cobrar</b><span class="sub">Cuota, varias cuotas o abono</span></div></div>
+    <div class="lg"><div class="act a-enviar"><svg class="i"><use href="#enviar"/></svg></div><div><b style="color:#C4B5FD">MORADO · Enviar</b><span class="sub">WhatsApp, recibo, reporte PDF</span></div></div>
+    <div class="lg"><div class="act a-recor"><svg class="i"><use href="#recor"/></svg></div><div><b style="color:#F9A8D4">ROSA · Recordar</b><span class="sub">Notas para ti o tu socio</span></div></div>
+    <div class="lg"><div class="act a-mal"><svg class="i"><use href="#gasto"/></svg></div><div><b style="color:#FF8A80">ROJO · Gasto o atraso</b><span class="sub">Sale plata o hay problema</span></div></div>
+    <div class="lg"><div class="act a-ver"><svg class="i"><use href="#editar"/></svg></div><div><b>GRIS · Ver o editar</b><span class="sub">Cambiar datos o fechas</span></div></div>
+  </div>
+</div>
+</div>
+<figcaption><b>Código de colores</b>Se muestra la primera vez que abren la app y queda en Más → Ayuda. El naranja se usa solo para marcar lo que vence hoy.</figcaption>
+</figure>
+
+<figure>
+<div class="phone"><div class="island"></div><div class="status"><span>9:41</span><span>100%</span></div>
   <div class="lock">
     <div class="logo">O&amp;C</div>
     <div class="mid">Oro &amp; Capital</div>
     <div class="sub">Hola, Socio 1</div>
-    <div class="face">◉‿◉</div>
+    <div class="face"><svg class="i"><use href="#face"/></svg></div>
     <div class="sub">Mira la pantalla para entrar</div>
     <div class="dots"><i class="f"></i><i class="f"></i><i></i><i></i></div>
-    <div class="sub" style="color:var(--gold)">Usar PIN</div>
+    <div class="sub" style="color:var(--gold2)">Usar PIN</div>
   </div>
 </div>
-<figcaption><b>1. Entrada segura</b>Face ID o PIN. La app alterna cuál pide de vez en cuando.</figcaption>
+<figcaption><b>1. Entrada</b>Face ID o PIN, y a veces cambia cuál pide. Para tu prueba la app trae un modo con datos de ejemplo.</figcaption>
 </figure>
 
-<!-- 2 INICIO -->
 <figure>
-<div class="phone"><div class="island"></div><div class="status"><span>9:41</span><span>●●● 100%</span></div>
+<div class="phone tall"><div class="island"></div><div class="status"><span>9:41</span><span>100%</span></div>
 <div class="scr">
-  <div class="top"><h2>Inicio</h2><div class="av">S1</div></div>
+  <div class="top"><h3>Inicio</h3><div class="av">S1</div></div>
   <div class="card hero">
-    <div class="row"><span class="lbl">Gramo oro 24k hoy</span><span class="chip">▲ 0,8 %</span></div>
+    <div class="row"><span class="lbl">Gramo de oro 24k hoy</span><span class="chip c-ok">▲ 0,8 %</span></div>
     <div class="big">$ 514.100</div>
-    <div class="sub">Onza US$ 4.100 · TRM $ 3.900 · hace 5 min</div>
-    <div class="k3">
-      <div><span class="lbl">Oro en mano</span><div class="v">320,4 g finos</div></div>
+    <div class="sub">Compras a $ 437.000 · vendes a $ 488.400</div>
+    <div class="k2">
+      <div><span class="lbl">Oro en mano</span><div class="v">320,4 g</div></div>
       <div><span class="lbl">Vale hoy</span><div class="v">$ 164,7 M</div></div>
       <div><span class="lbl">Me costó</span><div class="v">$ 142,1 M</div></div>
-      <div><span class="lbl">Ganancia</span><div class="v ok">+ $ 22,6 M</div></div>
+      <div><span class="lbl">Ganancia oro</span><div class="v ok">+ $ 22,6 M</div></div>
     </div>
   </div>
-  <div class="sec">Cobrar hoy <span>Ver todos</span></div>
-  <div class="card">
-    <div class="pp"><div class="ini">MR</div><div class="t"><b>María Rentería</b><span class="sub">Cuota 4 de 10 · $ 350.000</span></div><div class="wa">WhatsApp</div></div>
-    <div class="msg">"Buenos días, María. Le recuerdo su cuota de $350.000 de hoy. ¡Gracias!"</div>
+  <div class="card"><div class="row"><span class="lbl">Capital total</span><b class="mid">$ 224,2 M</b></div>
+    <div class="sub" style="margin-top:3px">Oro $ 164,7 M · Prestado $ 38,4 M · Caja $ 21,1 M</div></div>
+  <div class="acts">
+    <div class="act a-compra"><svg class="i"><use href="#compra"/></svg>Comprar oro</div>
+    <div class="act a-venta"><svg class="i"><use href="#venta"/></svg>Vender oro</div>
+    <div class="act a-presta"><svg class="i"><use href="#presta"/></svg>Prestar</div>
+    <div class="act a-cobra"><svg class="i"><use href="#cobra"/></svg>Cobrar</div>
   </div>
-  <div class="sec">Atrasados <span class="chip b">2</span></div>
+  <div class="sec">Cobrar hoy <span class="chip c-hoy">3 · $ 720.000</span></div>
   <div class="card">
-    <div class="pp"><div class="ini">JP</div><div class="t"><b>Jhon Palacios</b><span class="sub">3 días tarde · $ 520.000</span></div><div class="wa">WhatsApp</div></div>
+    <div class="pp"><div class="ini">MR</div><div class="t"><b>María Rentería</b><span class="sub">Cuota 4 de 10 · $ 350.000</span></div><div class="act a-enviar mini"><svg class="i"><use href="#enviar"/></svg>Recordar</div></div>
+    <div class="pp"><div class="ini">AM</div><div class="t"><b>Ana Mosquera</b><span class="sub">Cuota 9 de 24 · $ 50.000</span></div><div class="act a-enviar mini"><svg class="i"><use href="#enviar"/></svg>Recordar</div></div>
+  </div>
+  <div class="sec">Atrasados <span class="chip c-mal">2 · $ 600.000</span></div>
+  <div class="card">
+    <div class="pp"><div class="ini" style="color:#FF8A80">JP</div><div class="t"><b>Jhon Palacios</b><span class="sub">3 días tarde · $ 520.000</span></div><div class="act a-enviar mini"><svg class="i"><use href="#enviar"/></svg>Cobrar</div></div>
   </div>
 </div>
-<div class="bubble">🔔<em>3</em></div>
-<div class="tabs"><div class="on"><i>⌂</i>Inicio</div><div><i>◈</i>Oro</div><div class="plus">+</div><div><i>$</i>Préstamos</div><div><i>▤</i>Reportes</div></div>
+<div class="bubble"><svg class="i"><use href="#recor"/></svg><em>3</em></div>
+<div class="tabs"><div class="on"><svg class="i"><use href="#home"/></svg>Inicio</div><div><svg class="i"><use href="#oro"/></svg>Oro</div><div class="plus"><svg class="i"><use href="#plus"/></svg></div><div><svg class="i"><use href="#people"/></svg>Préstamos</div><div><svg class="i"><use href="#caja"/></svg>Caja</div></div>
 </div>
-<figcaption><b>2. Inicio</b>Precio del gramo, capital en oro y ganancia. Abajo los cobros de hoy y los atrasados con su mensaje listo. La pestaña azul de la derecha son los recordatorios minimizados.</figcaption>
+<figcaption><b>2. Inicio</b>Arriba el oro, después el capital total (idea de "Tus Finanzas") y los 4 botones grandes de colores. Abajo, a quién cobrar. Si hoy no hay cobros, sale el próximo. La pestaña rosa del borde son los recordatorios.</figcaption>
 </figure>
 
-<!-- 3 INICIO SIN COBROS -->
 <figure>
-<div class="phone"><div class="island"></div><div class="status"><span>9:41</span><span>●●● 100%</span></div>
+<div class="phone"><div class="island"></div><div class="status"><span>9:41</span><span>100%</span></div>
+<div class="scr"><div class="top"><h3>Inicio</h3></div><div class="card hero"><span class="lbl">Gramo de oro 24k hoy</span><div class="big">$ 514.100</div></div></div>
+<div class="dim"></div>
+<div class="sheet">
+  <div class="grab"></div>
+  <div class="mid" style="text-align:center;margin-bottom:12px">¿Qué vas a hacer?</div>
+  <div class="acts">
+    <div class="act a-compra"><svg class="i"><use href="#compra"/></svg>Comprar oro</div>
+    <div class="act a-venta"><svg class="i"><use href="#venta"/></svg>Vender oro</div>
+    <div class="act a-presta"><svg class="i"><use href="#presta"/></svg>Prestar</div>
+    <div class="act a-cobra"><svg class="i"><use href="#cobra"/></svg>Cobrar</div>
+    <div class="act a-mal"><svg class="i"><use href="#gasto"/></svg>Gasto</div>
+    <div class="act a-recor"><svg class="i"><use href="#recor"/></svg>Recordatorio</div>
+  </div>
+  <div class="sub" style="text-align:center">Siempre en el mismo orden y del mismo color</div>
+</div>
+</div>
+<figcaption><b>3. Botón +</b>Se abre desde cualquier pantalla. Son 6 acciones: las 4 grandes, más gasto y recordatorio.</figcaption>
+</figure>
+
+</div>
+</section>
+
+<!-- ================= ORO ================= -->
+<section class="part">
+<h2><i style="background:var(--compra)"></i>Parte 1 · Oro</h2>
+<p>Comprar, vender, saber cuánto oro hay y cuánto se gana. Todo parte del precio internacional, con un % que se cambia cada día o para cada cliente.</p>
+<div class="grid">
+
+<figure>
+<div class="phone"><div class="island"></div><div class="status"><span>9:41</span><span>100%</span></div>
 <div class="scr">
-  <div class="top"><h2>Inicio</h2><div class="av">S2</div></div>
-  <div class="card hero">
-    <div class="row"><span class="lbl">Gramo oro 24k hoy</span><span class="chip b">▼ 0,3 %</span></div>
-    <div class="big">$ 512.600</div>
-    <div class="k3">
-      <div><span class="lbl">Oro en mano</span><div class="v">320,4 g</div></div>
-      <div><span class="lbl">Ganancia</span><div class="v ok">+ $ 22,1 M</div></div>
-    </div>
+  <div class="top"><div class="back"><svg class="i"><use href="#chev"/></svg><h3 style="color:var(--compra)">Comprar oro</h3></div></div>
+  <div class="f2">
+    <div class="field"><div class="lbl">Gramos</div><div class="v">25,00</div></div>
+    <div class="field"><div class="lbl">Ley</div><div class="v">0,90</div></div>
   </div>
-  <div class="sec">Cobrar hoy</div>
-  <div class="card" style="text-align:center;padding:16px 12px">
-    <div style="font-size:26px">✓</div><b>Hoy no hay cobros</b>
-    <div class="sub">Todos al día</div>
-  </div>
-  <div class="sec">Próximo cobro <span class="chip g">en 2 días</span></div>
+  <div class="sub" style="margin:-2px 0 8px">= <b style="color:var(--ink)">22,50 g finos</b></div>
+  <div class="field" style="border-color:var(--compra)"><div class="row"><div class="lbl">Precio por gramo fino</div><span class="chip c-gold">85 % del internacional</span></div><div class="row"><div class="v">$ 437.000</div><span class="sub">− 1 % · + 1 %</span></div></div>
+  <div class="field"><div class="lbl">Le compro a</div><div class="v">Carlos M. · minero</div></div>
+  <div class="field"><div class="lbl">Pago con</div><div class="v">Efectivo</div></div>
+  <div class="card"><div class="row"><span class="sub">Total a pagar</span><b class="mid">$ 9.832.500</b></div>
+    <div class="row"><span class="sub">Si lo vendes hoy ganas</span><b class="ok">+ $ 1.156.400</b></div></div>
+  <div class="bigbtn a-compra"><svg class="i"><use href="#compra"/></svg>Guardar compra</div>
+</div>
+</div>
+<figcaption><b>4. Comprar oro (dorado)</b>Gramos × ley = gramos finos. El precio sale solo del internacional y se ajusta en un toque (−1 % / +1 %) según el día o el cliente.</figcaption>
+</figure>
+
+<figure>
+<div class="phone"><div class="island"></div><div class="status"><span>9:41</span><span>100%</span></div>
+<div class="scr">
+  <div class="top"><div class="back"><svg class="i"><use href="#chev"/></svg><h3 style="color:#5FD08E">Vender oro</h3></div></div>
+  <div class="card"><div class="row"><span class="sub">Tienes</span><b>320,4 g finos</b></div></div>
+  <div class="field"><div class="lbl">Gramos finos que vendo</div><div class="v">40,00</div></div>
+  <div class="field" style="border-color:var(--venta)"><div class="row"><div class="lbl">Precio por gramo</div><span class="chip c-ok">95 % del internacional</span></div><div class="row"><div class="v">$ 488.400</div><span class="sub">− 1 % · + 1 %</span></div></div>
+  <div class="field"><div class="lbl">Le vendo a</div><div class="v">Comprador Medellín</div></div>
   <div class="card">
-    <div class="pp"><div class="ini">LC</div><div class="t"><b>Luis Córdoba</b><span class="sub">Jueves 19 nov · $ 280.000</span></div><div class="wa">Recordar</div></div>
-    <div class="msg">"Hola, Luis. Le recuerdo que el jueves 19 vence su cuota de $280.000."</div>
+    <div class="row"><span class="sub">Recibo</span><b class="mid">$ 19.536.000</b></div>
+    <div class="row"><span class="sub">Me había costado</span><b>$ 17.740.000</b></div>
+    <div class="row"><span class="sub">Gano en esta venta</span><b class="ok">+ $ 1.796.000</b></div>
   </div>
+  <div class="bigbtn a-venta" style="color:#fff"><svg class="i"><use href="#venta"/></svg>Guardar venta</div>
 </div>
-<div class="bubble">🔔<em>1</em></div>
-<div class="tabs"><div class="on"><i>⌂</i>Inicio</div><div><i>◈</i>Oro</div><div class="plus">+</div><div><i>$</i>Préstamos</div><div><i>▤</i>Reportes</div></div>
 </div>
-<figcaption><b>3. Día sin cobros</b>Si hoy no hay a quién cobrar, aparece el próximo cliente con un recordatorio anticipado.</figcaption>
+<figcaption><b>5. Vender oro (verde)</b>Muestra al instante lo que había costado ese oro (costo promedio) y la ganancia real de la venta.</figcaption>
 </figure>
 
-<!-- 4 COMPRAR ORO -->
 <figure>
-<div class="phone"><div class="island"></div><div class="status"><span>9:41</span><span>●●● 100%</span></div>
+<div class="phone"><div class="island"></div><div class="status"><span>9:41</span><span>100%</span></div>
 <div class="scr">
-  <div class="top"><h2>Nuevo movimiento</h2><div class="sub" style="color:var(--gold)">Cerrar</div></div>
-  <div class="seg"><div class="on">Comprar oro</div><div>Vender oro</div><div>Préstamo</div></div>
-  <div class="field"><div class="lbl">Gramos en la balanza</div><div class="v">25,00 g</div></div>
-  <div class="field"><div class="lbl">Ley / pureza</div><div class="v">0,90 <span class="sub">→ 22,50 g finos</span></div></div>
-  <div class="field hl"><div class="row"><div class="lbl">Precio por gramo fino</div><span class="chip g">85 % del internacional</span></div><div class="v">$ 437.000 <span class="sub">✎ editar</span></div></div>
-  <div class="field"><div class="lbl">A quién le compro</div><div class="v">Minero · Carlos M.</div></div>
-  <div class="card" style="margin-top:4px">
-    <div class="row"><span class="sub">Total a pagar</span><b class="mid">$ 9.832.500</b></div>
-    <div class="row"><span class="sub">Ganancia si lo vendo hoy al 95 %</span><b class="ok">+ $ 1.156.400</b></div>
-  </div>
-  <div class="btn">Guardar compra</div>
-</div>
-</div>
-<figcaption><b>4. Comprar o vender</b>El precio sale solo del internacional, con el % que pongan, y se puede cambiar en cada compra según el día o el cliente.</figcaption>
-</figure>
-
-<!-- 5 ORO / INVENTARIO -->
-<figure>
-<div class="phone"><div class="island"></div><div class="status"><span>9:41</span><span>●●● 100%</span></div>
-<div class="scr">
-  <div class="top"><h2>Oro</h2><div class="sub" style="color:var(--gold)">Contar oro</div></div>
+  <div class="top"><h3>Oro</h3><div class="act a-ver mini"><svg class="i"><use href="#editar"/></svg>Contar oro</div></div>
   <div class="card">
     <div class="row"><span class="lbl">Debería tener</span><b>320,4 g</b></div>
     <div class="row" style="margin-top:4px"><span class="lbl">Contado el 14 nov</span><b>319,9 g</b></div>
-    <div class="row" style="margin-top:6px"><span class="sub">Diferencia</span><span class="chip w">− 0,5 g · revisar</span></div>
+    <div class="row" style="margin-top:6px"><span class="sub">Diferencia</span><span class="chip c-hoy">− 0,5 g · revisar</span></div>
   </div>
   <div class="card">
     <div class="row"><span class="lbl">Costo promedio</span><b>$ 443.500 /g</b></div>
-    <div class="row" style="margin-top:4px"><span class="lbl">Precio de venta hoy</span><b>$ 488.400 /g</b></div>
+    <div class="row" style="margin-top:4px"><span class="lbl">Vale hoy</span><b>$ 514.100 /g</b></div>
   </div>
-  <div class="sec">Últimos movimientos <span>Todos</span></div>
+  <div class="sec">Movimientos</div>
   <div class="card">
-    <div class="pp"><div class="ini" style="color:var(--ok)">↓</div><div class="t"><b>Compra · 22,5 g</b><span class="sub">Hoy 9:12 · Socio 1</span></div><b>$ 9,8 M</b></div>
-    <div class="pp"><div class="ini" style="color:var(--gold)">↑</div><div class="t"><b>Venta · 40,0 g</b><span class="sub">Ayer · Socio 2</span></div><div style="text-align:right"><b>$ 19,5 M</b><div class="ok" style="font-size:11px">+ $ 1,8 M</div></div></div>
-    <div class="pp"><div class="ini" style="color:var(--ok)">↓</div><div class="t"><b>Compra · 12,0 g</b><span class="sub">13 nov · Socio 2</span></div><b>$ 5,2 M</b></div>
+    <div class="pp"><div class="ini" style="background:var(--compra);color:#231600"><svg class="i"><use href="#compra"/></svg></div><div class="t"><b>Compra · 22,5 g</b><span class="sub">Hoy 9:12 · Socio 1</span></div><b>$ 9,8 M</b></div>
+    <div class="pp"><div class="ini" style="background:var(--venta);color:#fff"><svg class="i"><use href="#venta"/></svg></div><div class="t"><b>Venta · 40,0 g</b><span class="sub">Ayer · Socio 2</span></div><div style="text-align:right"><b>$ 19,5 M</b><div class="ok" style="font-size:11px">+ $ 1,8 M</div></div></div>
+    <div class="pp"><div class="ini" style="background:var(--compra);color:#231600"><svg class="i"><use href="#compra"/></svg></div><div class="t"><b>Compra · 12,0 g</b><span class="sub">13 nov · Socio 2</span></div><b>$ 5,2 M</b></div>
   </div>
 </div>
-<div class="tabs"><div><i>⌂</i>Inicio</div><div class="on"><i>◈</i>Oro</div><div class="plus">+</div><div><i>$</i>Préstamos</div><div><i>▤</i>Reportes</div></div>
+<div class="tabs"><div><svg class="i"><use href="#home"/></svg>Inicio</div><div class="on"><svg class="i"><use href="#oro"/></svg>Oro</div><div class="plus"><svg class="i"><use href="#plus"/></svg></div><div><svg class="i"><use href="#people"/></svg>Préstamos</div><div><svg class="i"><use href="#caja"/></svg>Caja</div></div>
 </div>
-<figcaption><b>5. Inventario</b>Lo que debería haber contra lo que de verdad hay, el costo promedio y quién hizo cada movimiento.</figcaption>
+<figcaption><b>6. Inventario</b>Lo que debería haber contra lo contado. Cada movimiento lleva el color de su acción y dice qué socio lo hizo.</figcaption>
 </figure>
 
-<!-- 6 PRÉSTAMOS -->
 <figure>
-<div class="phone"><div class="island"></div><div class="status"><span>9:41</span><span>●●● 100%</span></div>
+<div class="phone"><div class="island"></div><div class="status"><span>9:41</span><span>100%</span></div>
 <div class="scr">
-  <div class="top"><h2>Préstamos</h2><div class="sub" style="color:var(--gold)">+ Cliente</div></div>
-  <div class="card">
-    <div class="k3" style="margin-top:0">
-      <div><span class="lbl">Prestado</span><div class="v">$ 38,4 M</div></div>
-      <div><span class="lbl">Por cobrar</span><div class="v">$ 45,1 M</div></div>
-      <div><span class="lbl">Intereses mes</span><div class="v ok">+ $ 3,2 M</div></div>
-      <div><span class="lbl">Clientes</span><div class="v">21 activos</div></div>
-    </div>
-  </div>
-  <div class="seg"><div class="on">Todos</div><div>Hoy</div><div>Atrasados</div><div>Pagados</div></div>
-  <div class="card">
-    <div class="pp"><div class="ini">JP</div><div class="t"><b>Jhon Palacios</b><span class="sub">Saldo $ 2.080.000</span></div><span class="chip b">3 días tarde</span></div>
-    <div class="pp"><div class="ini">MR</div><div class="t"><b>María Rentería</b><span class="sub">Saldo $ 2.100.000</span></div><span class="chip w">Hoy</span></div>
-    <div class="pp"><div class="ini">LC</div><div class="t"><b>Luis Córdoba</b><span class="sub">Saldo $ 1.400.000</span></div><span class="chip">Al día</span></div>
-    <div class="pp"><div class="ini">AM</div><div class="t"><b>Ana Mosquera</b><span class="sub">Saldo $ 900.000</span></div><span class="chip">Al día</span></div>
-  </div>
-</div>
-<div class="tabs"><div><i>⌂</i>Inicio</div><div><i>◈</i>Oro</div><div class="plus">+</div><div class="on"><i>$</i>Préstamos</div><div><i>▤</i>Reportes</div></div>
-</div>
-<figcaption><b>6. Préstamos</b>Sirve igual con 5 que con 500 clientes. Al tocar uno: cuotas, abonos, recibo en PDF y WhatsApp.</figcaption>
-</figure>
-
-<!-- 7 REPORTES -->
-<figure>
-<div class="phone"><div class="island"></div><div class="status"><span>9:41</span><span>●●● 100%</span></div>
-<div class="scr">
-  <div class="top"><h2>Reportes</h2><div class="sub" style="color:var(--gold)">PDF</div></div>
-  <div class="seg"><div>Día</div><div class="on">Semana</div><div>Mes</div><div>Año</div></div>
+  <div class="top"><h3>Reporte de oro</h3><div class="act a-enviar mini"><svg class="i"><use href="#enviar"/></svg>PDF</div></div>
+  <div class="seg"><span>Día</span><span class="on">Semana</span><span>Mes</span></div>
   <div class="card">
     <div class="row"><span class="lbl">Ganancia oro</span><b class="ok">+ $ 4,6 M</b></div>
     <div class="bars">
-      <div><i style="height:60%"></i><i style="height:40%"></i></div>
-      <div><i style="height:35%"></i><i style="height:55%"></i></div>
-      <div><i style="height:80%"></i><i style="height:30%"></i></div>
-      <div><i style="height:45%"></i><i style="height:70%"></i></div>
-      <div><i style="height:90%"></i><i style="height:50%"></i></div>
-      <div><i style="height:25%"></i><i style="height:20%"></i></div>
+      <div><i style="height:60%"></i><i style="height:40%"></i></div><div><i style="height:35%"></i><i style="height:55%"></i></div>
+      <div><i style="height:80%"></i><i style="height:30%"></i></div><div><i style="height:45%"></i><i style="height:70%"></i></div>
+      <div><i style="height:90%"></i><i style="height:50%"></i></div><div><i style="height:25%"></i><i style="height:20%"></i></div>
     </div>
     <div class="xl"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span></div>
-    <div class="lgd"><span><i></i>Vendido</span><span><i class="c"></i>Comprado</span></div>
+    <div class="leg"><span><i style="background:var(--venta)"></i>Vendido</span><span><i style="background:var(--compra)"></i>Comprado</span></div>
+  </div>
+  <div class="card" style="border-color:#1F5C3A"><div class="row"><span class="lbl" style="color:#5FD08E">Vendí</span><b>118,0 g · $ 57,4 M</b></div><div class="sub" style="text-align:right">a $ 486.400 /g en promedio</div></div>
+  <div class="card" style="border-color:#5C4512"><div class="row"><span class="lbl" style="color:var(--compra)">Compré</span><b>96,5 g · $ 42,0 M</b></div><div class="sub" style="text-align:right">a $ 435.200 /g en promedio</div></div>
+</div>
+<div class="tabs"><div><svg class="i"><use href="#home"/></svg>Inicio</div><div class="on"><svg class="i"><use href="#oro"/></svg>Oro</div><div class="plus"><svg class="i"><use href="#plus"/></svg></div><div><svg class="i"><use href="#people"/></svg>Préstamos</div><div><svg class="i"><use href="#caja"/></svg>Caja</div></div>
+</div>
+<figcaption><b>7. Reportes de oro</b>Cuánto vendió y a cuánto (verde), cuánto compró y a cuánto (dorado). Se envía en PDF por WhatsApp (morado).</figcaption>
+</figure>
+
+</div>
+</section>
+
+<!-- ================= PRÉSTAMOS ================= -->
+<section class="part">
+<h2><i style="background:var(--presta)"></i>Parte 2 · Préstamos</h2>
+<p>Lo mejor de "Tus Finanzas": préstamo en 3 pasos que se llena solo, calendario de colores, cobro de varias cuotas o abono, y clientes que vienen del cuaderno.</p>
+<div class="grid">
+
+<figure>
+<div class="phone"><div class="island"></div><div class="status"><span>9:41</span><span>100%</span></div>
+<div class="scr">
+  <div class="top"><h3>Préstamos</h3><div class="act a-presta mini"><svg class="i"><use href="#presta"/></svg>Prestar</div></div>
+  <div class="card"><div class="k2" style="margin-top:0">
+    <div><span class="lbl">Prestado</span><div class="v">$ 38,4 M</div></div>
+    <div><span class="lbl">Por cobrar</span><div class="v">$ 45,1 M</div></div>
+    <div><span class="lbl">Intereses mes</span><div class="v ok">+ $ 3,2 M</div></div>
+    <div><span class="lbl">Clientes</span><div class="v">21 activos</div></div>
+  </div></div>
+  <div class="seg"><span class="on">Todos</span><span>Hoy</span><span>Atrasados</span></div>
+  <div class="card">
+    <div class="pp"><div class="ini">JP</div><div class="t"><b>Jhon Palacios</b><span class="sub">Debe $ 2.080.000</span></div><span class="chip c-mal">3 días tarde</span></div>
+    <div class="pp"><div class="ini">MR</div><div class="t"><b>María Rentería</b><span class="sub">Debe $ 2.100.000</span></div><span class="chip c-hoy">Hoy</span></div>
+    <div class="pp"><div class="ini">LC</div><div class="t"><b>Luis Córdoba</b><span class="sub">Debe $ 1.400.000</span></div><span class="chip c-ok">Al día</span></div>
+    <div class="pp"><div class="ini">AM</div><div class="t"><b>Ana Mosquera</b><span class="sub">Debe $ 900.000</span></div><span class="chip c-ok">Al día</span></div>
+  </div>
+</div>
+<div class="tabs"><div><svg class="i"><use href="#home"/></svg>Inicio</div><div><svg class="i"><use href="#oro"/></svg>Oro</div><div class="plus"><svg class="i"><use href="#plus"/></svg></div><div class="on"><svg class="i"><use href="#people"/></svg>Préstamos</div><div><svg class="i"><use href="#caja"/></svg>Caja</div></div>
+</div>
+<figcaption><b>8. Lista de clientes</b>Sin límite de clientes. Rojo = atrasado, naranja = hoy, verde = al día.</figcaption>
+</figure>
+
+<figure>
+<div class="phone tall"><div class="island"></div><div class="status"><span>9:41</span><span>100%</span></div>
+<div class="scr" style="padding-bottom:14px">
+  <div class="top"><div class="back"><svg class="i"><use href="#chev"/></svg><h3 style="color:#8DB4FF">Nuevo préstamo</h3></div></div>
+  <div class="card">
+    <div class="step"><em>1</em>¿A quién le prestas?</div>
+    <div class="field"><div class="lbl">Nombre</div><div class="v">Carlos Mena</div></div>
+    <div class="f2"><div class="field"><div class="lbl">Celular</div><div class="v">310 555 0142</div></div><div class="field"><div class="lbl">Cédula</div><div class="v">1.077…</div></div></div>
   </div>
   <div class="card">
-    <div class="row"><span class="lbl">Vendí</span><b>118,0 g · $ 57,4 M</b></div>
-    <div class="sub" style="text-align:right">Promedio $ 486.400 /g</div>
-    <div class="row" style="margin-top:6px"><span class="lbl">Compré</span><b>96,5 g · $ 42,0 M</b></div>
-    <div class="sub" style="text-align:right">Promedio $ 435.200 /g</div>
+    <div class="step"><em>2</em>¿Cuánto y cómo paga?</div>
+    <div class="f2"><div class="field"><div class="lbl">Le presto</div><div class="v">$ 1.000.000</div></div><div class="field"><div class="lbl">Interés</div><div class="v ok">20 %</div></div></div>
+    <div class="seg"><span class="on">Diario</span><span>Semanal</span><span>Quincenal</span><span>Mensual</span></div>
+    <div class="f2"><div class="field"><div class="lbl">Cuotas</div><div class="v">24</div></div><div class="field"><div class="lbl">Mora</div><div class="v">5 %</div></div></div>
+    <div class="sum"><div><span class="sub">Me debe</span><div class="mid">$ 1.200.000</div></div><div><span class="sub">Cada cuota</span><div class="mid ok">$ 50.000</div></div></div>
   </div>
-  <div class="card"><div class="row"><span class="lbl">Préstamos cobrados</span><b>$ 6,1 M</b></div></div>
+  <div class="card">
+    <div class="step"><em>3</em>Fechas (se llenan solas)</div>
+    <div class="sub">Desde mar 17 nov · sin domingos ni festivos · última: mar 15 dic</div>
+    <div class="sub" style="margin-top:6px;color:var(--ink)">☐ Ya venía del cuaderno (le presté antes)</div>
+  </div>
+  <div class="bigbtn a-presta" style="color:#fff"><svg class="i"><use href="#presta"/></svg>Crear préstamo</div>
 </div>
-<div class="tabs"><div><i>⌂</i>Inicio</div><div><i>◈</i>Oro</div><div class="plus">+</div><div><i>$</i>Préstamos</div><div class="on"><i>▤</i>Reportes</div></div>
 </div>
-<figcaption><b>7. Reportes</b>Cuánto vendió y a cuánto, cuánto compró y a cuánto, y lo cobrado en préstamos. Se exportan en PDF.</figcaption>
+<figcaption><b>9. Prestar (azul)</b>3 pasos y la app calcula el resto. Con "Ya venía del cuaderno" se meten los préstamos viejos marcando qué cuotas pagaron.</figcaption>
 </figure>
 
-<!-- 8 RECORDATORIOS -->
 <figure>
-<div class="phone"><div class="island"></div><div class="status"><span>9:41</span><span>●●● 100%</span></div>
-<div class="scr">
-  <div class="top"><h2>Inicio</h2><div class="av">S1</div></div>
-  <div class="card hero"><span class="lbl">Gramo oro 24k hoy</span><div class="big">$ 514.100</div></div>
-  <div class="card"><div class="pp"><div class="ini">MR</div><div class="t"><b>María Rentería</b><span class="sub">Cuota de hoy</span></div></div></div>
+<div class="phone tall"><div class="island"></div><div class="status"><span>9:41</span><span>100%</span></div>
+<div class="scr" style="padding-bottom:14px">
+  <div class="top"><div class="back"><svg class="i"><use href="#chev"/></svg><h3>Carlos Mena</h3></div><span class="chip c-mal">Debe 2</span></div>
+  <div class="card hero">
+    <span class="lbl">Le falta pagar</span><div class="big">$ 720.000</div>
+    <div class="sub">Pagó 10 de 24 cuotas de $ 50.000</div>
+  </div>
+  <div class="acts" style="grid-template-columns:1fr 1fr 1fr">
+    <div class="act a-cobra"><svg class="i"><use href="#cobra"/></svg>Cobrar</div>
+    <div class="act a-enviar"><svg class="i"><use href="#enviar"/></svg>Recordar</div>
+    <div class="act a-enviar"><svg class="i"><use href="#enviar"/></svg>Recibo</div>
+  </div>
+  <div class="card">
+    <div class="row"><b>Noviembre 2026</b><svg class="i"><use href="#cal"/></svg></div>
+    <div class="cal">
+      <span class="h">L</span><span class="h">M</span><span class="h">M</span><span class="h">J</span><span class="h">V</span><span class="h">S</span><span class="h">D</span>
+      <span class="x">26</span><span class="x">27</span><span class="x">28</span><span class="x">29</span><span class="x">30</span><span class="x">31</span><span class="x">1</span>
+      <span class="x">2</span><span class="p">3</span><span class="p">4</span><span class="t">5</span><span class="p">6</span><span class="p">7</span><span class="x">8</span>
+      <span class="p">9</span><span class="n">10</span><span class="p">11</span><span class="ab">12</span><span class="p">13</span><span class="p">14</span><span class="x">15</span>
+      <span class="x">16</span><span class="hy">17</span><span>18</span><span>19</span><span>20</span><span>21</span><span class="x">22</span>
+    </div>
+    <div class="leg"><span><i style="background:var(--venta)"></i>Pagó</span><span><i style="background:var(--hoy)"></i>Pagó tarde</span><span><i style="background:var(--mal)"></i>No pagó</span><span><i style="background:linear-gradient(180deg,var(--venta) 55%,#7F1D1D 55%)"></i>Abono</span><span><i style="background:#2A251D;outline:1px solid var(--ink)"></i>Hoy</span></div>
+    <div class="sub" style="margin-top:6px">Domingos y festivos (2 y 16 nov) en gris. Toca un día para editar esa cuota.</div>
+  </div>
 </div>
+</div>
+<figcaption><b>10. Ficha del cliente</b>El calendario de colores de "Tus Finanzas": de un vistazo se ve cómo paga. Los 3 botones de colores están siempre arriba.</figcaption>
+</figure>
+
+<figure>
+<div class="phone"><div class="island"></div><div class="status"><span>9:41</span><span>100%</span></div>
+<div class="scr"><div class="top"><h3>Carlos Mena</h3></div></div>
+<div class="dim"></div>
+<div class="sheet">
+  <div class="grab"></div>
+  <div style="text-align:center"><span class="sub">Cobrar a</span><div class="mid">Carlos Mena</div></div>
+  <div class="card" style="margin-top:9px"><div class="row"><b style="font-size:14px">¿Cuántas cuotas pagó?</b><div class="row" style="gap:12px"><span class="act a-ver mini">−</span><b class="mid">2</b><span class="act a-cobra mini">+</span></div></div></div>
+  <div class="card">
+    <div class="q"><input type="checkbox" checked aria-label="Cuota 10 nov"><span class="bar" style="background:var(--mal)"></span><span style="flex:1"><b>Mar 10 nov</b><br><span class="sub">No pagó ese día</span></span><b>$ 50.000</b></div>
+    <div class="q"><input type="checkbox" checked aria-label="Cuota 12 nov"><span class="bar" style="background:linear-gradient(180deg,var(--venta) 55%,#7F1D1D 55%)"></span><span style="flex:1"><b>Jue 12 nov</b><br><span class="sub">Falta resto del abono</span></span><b>$ 20.000</b></div>
+    <div class="q"><input type="checkbox" aria-label="Cuota 17 nov"><span class="bar" style="background:var(--hoy)"></span><span style="flex:1"><b>Mar 17 nov</b><br><span class="sub">Hoy</span></span><span class="sub">$ 50.000</span></div>
+  </div>
+  <div class="field" style="border:2px solid var(--cobra)"><div class="lbl">¿Cuánto recibiste?</div><div class="v" style="color:#5EEAD4;font-size:22px">$ 70.000</div></div>
+  <div class="sub" style="margin-bottom:4px">Si te dio menos, lo que falte queda como abono.</div>
+  <div class="bigbtn a-cobra"><svg class="i"><use href="#cobra"/></svg>Confirmar cobro · $ 70.000</div>
+</div>
+</div>
+<figcaption><b>11. Cobrar (turquesa)</b>Se cobran varias cuotas a la vez o un abono. Al confirmar, la app ofrece mandar el recibo por WhatsApp (morado).</figcaption>
+</figure>
+
+</div>
+</section>
+
+<!-- ================= CAJA + RECORDATORIOS ================= -->
+<section class="part">
+<h2><i style="background:var(--recor)"></i>Parte 3 · Caja y recordatorios</h2>
+<p>El cierre del día une el oro y los préstamos: cuánta plata debería haber en la caja, más las notas entre los socios.</p>
+<div class="grid">
+
+<figure>
+<div class="phone tall"><div class="island"></div><div class="status"><span>9:41</span><span>100%</span></div>
+<div class="scr">
+  <div class="top"><h3>Cierre del día</h3><span class="sub">Mar 17 nov</span></div>
+  <div class="card hero"><span class="lbl">Debería haber en la caja</span><div class="big">$ 21.063.500</div><div class="sub">Cuenta la plata y compara</div></div>
+  <div class="env" style="background:rgba(34,165,91,.12)"><div class="row"><b class="ok">Entró</b><b class="ok">+ $ 19.946.000</b></div>
+    <div class="row sub"><span>Ventas de oro</span><span>$ 19.536.000</span></div>
+    <div class="row sub"><span>Cobros de cuotas</span><span>$ 410.000</span></div>
+    <div class="sub" style="font-size:11px">Capital $ 341.667 · interés $ 68.333</div></div>
+  <div class="env" style="background:rgba(239,68,68,.12)"><div class="row"><b class="bad">Salió</b><b class="bad">− $ 10.882.500</b></div>
+    <div class="row sub"><span>Compras de oro</span><span>$ 9.832.500</span></div>
+    <div class="row sub"><span>Préstamos nuevos</span><span>$ 1.000.000</span></div>
+    <div class="row sub"><span>Gastos</span><span>$ 50.000</span></div></div>
+  <div class="card"><div class="row"><span class="sub">Caja al empezar el día</span><b>$ 12.000.000</b></div>
+    <div class="row" style="margin-top:4px"><span class="sub">Ganancia del día</span><b class="ok">+ $ 1.864.333</b></div>
+    <div class="sub" style="margin-top:2px">Venta de oro $ 1.796.000 + intereses $ 68.333</div></div>
+  <div class="sub" style="color:#FFA463">Faltaron 2 clientes por pagar: $ 600.000</div>
+  <div class="bigbtn a-ver"><svg class="i"><use href="#cobra"/></svg>Ya conté la plata</div>
+</div>
+<div class="tabs"><div><svg class="i"><use href="#home"/></svg>Inicio</div><div><svg class="i"><use href="#oro"/></svg>Oro</div><div class="plus"><svg class="i"><use href="#plus"/></svg></div><div><svg class="i"><use href="#people"/></svg>Préstamos</div><div class="on"><svg class="i"><use href="#caja"/></svg>Caja</div></div>
+</div>
+<figcaption><b>12. Caja: cierre del día</b>Del "Cierre del día" de "Tus Finanzas", con el oro agregado. Separa capital e intereses y dice cuánta plata debería haber.</figcaption>
+</figure>
+
+<figure>
+<div class="phone"><div class="island"></div><div class="status"><span>9:41</span><span>100%</span></div>
+<div class="scr"><div class="top"><h3>Inicio</h3></div><div class="card hero"><span class="lbl">Gramo de oro 24k hoy</span><div class="big">$ 514.100</div></div></div>
 <div class="dim"></div>
 <div class="float">
-  <div class="row"><b>🔔 Recordatorios</b><span class="min">— Minimizar</span></div>
-  <div class="rm">Llevar 40 g al comprador de Medellín<small>De Socio 2 para ti · hoy 3:00 p. m.</small></div>
-  <div class="rm">Pasar donde Jhon a cobrar en persona<small>Para ti · mañana</small></div>
-  <div class="rm">Revisar diferencia de 0,5 g<small>Para los dos · viernes</small></div>
-  <div class="btn" style="background:var(--blue);color:#06142B;padding:9px;font-size:13px">+ Nuevo recordatorio</div>
+  <div class="row"><b style="font-size:14px;display:flex;gap:6px;align-items:center;color:#F9A8D4"><svg class="i"><use href="#recor"/></svg>Recordatorios</b><span class="min">— Minimizar</span></div>
+  <div class="rm"><input type="checkbox" aria-label="Hecho"><div>Llevar 40 g al comprador de Medellín<small>De Socio 2 para ti · hoy 3:00 p. m.</small></div></div>
+  <div class="rm"><input type="checkbox" aria-label="Hecho"><div>Pasar donde Jhon a cobrar en persona<small>Para ti · mañana</small></div></div>
+  <div class="rm"><input type="checkbox" aria-label="Hecho"><div>Revisar diferencia de 0,5 g<small>Para los dos · viernes</small></div></div>
+  <div class="bigbtn a-recor" style="color:#fff;padding:9px;font-size:13px"><svg class="i"><use href="#plus"/></svg>Nuevo recordatorio</div>
 </div>
-<div class="tabs"><div class="on"><i>⌂</i>Inicio</div><div><i>◈</i>Oro</div><div class="plus">+</div><div><i>$</i>Préstamos</div><div><i>▤</i>Reportes</div></div>
+<div class="tabs"><div class="on"><svg class="i"><use href="#home"/></svg>Inicio</div><div><svg class="i"><use href="#oro"/></svg>Oro</div><div class="plus"><svg class="i"><use href="#plus"/></svg></div><div><svg class="i"><use href="#people"/></svg>Préstamos</div><div><svg class="i"><use href="#caja"/></svg>Caja</div></div>
 </div>
-<figcaption><b>8. Recordatorios flotantes</b>Cada socio deja notas para el otro o para sí mismo. La ventana se minimiza a la pestaña azul del borde.</figcaption>
+<figcaption><b>13. Recordatorios (rosa)</b>Notas para uno mismo, para el socio o para los dos. Se minimizan a la pestaña rosa y se marcan como hechas con un toque.</figcaption>
 </figure>
 
 </div>
+</section>
 
 <section class="notes">
-  <div><b>⚡ Tiempo real</b>Si un socio registra una compra o un pago, al otro le aparece en segundos.</div>
-  <div><b>🔒 Privado</b>Los datos se cifran en el celular antes de subir a la nube. Para recuperarlos hay un código impreso.</div>
-  <div><b>✎ Precios que cambian</b>El % de compra y venta se configura, pero en cada movimiento se puede cambiar por día o por cliente.</div>
-  <div><b>📋 Por definir con el cliente</b>Qué ve primero en Inicio, tipo de interés, crédito en oro, formas de pago, nombre y colores.</div>
+  <div><b>👁 Escaneo con el ojo</b>Cada acción tiene su color, su ícono y un verbo, y siempre está en el mismo lugar. Con eso no hace falta leer.</div>
+  <div><b>📱 Prueba en tu iPhone</b>Antes de entregarla viene con un "modo prueba" que trae datos de ejemplo y no usa la nube. Lo instalas desde Safari y la pruebas completa.</div>
+  <div><b>🎓 Fácil de enseñar</b>Una guía de 4 pasos la primera vez (los 4 botones grandes) y un video corto tuyo en Filmora.</div>
+  <div><b>✎ Precios del día</b>El % de compra y venta se ajusta en un toque en cada movimiento, según el día o el cliente.</div>
 </section>
 </body>
 </html>
