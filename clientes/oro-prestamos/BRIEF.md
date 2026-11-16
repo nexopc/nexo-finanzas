@@ -67,3 +67,7 @@ Fase actual: 4 (código en `app/`, versión 1.0.0). Se publica en `docs/oro/` co
 3. Probar en 390×844 con datos de ejemplo → `python3 build.py` → commit en la rama → push a `main` (con permiso de Cristóbal).
 4. En el iPhone: abrir la app con internet; si sale "Hay una versión nueva", cerrarla y abrirla otra vez.
 - Nunca borrar ni renombrar datos guardados (localStorage `oro-prestamos-v1`). Si un dato cambia de forma, convertirlo al cargar.
+
+## App 1.1.0
+- Bienvenida con **Unirme a mi socio**: el 2.º celular se conecta a la nube sin llenar el cuestionario, y después escoge quién es y crea su PIN.
+- La nube no acepta datos de prueba (hay que Empezar de cero antes).

@@ -30,7 +30,20 @@ service cloud.firestore {
 6. En **Authentication → Settings → Dominios autorizados**, agrega el dominio donde está publicada la app
    (por ahora `nexopc.github.io`).
 
-## 2. En cada iPhone (el día de la instalación)
+## 2. Conectar los 2 iPhone (el día de la instalación, ~5 minutos)
+**Celular del socio 1 (el que tiene los datos):**
+1. Si usaron datos de prueba: ⚙ → **Empezar de cero** → **Configurar mi negocio** con los datos reales.
+   (La app no deja subir datos de prueba a la nube.)
+2. ⚙ → **Nube entre socios** → llenar todo (abajo) → **Conectar**. El ícono de nube se pone verde.
+
+**Celular del socio 2 (vacío):**
+1. Instalar la app → en la pantalla de bienvenida tocar **Unirme a mi socio** (no el cuestionario).
+2. Llenar la nube con el **mismo** código del negocio y la **misma** clave, pero con **su propio** correo.
+3. Cuando lleguen los datos: escoger **quién es** y crear **su PIN** → Entrar.
+
+**Prueba final:** el socio 1 registra una compra → en segundos le aparece al socio 2.
+
+### Qué se llena en "Nube entre socios"
 App → ⚙ → **Nube entre socios**:
 - Pegar la configuración de Firebase.
 - **Código del negocio**: el mismo en los dos (ej. `oro-capital`).

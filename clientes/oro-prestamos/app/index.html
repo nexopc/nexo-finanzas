@@ -184,7 +184,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.3;stro
 <script>
 'use strict';
 /* =============== utilidades =============== */
-const APP_VERSION='1.0.0';
+const APP_VERSION='1.1.0';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ic=(n,st='')=>`<svg class="i" ${st?`style="${st}"`:''}><use href="#${n}"/></svg>`;
@@ -516,7 +516,8 @@ function applyTheme(){const c=cfg()||{};document.documentElement.className=(c.lo
   const m=document.querySelector('meta[name=theme-color]');if(m)m.content=getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()||'#0F0D0A'}
 function render(){
   applyTheme();const app=$('#app');
-  if(!cfg()&&S.me.view!=='wz'){app.innerHTML=renderWelcome();$('#layer').innerHTML='';return}
+  if(!cfg()&&S.me.view!=='wz'){app.innerHTML=renderWelcome();$('#layer').innerHTML=layer;return}
+  if(!S.me.pin&&S.me.cloud&&S.me.view!=='wz'){app.innerHTML=renderJoin();$('#layer').innerHTML='';return}
   if(S.me.view==='wz'&&W){app.innerHTML=renderWizard();$('#layer').innerHTML='';return}
   if(S.me.view==='wz'&&!W)S.me.view='inicio';
   if(needsLock()){app.innerHTML=renderLock();$('#layer').innerHTML='';return}
@@ -531,11 +532,19 @@ function tabs(v){const t=(id,ico,lab)=>`<button class="${v===id||(id==='prestamo
   return `<nav class="tabs">${t('inicio','home','Inicio')}${t('oro','oro','Oro')}<button class="plus" data-a="plus" aria-label="Nueva acción">${ic('plus')}</button>${t('prestamos','people','Préstamos')}${t('caja','caja','Caja')}</nav>`}
 function myRecs(){const yo=S.me.yo??0;return items('rec').filter(r=>!r.hecho&&(r.para==='ambos'||(r.para==='yo'&&r.de===yo)||(r.para==='socio'&&r.de!==yo)))}
 function bubble(){const n=myRecs().length;return `<button class="bubble" data-a="recs" aria-label="Recordatorios">${ic('recor')}${n?`<em>${n}</em>`:''}</button>`}
+function renderJoin(){
+  const c=cfg();const so=c.socios||[];
+  return `<div class="wz"><div class="top"><div><div class="sub">Conectado a ${esc(c.nombre)}</div><h2>¡Ya tienes los datos de tu socio!</h2></div></div>
+  <form id="fjoin"><div class="wq"><b>¿Quién eres tú?</b><div class="chips">${so.map((x,i)=>`<button type="button" data-a="joinyo" data-v="${i}" class="${(S.me.yo??-1)===i?'on':''}">${esc(x.nombre)}</button>`).join('')}</div></div>
+  <div class="wq"><b>Crea tu PIN de 4 números</b><div class="hint">Es solo para este celular.</div><input class="tin" name="pin" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]*" placeholder="••••" style="letter-spacing:.5em;font-size:1.4em;text-align:center"></div>
+  <button class="bigbtn a-compra" type="submit">Entrar</button></form></div>`}
 function renderWelcome(){
   return `<div class="lock"><div class="logo">${ic('oro','width:42px;height:42px')}</div><h1 style="font-size:1.6em;letter-spacing:-.02em">Oro y Préstamos</h1>
   <p class="sub" style="max-width:320px;margin:8px 0 26px;font-size:.92em">Compra y venta de oro, préstamos y caja, sincronizados entre socios.</p>
   <button class="bigbtn a-compra" data-a="wzstart">${ic('editar')}Configurar mi negocio</button>
+  <button class="bigbtn a-presta" data-a="join">${ic('cloud')}Unirme a mi socio</button>
   <button class="bigbtn a-ver" data-a="demo">${ic('refresh')}Probar con datos de ejemplo</button>
+  ${S.me.cloud?`<div class="banner" style="margin-top:14px">${ic('cloud')}<span>${Cloud.err?esc(Cloud.err):'Conectado. Esperando los datos de tu socio…'}</span></div>`:''}
   <p class="sub" style="margin-top:20px;max-width:320px">Para instalarla en el iPhone: en Safari toca <b>Compartir</b> → <b>Agregar a pantalla de inicio</b>.</p></div>`}
 
 /* ---- Inicio ---- */
@@ -903,6 +912,7 @@ function sheetCloud(){
   ${S.me.cloud?`<button type="button" class="bigbtn a-ver" data-a="clouddisc">Desconectar este celular</button>`:''}</form></div>`;render();
 }
 async function saveCloud(f){
+  if(S.me.demo){toast('Primero borra los datos de prueba: ⚙ → Empezar de cero');return}
   const config=parseFbConfig(f.config.value);if(!config){toast('La configuración de Firebase no es válida');return}
   const nid=f.nid.value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'-');const email=f.email.value.trim();
   if(!nid||!email||!f.pass.value||f.clave.value.length<6){toast('Llena todo. La clave debe tener mínimo 6 caracteres');return}
@@ -976,6 +986,8 @@ document.addEventListener('click',async e=>{
         el.parentElement.querySelectorAll('button').forEach(b=>b.classList.toggle('on',arr.includes(b.dataset.v)))}
       else{W.a[q.id]=W.a[q.id]===v?'':v;el.parentElement.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===W.a[q.id]))}break}
     case 'demo':loadDemo();break;
+    case 'join':sheetCloud();break;
+    case 'joinyo':S.me.yo=+v;el.parentElement.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===el));break;
     case 'tab':layer='';S.me.view=v;persist();render();scrollTo(0,0);break;
     case 'plus':if(!canEdit()){toast('Este celular solo puede ver');break}sheetPlus();break;
     case 'close':layer='';render();break;
@@ -1062,6 +1074,7 @@ document.addEventListener('submit',e=>{e.preventDefault();const f=e.target;
   else if(f.id==='fcl'){const cl=S.items[f.dataset.id];['nombre','cel','cedula','dir','codeudor','notas'].forEach(k=>cl[k]=f[k].value.trim());layer='';put(cl);toast('Datos guardados')}
   else if(f.id==='fpin'){if(!/^\d{4}$/.test(f.pin.value)){toast('El PIN debe tener 4 números');return}S.me.pin=f.pin.value;persist();toast('PIN cambiado');layer='';render()}
   else if(f.id==='fcloud')saveCloud(f);
+  else if(f.id==='fjoin'){if(S.me.yo===undefined||S.me.yo===null||S.me.yo<0){toast('Escoge quién eres');return}if(!/^\d{4}$/.test(f.pin.value)){toast('El PIN debe tener 4 números');return}S.me.pin=f.pin.value;S.me.unlocked=true;S.me.view='inicio';persist();render();setTimeout(()=>showColors(true),300)}
 });
 
 /* =============== arranque =============== */
