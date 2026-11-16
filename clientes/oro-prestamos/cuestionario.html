@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Cuestionario Oro y Préstamos</title>
+<style>
+:root{--bg:#F6F3EC;--card:#FFFFFF;--ink:#1C1912;--sub:#6B6456;--line:#E4DDCF;--gold:#B7861C;--goldbg:#FBF1D9;--ok:#1F8A4C;--chip:#F1ECE1}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F0D0A;--card:#1B1813;--ink:#F3EDE0;--sub:#A9A08D;--line:#332D24;--gold:#E0A526;--goldbg:#2E2513;--ok:#4CC27E;--chip:#26221B}}
+:root[data-theme="dark"]{--bg:#0F0D0A;--card:#1B1813;--ink:#F3EDE0;--sub:#A9A08D;--line:#332D24;--gold:#E0A526;--goldbg:#2E2513;--ok:#4CC27E;--chip:#26221B}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;padding:calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 120px)}
+main{max-width:640px;margin:0 auto}
+.head{padding:8px 2px 14px}
+.head h1{font-size:24px;letter-spacing:-.02em}
+.head p{color:var(--sub);font-size:14.5px;margin-top:4px}
+.prog{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0 10px}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--gold);border-radius:99px;transition:width .25s}
+.prog small{display:block;color:var(--sub);font-size:12.5px;margin-top:4px}
+h2{font-size:15px;text-transform:uppercase;letter-spacing:.07em;color:var(--gold);margin:22px 2px 8px}
+.q{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:10px}
+.q.done{border-color:color-mix(in srgb,var(--ok) 50%,var(--line))}
+.q b{display:block;font-size:16px}
+.q .n{color:var(--sub);font-weight:500;margin-right:4px}
+.hint{color:var(--sub);font-size:13.5px;margin-top:3px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chips button{font:inherit;font-size:15px;border:1.5px solid var(--line);background:var(--chip);color:var(--ink);border-radius:12px;padding:9px 13px;min-height:44px;cursor:pointer}
+.chips button.on{background:var(--gold);border-color:var(--gold);color:#1E1400;font-weight:650}
+.chips button .rec{font-size:11px;font-weight:700;opacity:.8;margin-left:4px}
+input[type=text],input[type=number],textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--chip);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px;min-height:46px}
+textarea{min-height:70px;resize:vertical}
+input:focus,textarea:focus{outline:none;border-color:var(--gold)}
+.ex{background:var(--goldbg);border-radius:12px;padding:9px 11px;font-size:13.5px;margin-top:9px;color:var(--ink)}
+.note{background:var(--card);border:1px dashed var(--line);border-radius:16px;padding:12px 14px;font-size:14px;color:var(--sub);margin-top:6px}
+.dock{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:10px 16px calc(env(safe-area-inset-bottom) + 10px);z-index:9}
+.dock div{max-width:640px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.dock button{font:inherit;font-size:14px;font-weight:700;border:0;border-radius:14px;min-height:50px;padding:6px;cursor:pointer}
+.wa{background:#8B5CF6;color:#fff}.cp{background:var(--ink);color:var(--bg)}.bl{background:var(--chip);color:var(--ink);border:1.5px solid var(--line)!important}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;transition:.25s;z-index:10;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<main>
+  <div class="head">
+    <h1>Cuestionario para tu app</h1>
+    <p>Son 27 preguntas cortas y casi todas se responden con un toque. Toma unos 10 minutos. No hay que escribir datos de tus clientes: eso se llena después dentro de la app, en privado.</p>
+  </div>
+  <div class="prog"><div class="bar"><i id="bar"></i></div><small id="cnt">0 de 27 respondidas</small></div>
+  <div id="form"></div>
+  <div class="note">🔒 Las respuestas se guardan solo en este celular hasta que las envíes. Si una pregunta no la tienes clara, déjala en blanco y la vemos juntos.</div>
+</main>
+<div class="dock"><div>
+  <button class="bl" id="blank">Preguntas en blanco</button>
+  <button class="cp" id="copy">Copiar respuestas</button>
+  <button class="wa" id="send">Enviar por WhatsApp</button>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const Q=[
+ {s:'1 · Tu negocio y la marca'},
+ {id:'nombre',t:'¿Qué nombre debe salir en la app?',type:'text',ph:'Ej: Oro & Capital'},
+ {id:'logo',t:'¿Tienes logo?',opts:['Sí, te mando la foto','No, diséñalo tú','No necesito logo']},
+ {id:'look',t:'¿Qué estilo de colores prefieres?',opts:['Negro y dorado (como el boceto)*','Claro y dorado','Que cambie según el iPhone (día/noche)'],hint:'Los colores de los botones (dorado comprar, verde vender…) se quedan iguales.'},
+ {id:'letra',t:'¿Tamaño de la letra?',opts:['Normal*','Grande']},
+
+ {s:'2 · Los socios'},
+ {id:'socios',t:'Nombre y correo de cada socio',type:'area',ph:'Socio 1: nombre · correo\nSocio 2: nombre · correo',hint:'El correo sirve para que solo ustedes dos entren a la nube.'},
+ {id:'permisos',t:'¿Los dos socios pueden hacer todo?',opts:['Sí, los dos todo*','Uno registra, el otro solo mira']},
+ {id:'borrar',t:'Si alguien borra o cambia un movimiento…',opts:['Avisarle al otro socio*','Que el otro lo apruebe','No hace falta avisar']},
+ {id:'reparto',t:'¿La app debe repartir la ganancia entre los socios?',opts:['Sí, 50 / 50','Sí, con otro %','No hace falta'],other:'¿Qué %?'},
+
+ {s:'3 · Oro'},
+ {id:'tipo_oro',t:'¿Qué oro compran?',multi:true,opts:['Bruto de mina','Fundido / barra','Joyas','Chatarra / partido']},
+ {id:'pureza',t:'¿Cómo miden la pureza?',opts:['Ley (ej. 0,90)*','Quilates (ej. 18k)','Las dos']},
+ {id:'pct_compra',t:'Normalmente, ¿a qué % del precio internacional compran?',type:'number',ph:'Ej: 85',hint:'Es solo el valor inicial: en cada compra se cambia con un toque según el día o el cliente.'},
+ {id:'pct_venta',t:'¿Y a qué % del internacional venden?',type:'number',ph:'Ej: 95'},
+ {id:'a_quien',t:'¿A quién le venden el oro?',multi:true,opts:['Un comprador fijo','Varios compradores','Fundidora / comercializadora','Clientes de joyería']},
+ {id:'credito_oro',t:'¿Venden oro a crédito o por cuotas?',opts:['No','Sí, a veces']},
+ {id:'costos_venta',t:'Al vender, ¿pagan algo aparte? (fundición, envío, transporte)',opts:['Sí, que se descuente de la ganancia','No']},
+ {id:'conteo',t:'¿Cada cuánto cuentan (pesan) el oro que tienen?',opts:['Cada día','Cada semana*','Cada mes','Nunca']},
+
+ {s:'4 · Préstamos'},
+ {id:'frecuencia',t:'¿Cada cuánto pagan sus clientes?',multi:true,opts:['Diario','Semanal','Quincenal','Mensual']},
+ {id:'interes',t:'¿Cómo cobran el interés?',opts:['Un % fijo sobre lo prestado','Un % cada mes sobre lo que debe','Depende del cliente'],ex:'Ej. fijo: presto $1.000.000 al 20 % → me pagan $1.200.000 en cuotas.'},
+ {id:'interes_val',t:'¿Cuánto es el interés que más usan?',type:'text',ph:'Ej: 20 % en 24 cuotas diarias'},
+ {id:'mora',t:'Si el cliente se atrasa, ¿cobran mora?',opts:['No','Sí, un % de la cuota','Sí, un valor fijo por día'],other:'¿Cuánto?'},
+ {id:'domingos',t:'¿Cobran domingos y festivos?',opts:['No, se saltan*','Sí']},
+ {id:'datos_cliente',t:'¿Qué datos le piden a cada cliente?',multi:true,opts:['Nombre','Celular','Cédula','Dirección','Foto de la cédula','Codeudor']},
+
+ {s:'5 · Plata y uso diario'},
+ {id:'pagos',t:'¿Cómo reciben y pagan la plata?',multi:true,opts:['Efectivo','Nequi','Daviplata','Bancolombia','Otro banco']},
+ {id:'inicio',t:'¿Qué quieren ver primero al abrir la app? (escoge 2)',multi:true,max:2,opts:['Precio del oro hoy','Oro que tengo y su ganancia','A quién cobrar hoy','Capital total']},
+ {id:'tono',t:'¿Cómo debe sonar el mensaje de cobro por WhatsApp?',opts:['Amable*','Formal','Directo'],ex:'Amable: "Buenos días, María 😊 le recuerdo su cuota de $50.000 de hoy. ¡Gracias!"'},
+ {id:'aviso',t:'¿A qué hora quieren el aviso de cobros del día?',opts:['7:00 a. m.','8:00 a. m.*','9:00 a. m.'],other:'Otra hora'},
+ {id:'ios',t:'Versión de iOS de cada iPhone',type:'text',ph:'Ej: 26.1 y 18.6',hint:'Se ve en Ajustes → General → Información → Versión de iOS.'},
+];
+const KEY='cuest-oro-v1';
+let A={};try{A=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(A))}catch(e){};progress()};
+const qs=Q.filter(q=>q.id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function render(){
+  let n=0,h='';
+  for(const q of Q){
+    if(q.s){h+=`<h2>${q.s}</h2>`;continue}
+    n++;q.n=n;const v=A[q.id];
+    h+=`<div class="q" id="q-${q.id}"><b><span class="n">${n}.</span>${esc(q.t)}</b>`;
+    if(q.hint)h+=`<div class="hint">${esc(q.hint)}</div>`;
+    if(q.opts){
+      h+=`<div class="chips">`;
+      for(const o of q.opts){const rec=o.endsWith('*'),lab=o.replace('*','');
+        const on=q.multi?(v||[]).includes(lab):v===lab;
+        h+=`<button type="button" data-q="${q.id}" data-v="${esc(lab)}" class="${on?'on':''}">${esc(lab)}${rec?'<span class="rec">· sugerido</span>':''}</button>`}
+      h+=`</div>`;
+      if(q.other)h+=`<input type="text" data-o="${q.id}" placeholder="${esc(q.other)} (opcional)" value="${esc(A[q.id+'_otro']||'')}">`;
+    }else if(q.type==='area'){h+=`<textarea data-t="${q.id}" placeholder="${esc(q.ph)}">${esc(v||'')}</textarea>`}
+    else{h+=`<input type="${q.type==='number'?'text':'text'}" ${q.type==='number'?'inputmode="decimal"':''} data-t="${q.id}" placeholder="${esc(q.ph||'')}" value="${esc(v||'')}">`}
+    if(q.ex)h+=`<div class="ex">${esc(q.ex)}</div>`;
+    h+=`</div>`;
+  }
+  document.getElementById('form').innerHTML=h;progress();
+}
+function answered(q){const v=A[q.id];return Array.isArray(v)?v.length>0:!!(v&&String(v).trim())}
+function progress(){
+  const d=qs.filter(answered).length;
+  document.getElementById('bar').style.width=(d/qs.length*100)+'%';
+  document.getElementById('cnt').textContent=`${d} de ${qs.length} respondidas`;
+  qs.forEach(q=>{const el=document.getElementById('q-'+q.id);if(el)el.classList.toggle('done',answered(q))});
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button[data-q]');if(!b)return;
+  const q=qs.find(x=>x.id===b.dataset.q),v=b.dataset.v;
+  if(q.multi){let a=A[q.id]||[];
+    if(a.includes(v))a=a.filter(x=>x!==v);else{if(q.max&&a.length>=q.max)a.shift();a.push(v)}
+    A[q.id]=a;
+    b.parentElement.querySelectorAll('button').forEach(x=>x.classList.toggle('on',a.includes(x.dataset.v)));
+  }else{A[q.id]=A[q.id]===v?'':v;
+    b.parentElement.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.v===A[q.id]));}
+  save();
+});
+document.addEventListener('input',e=>{
+  const t=e.target;if(t.dataset.t){A[t.dataset.t]=t.value;save()}
+  if(t.dataset.o){A[t.dataset.o+'_otro']=t.value;save()}
+});
+function textAnswers(){
+  let out=['*Respuestas – App de oro y préstamos*',''],sec='';
+  for(const q of Q){
+    if(q.s){out.push('','*'+q.s+'*');continue}
+    let v=A[q.id];v=Array.isArray(v)?v.join(', '):(v||'').trim();
+    const o=(A[q.id+'_otro']||'').trim();if(o)v+=(v?' · ':'')+o;
+    out.push(`${q.n}. ${q.t}`,`   → ${v||'(sin responder)'}`);
+  }
+  return out.join('\n');
+}
+function textBlank(){
+  let out=['*Preguntas para tu app de oro y préstamos*','Responde con el número, ej: "3: negro y dorado"',''];
+  for(const q of Q){
+    if(q.s){out.push('','*'+q.s+'*');continue}
+    let l=`${q.n}. ${q.t}`;
+    if(q.opts)l+=`\n   (${q.opts.map(o=>o.replace('*','')).join(' / ')})`;
+    out.push(l);
+  }
+  return out.join('\n');
+}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
+async function copy(txt,msg){
+  try{await navigator.clipboard.writeText(txt);toast(msg)}
+  catch(e){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast(msg)}catch(_){toast('No se pudo copiar')}ta.remove()}
+}
+document.getElementById('copy').onclick=()=>copy(textAnswers(),'Respuestas copiadas');
+document.getElementById('blank').onclick=()=>copy(textBlank(),'Preguntas copiadas: pégalas en WhatsApp');
+document.getElementById('send').onclick=()=>{location.href='https://wa.me/?text='+encodeURIComponent(textAnswers())};
+render();
+</script>
+</body>
+</html>

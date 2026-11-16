@@ -1,6 +1,6 @@
 # Brief — App de oro y préstamos (cliente hipotético)
 
-Fase actual: 2 (boceto en `boceto.html`) → sigue 3 (cuestionario al cliente). Formato: ver `/FORMATO-APPS-CLIENTES.md`.
+Fase actual: 3 (cuestionario en `cuestionario.html`) → sigue 4 (código) cuando lleguen las respuestas. Formato: ver `/FORMATO-APPS-CLIENTES.md`.
 
 ## Usuarios y dispositivos
 - 2 socios, 1 iPhone cada uno (13 Pro Max y 17 Pro Max). Compatibilidad objetivo: iOS 16.4+.
