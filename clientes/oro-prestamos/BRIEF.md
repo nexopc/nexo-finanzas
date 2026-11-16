@@ -1,6 +1,6 @@
 # Brief — App de oro y préstamos (cliente hipotético)
 
-Fase actual: 1 terminada → sigue 2 (boceto). Formato: ver `/FORMATO-APPS-CLIENTES.md`.
+Fase actual: 2 (boceto en `boceto.html`) → sigue 3 (cuestionario al cliente). Formato: ver `/FORMATO-APPS-CLIENTES.md`.
 
 ## Usuarios y dispositivos
 - 2 socios, 1 iPhone cada uno (13 Pro Max y 17 Pro Max). Compatibilidad objetivo: iOS 16.4+.
@@ -25,10 +25,18 @@ Fase actual: 1 terminada → sigue 2 (boceto). Formato: ver `/FORMATO-APPS-CLIEN
 
 ## Nube
 - Sincronización en tiempo real entre los 2 celulares. Privada: solo ellos acceden.
+- DECIDIDO: Firebase + acceso solo para 2 correos + **cifrado en el celular** (ni NEXO PC lee los datos) + código de recuperación impreso.
 
 ## Van al formulario del cliente
 - Venta a crédito (sí/no), tipo de interés, métodos de pago, qué ver primero en Inicio,
   nombre/logo/colores, cómo fijan su precio de compra y venta frente al internacional.
 
+## Decisiones de precio
+- El % de compra/venta frente al internacional va en el formulario, pero **cambia según el día o el cliente**: cada movimiento permite editar el precio.
+
+## Código
+- Va en esta carpeta (`clientes/oro-prestamos/`), no en un repo aparte.
+
 ## Comercial
+- Precio sugerido: $2.000.000 desarrollo (50/50) + $100.000/mes.
 - Plazo: 2 semanas. Todo dato del negocio se llena dentro de la app (nada en el repositorio).
