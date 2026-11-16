@@ -36,4 +36,5 @@ shutil.copytree(root/'icons', dist/'icons')
 # Apps de clientes: se publican en docs/<carpeta> (ej. docs/oro → /nexo-finanzas/oro/)
 for src, dst in [('clientes/oro-prestamos/app', 'oro')]:
     if (root/src).exists(): shutil.copytree(root/src, dist/dst)
+if (root/'clientes/oro-prestamos/guia.html').exists(): shutil.copy(root/'clientes/oro-prestamos/guia.html', dist/'oro'/'guia.html')
 print('docs/ listo — versión', ver)

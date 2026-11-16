@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Guía Oro y Préstamos</title>
+<style>
+:root{--bg:#F6F3EC;--card:#fff;--ink:#1C1912;--sub:#6B6456;--line:#E4DDCF;--chip:#F1ECE1;--gold:#B7861C;
+  --compra:#E0A526;--venta:#22A55B;--presta:#3B7BF6;--cobra:#14B8A6;--enviar:#8B5CF6;--recor:#EC4899;--mal:#EF4444;--ver:#8A8170}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F0D0A;--card:#1B1813;--ink:#F3EDE0;--sub:#A9A08D;--line:#332D24;--chip:#26221B;--gold:#E0A526}}
+:root[data-theme="dark"]{--bg:#0F0D0A;--card:#1B1813;--ink:#F3EDE0;--sub:#A9A08D;--line:#332D24;--chip:#26221B;--gold:#E0A526}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;padding:calc(env(safe-area-inset-top) + 16px) 16px 60px}
+main{max-width:720px;margin:0 auto}
+h1{font-size:26px;letter-spacing:-.02em}
+.lead{color:var(--sub);margin:6px 0 14px}
+.tabs{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;gap:8px;padding:8px 0 12px}
+.tabs button{flex:1;font:inherit;font-weight:700;border:1.5px solid var(--line);background:var(--chip);color:var(--ink);border-radius:13px;min-height:48px;cursor:pointer}
+.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.prog{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:6px}
+.prog i{display:block;height:100%;width:0;background:var(--gold);transition:width .3s}
+.small{font-size:13px;color:var(--sub)}
+h2{font-size:15px;text-transform:uppercase;letter-spacing:.07em;color:var(--gold);margin:24px 2px 10px}
+.m{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--c,var(--ver));border-radius:16px;padding:14px;margin-bottom:12px}
+.m.done{opacity:.6}
+.mh{display:flex;align-items:center;gap:10px}
+.mh input{width:24px;height:24px;accent-color:var(--gold);flex:none}
+.mh b{font-size:17px;flex:1}
+.dot{display:inline-block;width:12px;height:12px;border-radius:4px;background:var(--c);vertical-align:-1px;margin-right:6px}
+ol{margin:10px 0 0 22px}ol li{margin:5px 0}
+.ok{background:rgba(34,165,91,.12);border-radius:10px;padding:8px 10px;font-size:14px;margin-top:9px}
+.tip{background:rgba(224,165,38,.14);border-radius:10px;padding:8px 10px;font-size:14px;margin-top:9px}
+kbd{font:inherit;font-weight:700;background:var(--chip);border:1px solid var(--line);border-radius:6px;padding:0 6px;white-space:nowrap}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.legend div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 10px;font-size:14px}
+.scene{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.scene .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.scene .t{font-size:12px;font-weight:700;background:var(--chip);border-radius:99px;padding:3px 10px;white-space:nowrap}
+.scene b{font-size:16px}
+.row{display:grid;grid-template-columns:92px 1fr;gap:8px;margin-top:8px;font-size:14.5px}
+.row span:first-child{color:var(--sub);font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;padding-top:2px}
+.say{font-style:italic}
+table{width:100%;border-collapse:collapse;font-size:14.5px;background:var(--card);border-radius:14px;overflow:hidden}
+td,th{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--sub)}
+.box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.box ul{margin:6px 0 0 20px}.box li{margin:4px 0}
+.hide{display:none}
+a{color:var(--gold)}
+</style>
+</head>
+<body>
+<main>
+  <h1>Guía de Oro y Préstamos</h1>
+  <p class="lead">Primero aprendes tú con 10 misiones cortas. Después grabas el video para enseñarle al cliente.</p>
+  <div class="tabs"><button class="on" data-t="aprende">1 · Aprende a usarla</button><button data-t="video">2 · Guion del video</button></div>
+
+  <!-- ================= APRENDE ================= -->
+  <section id="aprende">
+    <div class="prog"><i id="bar"></i></div><div class="small" id="cnt">0 de 10 misiones</div>
+
+    <h2>Antes de empezar</h2>
+    <div class="box">
+      <ol>
+        <li>Abre <a href="https://nexopc.github.io/nexo-finanzas/oro/">nexopc.github.io/nexo-finanzas/oro</a> en <b>Safari</b>.</li>
+        <li>Toca <kbd>Compartir</kbd> → <kbd>Agregar a pantalla de inicio</kbd> → <kbd>Agregar</kbd>.</li>
+        <li>Abre la app desde el ícono dorado <b>$</b> y toca <kbd>Probar con datos de ejemplo</kbd>.</li>
+      </ol>
+      <div class="tip">💡 Practica con los datos de ejemplo: si te equivocas no pasa nada. Al final se borran en ⚙ → <b>Empezar de cero</b>.</div>
+    </div>
+
+    <h2>La regla de oro: un color = una acción</h2>
+    <div class="legend">
+      <div><span class="dot" style="--c:var(--compra)"></span><b>Dorado</b> · Comprar oro</div>
+      <div><span class="dot" style="--c:var(--venta)"></span><b>Verde</b> · Vender oro</div>
+      <div><span class="dot" style="--c:var(--presta)"></span><b>Azul</b> · Prestar</div>
+      <div><span class="dot" style="--c:var(--cobra)"></span><b>Turquesa</b> · Cobrar</div>
+      <div><span class="dot" style="--c:var(--enviar)"></span><b>Morado</b> · Enviar por WhatsApp</div>
+      <div><span class="dot" style="--c:var(--recor)"></span><b>Rosa</b> · Recordatorios</div>
+      <div><span class="dot" style="--c:var(--mal)"></span><b>Rojo</b> · Gasto o atraso</div>
+      <div><span class="dot" style="--c:var(--ver)"></span><b>Gris</b> · Ver, editar, contar</div>
+    </div>
+
+    <h2>Las misiones</h2>
+    <div id="missions"></div>
+
+    <h2>Si algo sale mal</h2>
+    <div class="box"><table>
+      <tr><th>Pasó esto</th><th>Haz esto</th></tr>
+      <tr><td>Guardé mal una compra o venta</td><td>Pestaña <b>Oro</b> → tócala → corrige y guarda, o <b>Borrar</b>.</td></tr>
+      <tr><td>Registré mal un cobro</td><td>Abre el cliente → <b>Pagos</b> → botón de basura.</td></tr>
+      <tr><td>El cliente pagó menos de la cuota</td><td>Escribe lo que te dio: lo que falte queda como <b>abono</b> (cuadro mitad verde, mitad rojo).</td></tr>
+      <tr><td>El oro de la app no cuadra con la balanza</td><td><b>Oro</b> → <b>Contar oro</b> → marca "Ajustar el inventario".</td></tr>
+      <tr><td>No sale el precio del oro</td><td>Revisa el internet y toca el botón ↻, o ⚙ → <b>Precio del oro a mano</b>.</td></tr>
+      <tr><td>El cliente no me abre WhatsApp</td><td>Revisa que el cliente tenga el celular guardado: abre el cliente → <b>Editar datos</b>.</td></tr>
+    </table></div>
+  </section>
+
+  <!-- ================= VIDEO ================= -->
+  <section id="video" class="hide">
+    <div class="box">
+      <b>Video tutorial para el cliente</b>
+      <ul>
+        <li><b>Duración:</b> unos 3 minutos, en 9:16 vertical (1080×1920), para mandarlo por WhatsApp.</li>
+        <li><b>Cómo se graba:</b> grabación de pantalla del iPhone más tu voz explicando.</li>
+        <li><b>Cliente de ejemplo:</b> los socios Andrés y Yeison, del negocio "Oro &amp; Capital" (son los datos de prueba).</li>
+        <li><b>Además:</b> sacas 4 clips cortos de 30 s, uno por botón, para que el cliente repase solo lo que necesite.</li>
+      </ul>
+    </div>
+
+    <h2>Antes de grabar (10 min)</h2>
+    <div class="box"><ol>
+      <li>En la app: ⚙ → <b>Empezar de cero</b> → <b>Probar con datos de ejemplo</b>.</li>
+      <li>Activa <b>No molestar</b> para que no salgan notificaciones en el video, y deja la batería por encima del 50 %.</li>
+      <li>Agrega <b>Grabación de pantalla</b> al Centro de control: Ajustes → Centro de control.</li>
+      <li>Para que tu voz quede grabada con la pantalla: mantén presionado el botón de grabar en el Centro de control → <b>Micrófono: activado</b>.</li>
+      <li>Ensaya una vez sin grabar. Ve despacio: espera 1 segundo después de cada toque.</li>
+    </ol>
+    <div class="tip">💡 Si la voz te sale con nervios, graba solo la pantalla y después pon la voz en Filmora con <b>Grabar voz en off</b>.</div></div>
+
+    <h2>Guion escena por escena</h2>
+    <div id="scenes"></div>
+
+    <h2>Edición en Filmora 16</h2>
+    <div class="box"><ol>
+      <li><b>Nuevo proyecto</b> en relación de aspecto <b>9:16</b> → importa la grabación del iPhone.</li>
+      <li>Corta los silencios y los errores con <b>Detección de silencio</b> (clic derecho sobre el clip) o a mano con la tijera.</li>
+      <li>En cada toque importante pon un <b>círculo</b> (Elementos → busca "click" o "círculo"), porque el iPhone no muestra los toques.</li>
+      <li>Con <b>Pan y Zoom</b> acerca la imagen al botón que estás explicando, 1,3× más o menos.</li>
+      <li>Pon el <b>título de cada escena</b> con el color del botón: dorado para comprar, verde para vender, etc.</li>
+      <li>Agrega <b>subtítulos automáticos</b> (Voz a texto, en español) y corrige los errores. Mucha gente ve videos sin sonido.</li>
+      <li>Música suave al <b>10–15 %</b> de volumen. Con <b>Atenuación de audio</b> (ducking) baja sola mientras hablas.</li>
+      <li>Al final, una tarjeta de cierre con el logo de NEXO PC y tu WhatsApp de soporte.</li>
+      <li>Exporta en <b>MP4, 1080×1920, 30 fps</b>. Para los clips cortos, selecciona cada parte con los marcadores y expórtala por separado.</li>
+    </ol></div>
+
+    <h2>Los 4 clips cortos (30 s)</h2>
+    <div class="box"><table>
+      <tr><th>Clip</th><th>Escenas</th><th>Nombre del archivo</th></tr>
+      <tr><td><span class="dot" style="--c:var(--compra)"></span>Comprar oro</td><td>3</td><td>1-comprar-oro.mp4</td></tr>
+      <tr><td><span class="dot" style="--c:var(--venta)"></span>Vender oro</td><td>4</td><td>2-vender-oro.mp4</td></tr>
+      <tr><td><span class="dot" style="--c:var(--presta)"></span>Prestar</td><td>5</td><td>3-prestar.mp4</td></tr>
+      <tr><td><span class="dot" style="--c:var(--cobra)"></span>Cobrar</td><td>6 y 7</td><td>4-cobrar.mp4</td></tr>
+    </table></div>
+
+    <h2>Cómo entregarlo</h2>
+    <div class="box"><ol>
+      <li>Instálale la app al cliente <b>en persona</b> y haz con él la misión 3 (comprar oro) usando sus datos reales.</li>
+      <li>Ese mismo día mándale por WhatsApp el video largo y los 4 clips.</li>
+      <li>A los 3 días escríbele: "¿Cómo le ha ido con la app? ¿Algún botón que no le quede claro?". Ese seguimiento es lo que justifica el mantenimiento mensual.</li>
+    </ol></div>
+  </section>
+</main>
+
+<script>
+const M=[
+ {c:'--ver',t:'1. Conoce el Inicio',s:['Mira la tarjeta de arriba: <b>precio del gramo de oro 24k hoy</b>, y debajo a cuánto compras y a cuánto vendes.','Debajo están los 4 botones grandes: dorado, verde, azul y turquesa. Son el 90 % de lo que vas a usar.','Baja: <b>Cobrar hoy</b> (o el próximo cobro) y <b>Atrasados</b> en rojo.','Mira la pestaña rosa en el borde derecho: son los recordatorios.'],ok:'Sabes leer de un vistazo cuánto vale el oro, cuánto tienes y a quién cobrar.'},
+ {c:'--compra',t:'2. Compra oro',s:['Toca el botón <b>dorado Comprar oro</b>.','Gramos: <kbd>10</kbd> · Ley: <kbd>0,90</kbd>. Mira cómo la app calcula <b>9,00 g finos</b>.','El precio ya viene al 85 % del internacional. Toca <kbd>+1 %</kbd> para pagar un poco más.','Le compro a: <kbd>Carlos</kbd> → <b>Guardar compra</b>.'],ok:'La compra aparece en la pestaña Oro, en color dorado y con tu nombre.',tip:'"Si lo vendes hoy ganas" te dice la ganancia antes de comprar.'},
+ {c:'--venta',t:'3. Vende oro',s:['Toca el botón <b>verde Vender oro</b>.','Gramos finos: <kbd>20</kbd>.','Lee las 3 líneas: <b>Recibo</b>, <b>Me había costado</b> y <b>Gano en esta venta</b>.','Me pagan con: <kbd>Nequi</kbd> → <b>Guardar venta</b>.'],ok:'En la pestaña Oro sale la venta en verde con la ganancia debajo.'},
+ {c:'--presta',t:'4. Haz un préstamo',s:['Toca el botón <b>azul Prestar</b>.','Paso 1: nombre <kbd>Pedro Asprilla</kbd> y tu propio celular, para probar el WhatsApp.','Paso 2: le presto <kbd>500.000</kbd>, interés <kbd>20</kbd>, <b>Diario</b>, 24 cuotas. Mira <b>Me debe en total</b> y <b>Cada cuota</b>.','Paso 3: revisa las fechas (sin domingos ni festivos) → <b>Crear préstamo</b>.'],ok:'Se abre la ficha de Pedro con su calendario.',tip:'Para un préstamo viejo del cuaderno, marca "Ya venía del cuaderno" y escribe cuántas cuotas pagó.'},
+ {c:'--cobra',t:'5. Cobra a un cliente atrasado',s:['En Inicio, toca el botón <b>turquesa Cobrar</b> → escoge a <b>Carlos Mena</b> (sale con "Tarde").','Con <kbd>−</kbd> y <kbd>+</kbd> escoge cuántas cuotas pagó. El valor se llena solo.','Cambia el valor a uno menor, por ejemplo <kbd>60.000</kbd>, y mira que lo que falta queda como abono.','<b>Confirmar cobro</b> → <b>Enviar recibo por WhatsApp</b> (morado).'],ok:'En el calendario de Carlos cambian los colores de las cuotas.'},
+ {c:'--enviar',t:'6. Recuerda por WhatsApp',s:['En Inicio, en <b>Atrasados</b>, toca el botón morado <b>Cobrar</b> de Jhon Palacios.','Se abre WhatsApp con el mensaje ya escrito, en el tono que escogiste en el cuestionario.','No lo envíes: es un número de prueba. Vuelve a la app.'],ok:'Ya sabes cobrar sin escribir nada.'},
+ {c:'--ver',t:'7. Lee el calendario del cliente',s:['Pestaña <b>Préstamos</b> → toca a <b>Carlos Mena</b>.','Colores: verde pagó, naranja pagó tarde, rojo no pagó, mitad verde y mitad rojo es abono, punteado es lo que falta.','Toca un día punteado → <b>Mover la fecha de cobro</b> → escoge otra fecha → guardar.'],ok:'Puedes correr una cuota cuando el cliente pide plazo.'},
+ {c:'--mal',t:'8. Cierra la caja del día',s:['Pestaña <b>Caja</b>: arriba, cuánta plata debería haber en total y en cada medio (Efectivo, Nequi).','Abajo: lo que <b>Entró</b>, lo que <b>Salió</b> y la <b>Ganancia del día</b>.','Toca el botón <b>rojo Registrar gasto</b> → <kbd>20.000</kbd> Transporte → guardar.','Toca <b>Contar la plata</b> → Efectivo → escribe un valor parecido → guardar.'],ok:'Si no cuadra, la app guarda la diferencia y ajusta la caja a lo que contaste.'},
+ {c:'--compra',t:'9. Mira los reportes',s:['Pestaña <b>Oro</b> → <b>Reportes</b>.','Cambia entre <b>Hoy</b>, <b>Semana</b>, <b>Mes</b> y <b>Año</b>.','Lee <b>Vendí</b> y <b>Compré</b>, con cuánto y a qué precio promedio.','Toca <b>PDF</b> (morado) → en la hoja de imprimir, toca Compartir para guardarlo o mandarlo.'],ok:'Tienes el reporte para revisar con tu socio.'},
+ {c:'--recor',t:'10. Recordatorios y ajustes',s:['Toca la <b>pestaña rosa</b> del borde → escribe "Pesar el oro" → <b>Para los dos</b> → Agregar → <b>Minimizar</b>.','Marca un recordatorio como hecho tocando su cuadrito.','En Inicio toca ⚙: <b>Ajustes del negocio</b> son las preguntas del cuestionario y se pueden cambiar cuando quieras.','En ⚙ también están: <b>PIN y Face ID</b>, <b>Copia de seguridad</b> y <b>Empezar de cero</b>.'],ok:'¡Ya dominas la app! Ahora borra los datos de prueba y configúrala como si fueras el cliente.'},
+];
+const SC=[
+ {t:'0:00–0:12',b:'Gancho',c:'--compra',v:'Tu cara o el logo de la app. Corte rápido al Inicio.',d:'"Con esta app van a saber, en un segundo, cuánto oro tienen, cuánto vale hoy y a quién le toca cobrar. Les enseño en 3 minutos."',x:'Su negocio en el bolsillo'},
+ {t:'0:12–0:30',b:'1 · Instalar',c:'--ver',v:'Safari → Compartir → Agregar a pantalla de inicio → ícono dorado.',d:'"Abren el enlace en Safari, tocan Compartir y luego Agregar a pantalla de inicio. Desde ahí la abren siempre."',x:'Instalar en 3 toques'},
+ {t:'0:30–0:50',b:'2 · El Inicio y los colores',c:'--ver',v:'Inicio: zoom al precio del gramo y después a los 4 botones.',d:'"Arriba está el precio del gramo de hoy, que sale del precio internacional. Y cada color es una acción: dorado comprar, verde vender, azul prestar, turquesa cobrar. Siempre en el mismo lugar."',x:'Un color = una acción'},
+ {t:'0:50–1:15',b:'3 · Comprar oro',c:'--compra',v:'Botón dorado → 10 g, ley 0,90 → +1 % → Carlos → Guardar.',d:'"Para comprar: el botón dorado. Ponen los gramos de la balanza y la ley, y la app calcula los gramos finos y el precio. Si ese día pagan un poquito más, tocan más uno por ciento. Guardar."',x:'Comprar oro'},
+ {t:'1:15–1:35',b:'4 · Vender oro',c:'--venta',v:'Botón verde → 20 g → zoom a "Gano en esta venta" → Guardar.',d:'"Para vender, el verde. Aquí ven al instante cuánto les había costado ese oro y cuánto se ganan en la venta."',x:'Vender oro'},
+ {t:'1:35–2:00',b:'5 · Prestar',c:'--presta',v:'Botón azul → nombre, celular → 500.000, 20 %, diario, 24 → fechas → Crear.',d:'"Para prestar, el azul. Son tres pasos: a quién, cuánto y cómo paga. Las fechas salen solas, sin domingos ni festivos."',x:'Prestar en 3 pasos'},
+ {t:'2:00–2:25',b:'6 · Cobrar',c:'--cobra',v:'Botón turquesa → Carlos Mena → + / − cuotas → Confirmar → Enviar recibo.',d:'"Cuando les paguen, el turquesa. Escogen al cliente y cuántas cuotas pagó. Si les dio menos, queda como abono. Y le mandan el recibo por WhatsApp en un toque."',x:'Cobrar y enviar recibo'},
+ {t:'2:25–2:40',b:'7 · Calendario y atrasados',c:'--mal',v:'Ficha de Carlos: calendario de colores. Inicio → Atrasados → botón morado.',d:'"En el calendario ven cómo paga cada cliente: verde pagó, rojo no pagó. Y a los atrasados les cobran con el botón morado: el mensaje sale ya escrito."',x:'Cobrar sin escribir'},
+ {t:'2:40–2:55',b:'8 · Caja y reportes',c:'--ver',v:'Pestaña Caja → Contar la plata. Oro → Reportes → Semana.',d:'"Al final del día, en Caja ven cuánta plata debería haber y la cuentan. Y en Reportes, cuánto compraron, cuánto vendieron y cuánto ganaron."',x:'Cerrar el día'},
+ {t:'2:55–3:05',b:'9 · Recordatorios entre socios',c:'--recor',v:'Pestaña rosa → nuevo recordatorio "Para Yeison" → Minimizar.',d:'"Y si quieren dejarle una nota al socio, la pestaña rosa. Lo que registra uno, le aparece al otro."',x:'Notas entre socios'},
+ {t:'3:05–3:15',b:'Cierre',c:'--compra',v:'Tarjeta con el logo de NEXO PC y el WhatsApp de soporte.',d:'"Cualquier duda me escriben. Soy Cristóbal, de NEXO PC: excelencia digital, confianza real."',x:'NEXO PC · soporte por WhatsApp'},
+];
+let D={};try{D=JSON.parse(localStorage.getItem('guia-oro')||'{}')}catch(e){}
+const save=()=>{try{localStorage.setItem('guia-oro',JSON.stringify(D))}catch(e){}};
+function render(){
+  document.getElementById('missions').innerHTML=M.map((m,i)=>`<div class="m ${D[i]?'done':''}" style="--c:var(${m.c})"><label class="mh"><input type="checkbox" data-i="${i}" ${D[i]?'checked':''}><b>${m.t}</b></label><ol>${m.s.map(x=>`<li>${x}</li>`).join('')}</ol><div class="ok">✓ ${m.ok}</div>${m.tip?`<div class="tip">💡 ${m.tip}</div>`:''}</div>`).join('');
+  const n=Object.values(D).filter(Boolean).length;document.getElementById('bar').style.width=n*10+'%';document.getElementById('cnt').textContent=`${n} de 10 misiones`+(n===10?' · ¡Listo para enseñarla!':'');
+}
+document.getElementById('scenes').innerHTML=SC.map(s=>`<div class="scene" style="border-left:6px solid var(${s.c})"><div class="top"><b>${s.b}</b><span class="t">${s.t}</span></div>
+ <div class="row"><span>Pantalla</span><span>${s.v}</span></div><div class="row"><span>Dices</span><span class="say">${s.d}</span></div><div class="row"><span>Texto</span><span><b>${s.x}</b></span></div></div>`).join('');
+document.addEventListener('change',e=>{if(e.target.dataset.i!==undefined){D[e.target.dataset.i]=e.target.checked;save();render()}});
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.getElementById('aprende').classList.toggle('hide',b.dataset.t!=='aprende');document.getElementById('video').classList.toggle('hide',b.dataset.t!=='video');scrollTo(0,0)});
+render();
+</script>
+</body>
+</html>
