@@ -1,0 +1,34 @@
+# Brief — App de oro y préstamos (cliente hipotético)
+
+Fase actual: 1 terminada → sigue 2 (boceto). Formato: ver `/FORMATO-APPS-CLIENTES.md`.
+
+## Usuarios y dispositivos
+- 2 socios, 1 iPhone cada uno (13 Pro Max y 17 Pro Max). Compatibilidad objetivo: iOS 16.4+.
+- PWA instalada desde Safari. Bloqueo con PIN y Face ID (passkey/WebAuthn), alternados.
+
+## Oro (función principal)
+- Compra y venta por gramo. No solo puro: cada movimiento registra gramos y **ley/pureza** → gramos finos.
+- Precio base = precio internacional (onza troy en USD → gramo → COP con la TRM), con opción manual.
+- Inventario calculado (compras − ventas) + conteo físico para comparar "tengo vs debería tener".
+- Valor del inventario a precio actual, costo promedio de compra, ganancia realizada y no realizada.
+- Reportes: ventas (cuánto y a cuánto) y compras (cuánto y a cuánto) por día, semana y mes.
+
+## Préstamos
+- Unos 20 clientes, sin límite fijo (la app no debe fallar si son 5 o 500).
+- Tipo de interés (diario, semanal, mensual; fijo o sobre saldo) → lo define el cliente (formulario).
+- Sin garantía. Avisos de cuotas vencidas + mensaje sugerido por WhatsApp. Recibo en PDF.
+
+## Inicio (para el boceto)
+- Precio del gramo en COP · capital en oro (gramos y $) · costo de compra · ganancia.
+- Cobros de hoy; si no hay, el próximo cobro. Atrasados aparte. Ambos con mensaje de WhatsApp sugerido.
+- Recordatorios entre socios en una ventana flotante que se minimiza a un lado de la pantalla.
+
+## Nube
+- Sincronización en tiempo real entre los 2 celulares. Privada: solo ellos acceden.
+
+## Van al formulario del cliente
+- Venta a crédito (sí/no), tipo de interés, métodos de pago, qué ver primero en Inicio,
+  nombre/logo/colores, cómo fijan su precio de compra y venta frente al internacional.
+
+## Comercial
+- Plazo: 2 semanas. Todo dato del negocio se llena dentro de la app (nada en el repositorio).
