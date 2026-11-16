@@ -184,7 +184,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.3;stro
 <script>
 'use strict';
 /* =============== utilidades =============== */
-const APP_VERSION='1.1.0';
+const APP_VERSION='1.2.0';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ic=(n,st='')=>`<svg class="i" ${st?`style="${st}"`:''}><use href="#${n}"/></svg>`;
@@ -275,34 +275,50 @@ function loanSched(p){
   const n=p.n,base=Math.round(p.total/n);const cuotas=p.fechas.map((f,i)=>({i,f,v:i===n-1?p.total-base*(n-1):base}));
   let acc=0;cuotas.forEach(c=>{acc+=c.v;c.cum=acc});return cuotas;
 }
+function allocate(p){
+  const cuotas=loanSched(p);cuotas.forEach(c=>{c.pays=[];c.got=0});
+  if(p.previas){let left=cuotas[Math.min(p.previas,p.n)-1].cum;for(const c of cuotas){if(left<=0.5)break;const m=Math.min(c.v,left);c.pays.push({fecha:'0000-00-00',m,prev:1});c.got+=m;left-=m}}
+  const pagos=items('pago').filter(x=>x.prestamo===p.id).sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:a.ts-b.ts);
+  for(const x of pagos)if(x.alloc)for(const a of x.alloc){const c=cuotas[a.i];if(c&&a.m>0){c.pays.push({fecha:x.fecha,m:a.m,id:x.id});c.got+=a.m}}
+  for(const x of pagos){let left=x.alloc?x.monto-x.alloc.reduce((s,a)=>s+a.m,0):x.monto;
+    for(const c of cuotas){if(left<=0.5)break;const rem=c.v-c.got;if(rem<=0.5)continue;const m=Math.min(rem,left);c.pays.push({fecha:x.fecha,m,id:x.id});c.got+=m;left-=m}}
+  return {cuotas,pagos};
+}
 function loanStatus(p,ref){
   ref=ref||today();
-  const pagos=items('pago').filter(x=>x.prestamo===p.id).sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:a.ts-b.ts);
-  const cuotas=loanSched(p);
-  const events=[];if(p.previas){events.push({fecha:'0000-00-00',m:Math.min(p.total,cuotas[Math.min(p.previas,p.n)-1].cum)})}
-  pagos.forEach(x=>events.push({fecha:x.fecha,m:x.monto}));
-  let paid=0;const paidAt=[];// fecha en que se alcanzó cada cuota
-  let ci=0;for(const e of events){paid+=e.m;while(ci<cuotas.length&&paid>=cuotas[ci].cum-0.5){paidAt[ci]=e.fecha;ci++}}
-  const total=paid;
-  cuotas.forEach((c,i)=>{const prev=i?cuotas[i-1].cum:0;
-    if(paidAt[i]){c.st=paidAt[i]<=c.f?'p':'t';c.pf=paidAt[i]}
-    else if(total>prev+0.5){c.st='ab';c.falta=c.cum-total}
-    else if(c.f<ref)c.st='n';else if(c.f===ref)c.st='hoy';else c.st='f'});
-  const due=cuotas.filter(c=>c.f<=ref);const needToday=due.length?due[due.length-1].cum:0;
-  const debeHoy=Math.max(0,needToday-total);
-  const overdue=cuotas.filter(c=>c.f<ref);const needOver=overdue.length?overdue[overdue.length-1].cum:0;
-  const atraso=Math.max(0,needOver-total);
-  const vencidas=cuotas.filter(c=>c.f<=ref&&c.st!=='p'&&c.st!=='t').length;
-  const lateDays=(()=>{const c=cuotas.find(c=>c.f<ref&&c.st!=='p'&&c.st!=='t');return c?Math.round((pd(ref)-pd(c.f))/864e5):0})();
-  const next=cuotas.find(c=>c.f>ref&&c.st!=='p'&&c.st!=='t');
+  const {cuotas,pagos}=allocate(p);let paid=0;
+  cuotas.forEach(c=>{paid+=c.got;const rem=c.v-c.got;c.rem=Math.max(0,rem);
+    if(rem<=0.5){let acc=0,pf=null;for(const y of c.pays.slice().sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:0)){acc+=y.m;if(acc>=c.v-0.5){pf=y.fecha;break}}c.pf=pf;c.st=pf<=c.f?'p':'t';c.rem=0}
+    else if(c.got>0.5){c.st='ab';c.falta=rem}
+    else c.st=c.f<ref?'n':c.f===ref?'hoy':'f'});
+  const debeHoy=cuotas.filter(c=>c.f<=ref).reduce((s,c)=>s+c.rem,0);
+  const atraso=cuotas.filter(c=>c.f<ref).reduce((s,c)=>s+c.rem,0);
+  const unpaid=c=>c.st!=='p'&&c.st!=='t';
+  const vencidas=cuotas.filter(c=>c.f<=ref&&unpaid(c)).length;
+  const lateDays=(()=>{const c=cuotas.find(c=>c.f<ref&&unpaid(c));return c?Math.round((pd(ref)-pd(c.f))/864e5):0})();
+  const next=cuotas.find(c=>c.f>ref&&unpaid(c));
   const hoy=cuotas.find(c=>c.f===ref);
-  const pagadas=cuotas.filter(c=>c.st==='p'||c.st==='t').length;
-  const saldo=Math.max(0,p.total-total);
+  const pagadas=cuotas.filter(c=>!unpaid(c)).length;
+  const saldo=Math.max(0,p.total-paid);
   const c=cfg()||{};let mora=0;
   if(c.moraTipo&&c.moraTipo!=='No'&&atraso>0){const v=num(c.moraVal);
-    if(c.moraTipo.includes('%'))mora=cuotas.filter(x=>x.f<ref&&x.st!=='p'&&x.st!=='t').reduce((s,x)=>s+x.v*v/100,0);
+    if(c.moraTipo.includes('%'))mora=cuotas.filter(x=>x.f<ref&&unpaid(x)).reduce((s,x)=>s+x.v*v/100,0);
     else mora=v*lateDays}
-  return {cuotas,pagos,paid:total,debeHoy,atraso,vencidas,lateDays,next,hoy,pagadas,saldo,done:saldo<=0.5,mora}
+  return {cuotas,pagos,paid,debeHoy,atraso,vencidas,lateDays,next,hoy,pagadas,saldo,done:saldo<=0.5,mora}
+}
+/* deja todos los pagos del préstamo amarrados a sus cuotas (para poder corregir una sola) */
+function materialize(p){
+  const {cuotas,pagos}=allocate(p);
+  if(p.previas){cuotas.forEach(c=>{const pv=c.pays.filter(y=>y.prev);if(pv.length){const m=pv.reduce((s,y)=>s+y.m,0);put({id:uid(),k:'pago',prestamo:p.id,fecha:c.f,monto:m,alloc:[{i:c.i,m}],cuaderno:true,pago:p.pago},true)}});p.previas=0;put(p,true)}
+  for(const x of pagos){if(x.alloc&&Math.abs(x.alloc.reduce((s,a)=>s+a.m,0)-x.monto)<1)continue;
+    const al=[];cuotas.forEach(c=>c.pays.filter(y=>y.id===x.id).forEach(y=>{const e=al.find(a=>a.i===c.i);if(e)e.m+=y.m;else al.push({i:c.i,m:y.m})}));x.alloc=al;put(x,true)}
+}
+function setCuota(pid,i,mode,fecha,monto,metodo){
+  const p=S.items[pid];materialize(p);const c=loanSched(p)[i];
+  items('pago').filter(x=>x.prestamo===pid&&x.alloc&&x.alloc.some(a=>a.i===i)).forEach(x=>{const a=x.alloc.find(a=>a.i===i);x.alloc=x.alloc.filter(a=>a.i!==i);x.monto-=a.m;if(x.monto<=0.5&&!x.mora)x.del=true;put(x,true)});
+  const m=mode==='ab'?Math.min(monto,c.v):c.v;const f=mode==='p'?c.f:(fecha||today());
+  if(mode!=='n'&&m>0)put({id:uid(),k:'pago',prestamo:pid,fecha:f,monto:m,alloc:[{i,m}],pago:metodo||p.pago,manual:true},true);
+  render();
 }
 const loansActive=()=>items('prestamo').map(p=>({p,s:loanStatus(p),cl:S.items[p.cliente]})).filter(x=>!x.s.done&&x.cl&&!x.cl.del);
 function interesPart(p,monto){return p.total>0?monto*(p.total-p.monto)/p.total:0}
@@ -314,8 +330,8 @@ function cajaStats(){
   addm(methods.includes('Efectivo')?'Efectivo':methods[0],c.caja0||0);
   items('compra').forEach(x=>addm(x.pago,-x.total));
   items('venta').forEach(x=>addm(x.pago,x.total-(x.gastos||0)));
-  items('prestamo').forEach(x=>{if(!x.previas)addm(x.pago,-x.monto)});
-  items('pago').forEach(x=>addm(x.pago,x.monto+(x.mora||0)));
+  items('prestamo').forEach(x=>{if(!x.previas&&!x.cuaderno)addm(x.pago,-x.monto)});
+  items('pago').forEach(x=>{if(!x.cuaderno)addm(x.pago,x.monto+(x.mora||0))});
   items('gasto').forEach(x=>addm(x.pago,-x.monto));
   items('cierre').forEach(x=>addm(x.metodo||methods[0],x.diff||0));
   const total=Object.values(bal).reduce((a,b)=>a+b,0);
@@ -325,8 +341,8 @@ function dayStats(d){
   const os=oroStats();const r={ventas:0,compras:0,cobros:0,cap:0,int:0,mora:0,prest:0,gastos:0,ganOro:0,gV:0,gC:0};
   items('venta').filter(x=>x.fecha===d).forEach(x=>{r.ventas+=x.total-(x.gastos||0);r.ganOro+=os.gan[x.id]||0;r.gV+=x.finos});
   items('compra').filter(x=>x.fecha===d).forEach(x=>{r.compras+=x.total;r.gC+=x.finos});
-  items('pago').filter(x=>x.fecha===d).forEach(x=>{const p=S.items[x.prestamo];const it=p?interesPart(p,x.monto):0;r.cobros+=x.monto+(x.mora||0);r.int+=it;r.cap+=x.monto-it;r.mora+=x.mora||0});
-  items('prestamo').filter(x=>x.inicio===d&&!x.previas).forEach(x=>r.prest+=x.monto);
+  items('pago').filter(x=>x.fecha===d&&!x.cuaderno).forEach(x=>{const p=S.items[x.prestamo];const it=p?interesPart(p,x.monto):0;r.cobros+=x.monto+(x.mora||0);r.int+=it;r.cap+=x.monto-it;r.mora+=x.mora||0});
+  items('prestamo').filter(x=>x.inicio===d&&!x.previas&&!x.cuaderno).forEach(x=>r.prest+=x.monto);
   items('gasto').filter(x=>x.fecha===d).forEach(x=>r.gastos+=x.monto);
   r.entro=r.ventas+r.cobros;r.salio=r.compras+r.prest+r.gastos;r.gan=r.ganOro+r.int+r.mora-r.gastos;return r;
 }
@@ -380,7 +396,7 @@ const WZ=[
   {id:'interesTipo',t:'¿Cómo cobran el interés?',opts:['Un % fijo sobre lo prestado*','Un % cada mes'],ex:'Fijo: presto $1.000.000 al 20 % → me pagan $1.200.000 en cuotas.'},
   {id:'interesPct',t:'¿Cuánto % usan casi siempre?',type:'num',ph:'20'},
   {id:'moraTipo',t:'Si el cliente se atrasa, ¿cobran mora?',opts:['No*','Sí, un % de la cuota','Sí, un valor fijo por día'],other:'¿Cuánto? (ej. 5 o 2.000)'},
-  {id:'domingos',t:'¿Cobran domingos y festivos?',opts:['No, se saltan*','Sí']},
+  {id:'domingos',t:'¿Qué días cobran normalmente?',opts:['Todos los días*','Sin domingos','Sin domingos ni festivos'],hint:'Es lo que viene marcado. Se puede cambiar en cada préstamo.'},
   {id:'datosCliente',t:'¿Qué datos le piden a cada cliente?',multi:1,opts:['Celular','Cédula','Dirección','Codeudor','Notas']},
  ]},
  {s:'Plata y uso diario',qs:[
@@ -393,7 +409,7 @@ const WZ=[
   {id:'pin',t:'Crea un PIN de 4 números para entrar',type:'pin',ph:'••••',req:1,hint:'Es solo para este celular. Si activas Face ID, a veces te pedirá uno y a veces el otro.'},
  ]},
 ];
-const DEF={look:'Negro y dorado',letra:'Normal',permisos:'Sí, los dos todo',borrar:'Avisarle al otro socio',reparto:'No hace falta',tipoOro:['Bruto de mina'],pureza:'Ley (ej. 0,90)',pctCompra:85,pctVenta:95,costosVenta:'No',oro0g:0,oro0c:0,frecs:['Diario','Semanal','Mensual'],interesTipo:'Un % fijo sobre lo prestado',interesPct:20,moraTipo:'No',domingos:'No, se saltan',datosCliente:['Celular','Cédula','Dirección'],pagos:['Efectivo','Nequi'],caja0:0,inicio:['Precio del oro hoy','A quién cobrar hoy'],tono:'Amable'};
+const DEF={look:'Negro y dorado',letra:'Normal',permisos:'Sí, los dos todo',borrar:'Avisarle al otro socio',reparto:'No hace falta',tipoOro:['Bruto de mina'],pureza:'Ley (ej. 0,90)',pctCompra:85,pctVenta:95,costosVenta:'No',oro0g:0,oro0c:0,frecs:['Diario','Semanal','Mensual'],interesTipo:'Un % fijo sobre lo prestado',interesPct:20,moraTipo:'No',domingos:'Todos los días',datosCliente:['Celular','Cédula','Dirección'],pagos:['Efectivo','Nequi'],caja0:0,inicio:['Precio del oro hoy','A quién cobrar hoy'],tono:'Amable'};
 let W=null;// estado del asistente
 function startWizard(edit){
   const c=cfg();const a={};
@@ -450,7 +466,7 @@ function finishWizard(){
 function loadDemo(){
   S={v:1,items:{},me:{yo:0,pin:'1234',demo:true,view:'inicio',unlocked:true,px:S.me.px,pxh:S.me.pxh}};
   const t=today();const D=n=>addDays(t,n);
-  const c={id:'cfg',k:'cfg',ans:{},nombre:'Oro & Capital',look:'Negro y dorado',letra:'Normal',socios:[{nombre:'Andrés'},{nombre:'Yeison'}],permisos:'Sí, los dos todo',borrar:'Avisarle al otro socio',reparto:'Sí, 50 / 50',repartoPct:50,tipoOro:['Bruto de mina'],pureza:'Ley (ej. 0,90)',pctCompra:85,pctVenta:95,costosVenta:'No',oro0g:280,oro0c:440000,frecs:['Diario','Semanal','Mensual'],interesTipo:'Un % fijo sobre lo prestado',interesPct:20,moraTipo:'No',moraVal:'',domingos:'No, se saltan',datosCliente:['Celular','Cédula','Dirección'],pagos:['Efectivo','Nequi'],caja0:60000000,inicio:['Precio del oro hoy','A quién cobrar hoy'],tono:'Amable'};
+  const c={id:'cfg',k:'cfg',ans:{},nombre:'Oro & Capital',look:'Negro y dorado',letra:'Normal',socios:[{nombre:'Andrés'},{nombre:'Yeison'}],permisos:'Sí, los dos todo',borrar:'Avisarle al otro socio',reparto:'Sí, 50 / 50',repartoPct:50,tipoOro:['Bruto de mina'],pureza:'Ley (ej. 0,90)',pctCompra:85,pctVenta:95,costosVenta:'No',oro0g:280,oro0c:440000,frecs:['Diario','Semanal','Mensual'],interesTipo:'Un % fijo sobre lo prestado',interesPct:20,moraTipo:'No',moraVal:'',domingos:'Todos los días',datosCliente:['Celular','Cédula','Dirección'],pagos:['Efectivo','Nequi'],caja0:60000000,inicio:['Precio del oro hoy','A quién cobrar hoy'],tono:'Amable'};
   c.ans={nombre:c.nombre,s1:'Andrés',s2:'Yeison',yo:'Socio 1',pctCompra:85,pctVenta:95,interesPct:20,oro0g:280,oro0c:440000,caja0:60000000,frecs:c.frecs,pagos:c.pagos,inicio:c.inicio,tono:'Amable',look:c.look,letra:c.letra,datosCliente:c.datosCliente};
   const add=(o)=>{o.id=o.id||uid();o.ts=Date.now()-Math.random()*1e5;o.by=Math.random()<.5?0:1;S.items[o.id]=o;return o};
   add(c);
@@ -458,7 +474,7 @@ function loadDemo(){
   [[ -9,25,.9,'Carlos M.'],[-6,12,.88,'Don Luis'],[-3,40,.92,'Carlos M.'],[-1,18.5,.9,'Minera El Río'],[0,22.5,.9,'Carlos M.']].forEach(([d,g,l,q])=>{const f=g*l,pr=Math.round(g24*.85/100)*100;add({k:'compra',fecha:D(d),g,ley:l,finos:f,precio:pr,total:Math.round(f*pr),quien:q,pago:'Efectivo'})});
   [[-7,60,'Comprador Medellín','Efectivo'],[-2,40,'Comprador Medellín','Nequi']].forEach(([d,f,q,pg])=>{const pr=Math.round(g24*.95/100)*100;add({k:'venta',fecha:D(d),finos:f,precio:pr,total:Math.round(f*pr),quien:q,pago:pg,gastos:0})});
   const mk=(nombre,cel,monto,pct,frec,n,startOff,payPlan)=>{const cl=add({k:'cliente',nombre,cel,cedula:'',dir:'Quibdó',notas:''});
-    const ini=D(startOff);const fechas=makeDates(ini,frec,n,false);const total=Math.round(monto*(1+pct/100));
+    const ini=D(startOff);const fechas=makeDates(ini,frec,n,'todos');const total=Math.round(monto*(1+pct/100));
     const p=add({k:'prestamo',cliente:cl.id,monto,pct,tipo:'fijo',frec,n,total,cuota:Math.round(total/n),inicio:ini,fechas,previas:0,pago:'Efectivo'});
     const sch=loanSched(p);payPlan(sch).forEach(([i,fecha,m])=>add({k:'pago',prestamo:p.id,fecha,monto:m,pago:'Efectivo'}));};
   mk('María Rentería','3105550101',2000000,20,'Semanal',10,-29,s=>s.filter(c=>c.f<today()).map(c=>[c.i,c.f,c.v]));
@@ -473,8 +489,9 @@ function loadDemo(){
 }
 
 /* =============== fechas de préstamos =============== */
-function makeDates(first,frec,n,cobraDom){
-  const out=[];let d=first;const okDay=s=>cobraDom||!isOff(s);
+function makeDates(first,frec,n,mode){
+  if(mode===true)mode='todos';if(!mode)mode='sinfest';
+  const out=[];const okDay=s=>mode==='todos'||(mode==='sindom'?pd(s).getDay()!==0:!isOff(s));
   const step=s=>frec==='Diario'?addDays(s,1):frec==='Semanal'?addDays(s,7):frec==='Quincenal'?addDays(s,15):(()=>{const x=pd(s);const day=pd(first).getDate();const nx=new Date(x.getFullYear(),x.getMonth()+1,1);const last=new Date(nx.getFullYear(),nx.getMonth()+1,0).getDate();nx.setDate(Math.min(day,last));return ymd(nx)})();
   let base=first;
   while(out.length<n){let f=base;if(frec==='Diario'){while(!okDay(f))f=addDays(f,1);out.push(f);base=addDays(f,1)}
@@ -655,7 +672,7 @@ function vPrestamos(){
   const la=loansActive();const f=S.me.pf||'todos';
   const all=items('prestamo').map(p=>({p,s:loanStatus(p),cl:S.items[p.cliente]})).filter(x=>x.cl&&!x.cl.del);
   const prest=la.reduce((s,x)=>s+x.p.monto*(x.s.saldo/x.p.total),0);const porCobrar=la.reduce((s,x)=>s+x.s.saldo,0);
-  const m0=today().slice(0,7);const intMes=items('pago').filter(x=>x.fecha.startsWith(m0)).reduce((s,x)=>{const p=S.items[x.prestamo];return s+(p?interesPart(p,x.monto):0)+(x.mora||0)},0);
+  const m0=today().slice(0,7);const intMes=items('pago').filter(x=>x.fecha.startsWith(m0)&&!x.cuaderno).reduce((s,x)=>{const p=S.items[x.prestamo];return s+(p?interesPart(p,x.monto):0)+(x.mora||0)},0);
   let list=f==='hoy'?la.filter(x=>x.s.debeHoy>0&&x.s.atraso<=.5):f==='atr'?la.filter(x=>x.s.atraso>.5):f==='pag'?all.filter(x=>x.s.done):la;
   const q=(S.me.pq||'').toLowerCase();if(q)list=list.filter(x=>x.cl.nombre.toLowerCase().includes(q));
   list.sort((a,b)=>(b.s.atraso>0)-(a.s.atraso>0)||(b.s.debeHoy>0)-(a.s.debeHoy>0)||a.cl.nombre.localeCompare(b.cl.nombre));
@@ -670,9 +687,11 @@ function vPrestamos(){
     h+=`<button class="pp" data-a="cliente" data-v="${x.p.id}"><span class="ini">${esc(initials(x.cl.nombre))}</span><span class="t"><b>${esc(x.cl.nombre)}</b><span class="sub">Debe ${money(x.s.saldo)} · ${x.p.frec.toLowerCase()}</span></span>${ch}</button>`}
   return h+`</div>`;
 }
+const DIAS=[['todos','Todos los días'],['sindom','Sin domingos'],['sinfest','Sin domingos ni festivos']];
+const diasDef=()=>{const d=(cfg()||{}).domingos||'';return d.startsWith('Todos')||d==='Sí'?'todos':d==='Sin domingos'?'sindom':'sinfest'};
 function sheetPrestar(){
   const c=cfg();const fr=(c.frecs&&c.frecs.length?c.frecs:['Diario','Semanal','Quincenal','Mensual']);const dc=c.datosCliente||[];
-  const clientes=items('cliente');
+  const clientes=items('cliente');const dd=diasDef();
   layer=`<div class="dim" data-a="close"></div><div class="sheet"><div class="grab"></div><h2 style="color:var(--presta)">${ic('presta')}Nuevo préstamo</h2><form id="fp">
   <div class="card"><div class="step"><em>1</em>¿A quién le prestas?</div>
    <label class="field"><span>Nombre</span><input name="nombre" list="dl-cl" placeholder="Nombre y apellido" autocomplete="off"></label>
@@ -681,25 +700,39 @@ function sheetPrestar(){
    ${dc.includes('Dirección')?`<label class="field"><span>Dirección</span><input name="dir"></label>`:''}${dc.includes('Codeudor')?`<label class="field"><span>Codeudor</span><input name="codeudor" placeholder="Nombre y celular"></label>`:''}${dc.includes('Notas')?`<label class="field"><span>Notas</span><input name="notas"></label>`:''}</div>
   <div class="card"><div class="step"><em>2</em>¿Cuánto y cómo paga?</div>
    <div class="f2"><label class="field"><span>Le presto</span><input name="monto" inputmode="numeric" data-money="1" placeholder="1.000.000"></label><label class="field"><span>Interés % ${c.interesTipo==='Un % cada mes'?'mensual':'total'}</span><input name="pct" inputmode="decimal" value="${String(c.interesPct).replace('.',',')}"></label></div>
-   <div class="seg" id="frseg">${fr.map((x,i)=>`<button type="button" data-a="frec" data-v="${x}" class="${i===0?'on':''}">${x}</button>`).join('')}</div><input type="hidden" name="frec" value="${fr[0]}">
+   <div class="seg">${fr.map((x,i)=>`<button type="button" data-a="frec" data-v="${x}" class="${i===0?'on':''}">${x}</button>`).join('')}</div><input type="hidden" name="frec" value="${fr[0]}">
+   <div class="sub" style="margin:0 2px 6px;font-weight:700">¿Qué días se le cobra?</div>
+   <div class="seg">${DIAS.map(([k,l])=>`<button type="button" data-a="dias" data-v="${k}" class="${k===dd?'on':''}">${l}</button>`).join('')}</div><input type="hidden" name="dias" value="${dd}">
    <div class="f2"><label class="field"><span>Número de cuotas</span><input name="n" inputmode="numeric" value="${fr[0]==='Diario'?24:fr[0]==='Semanal'?10:fr[0]==='Quincenal'?6:4}"></label><label class="field"><span>Primera cuota</span><input name="first" type="date" value="${firstDue(fr[0])}"></label></div>
    <div class="f2"><label class="field"><span>Entrego con</span><select name="pago">${(c.pagos||['Efectivo']).map(m=>`<option>${esc(m)}</option>`).join('')}</select></label><label class="field"><span>Fecha del préstamo</span><input name="inicio" type="date" value="${today()}"></label></div>
    <div class="sum" id="psum"></div></div>
   <div class="card"><div class="step"><em>3</em>Fechas (se llenan solas)</div><div class="sub" id="pfechas"></div>
    <label class="row" style="margin-top:10px;justify-content:flex-start;gap:10px;font-size:.9em"><input type="checkbox" name="cuaderno" style="width:22px;height:22px;accent-color:var(--presta)"> Ya venía del cuaderno (le presté antes)</label>
-   <div id="cuad" style="display:none;margin-top:8px"><label class="field"><span>¿Cuántas cuotas ya pagó?</span><input name="previas" inputmode="numeric" value="0"></label><div class="sub">Ese préstamo no saca plata de la caja de hoy.</div></div></div>
+   <div id="cuad" style="display:none;margin-top:8px"></div></div>
   <button class="bigbtn a-presta" type="submit">${ic('presta')}Crear préstamo</button></form></div>`;
   render();pCalc();
 }
 function pCalc(){
-  const f=$('#fp');if(!f)return;const c=cfg();const monto=intv(f.monto.value),pct=num(f.pct.value),n=Math.max(1,intv(f.n.value)),frec=f.frec.value;
-  const fechas=f.first.value?makeDates(f.first.value,frec,n,c.domingos==='Sí'):[];
+  const f=$('#fp');if(!f)return;const c=cfg();const monto=intv(f.monto.value),pct=num(f.pct.value),n=Math.max(1,intv(f.n.value)),frec=f.frec.value,dias=f.dias.value;
+  const fechas=f.first.value?makeDates(f.first.value,frec,n,dias):[];
   let total=monto*(1+pct/100);if(c.interesTipo==='Un % cada mes'&&fechas.length){const months=Math.max(1,Math.round((pd(fechas[fechas.length-1])-pd(f.inicio.value||today()))/864e5/30));total=monto*(1+pct/100*months)}
   total=Math.round(total);
   $('#psum').innerHTML=`<div><span class="sub">Me debe en total</span><div class="mid">${money(total)}</div></div><div><span class="sub">Cada cuota</span><div class="mid ok">${money(Math.round(total/n))}</div></div><div style="grid-column:1/3"><span class="sub">Ganancia: ${money(total-monto)}</span></div>`;
-  $('#pfechas').innerHTML=fechas.length?`${c.domingos==='Sí'?'Incluye domingos y festivos':'Sin domingos ni festivos'} · desde <b>${fdate(fechas[0])}</b> hasta <b>${fdate(fechas[fechas.length-1])}</b>`:'';
-  f._calc={monto,pct,n,frec,fechas,total};
-  $('#cuad').style.display=f.cuaderno.checked?'block':'none';
+  $('#pfechas').innerHTML=fechas.length?`${DIAS.find(d=>d[0]===dias)[1]} · desde <b>${fdate(fechas[0])}</b> hasta <b>${fdate(fechas[fechas.length-1])}</b>`:'';
+  f._calc={monto,pct,n,frec,fechas,total,dias};f._cm=f._cm||{};
+  cuadRender(f);
+}
+/* cuaderno: tocar cada día para ponerle su color (sin candado) */
+const CM={p:['var(--venta)','#fff','pagó'],t:['var(--hoy)','#2A1000','pagó tarde'],n:['var(--mal)','#fff','no pagó']};
+function cuadRender(f){
+  const box=$('#cuad');if(!f.cuaderno.checked){box.style.display='none';return}box.style.display='block';
+  const x=f._calc;const t=today();const past=x.fechas.map((d,i)=>({d,i})).filter(o=>o.d<t);
+  if(!past.length){box.innerHTML=`<div class="sub">Pon la <b>fecha del préstamo</b> y la <b>primera cuota</b> en los días en que de verdad fueron (en el pasado). Así salen aquí los días para marcar.</div>`;return}
+  const cnt={p:0,t:0,n:0};past.forEach(o=>cnt[f._cm[o.i]||'p']++);
+  box.innerHTML=`<div class="sub" style="margin-bottom:6px"><b style="color:var(--ink)">Toca cada día para ponerle su color.</b> Cada toque cambia: verde pagó → naranja pagó tarde → rojo no pagó.</div>
+  <div class="cal" style="grid-template-columns:repeat(6,1fr)">${past.map(o=>{const st=f._cm[o.i]||'p';const d=pd(o.d);return `<button type="button" data-a="cuad" data-i="${o.i}" style="background:${CM[st][0]};color:${CM[st][1]};flex-direction:column;line-height:1.1;font-size:.7em">${d.getDate()}<small style="font-size:.75em;opacity:.85">${MES[d.getMonth()]}</small></button>`}).join('')}</div>
+  <div class="row" style="margin-top:8px"><span class="sub">${cnt.p} pagó · ${cnt.t} tarde · ${cnt.n} no pagó</span><span style="display:flex;gap:6px"><button type="button" class="act a-ver mini" data-a="cuadall" data-v="p">Todos pagaron</button><button type="button" class="act a-ver mini" data-a="cuadall" data-v="n">Ninguno</button></span></div>
+  <div class="sub" style="margin-top:6px">Desde hoy sigue normal. Estos pagos no se suman a la caja de hoy.</div>`;
 }
 function savePrestamo(f){
   const x=f._calc;const nombre=f.nombre.value.trim();if(!nombre){toast('Falta el nombre');return}if(!x.monto){toast('Falta cuánto le prestas');return}
@@ -707,9 +740,12 @@ function savePrestamo(f){
   const g=k=>f[k]?f[k].value.trim():'';
   if(!cl){cl={id:uid(),k:'cliente',nombre,cel:g('cel'),cedula:g('cedula'),dir:g('dir'),codeudor:g('codeudor'),notas:g('notas')};put(cl,true)}
   else{let ch=false;['cel','cedula','dir','codeudor','notas'].forEach(k=>{if(g(k)){cl[k]=g(k);ch=true}});if(ch)put(cl,true)}
-  const previas=f.cuaderno.checked?Math.min(x.n,intv(f.previas.value)):0;
-  const p={id:uid(),k:'prestamo',cliente:cl.id,monto:x.monto,pct:x.pct,tipo:cfg().interesTipo,frec:x.frec,n:x.n,total:x.total,cuota:Math.round(x.total/x.n),inicio:f.inicio.value||today(),fechas:x.fechas,previas,cuaderno:f.cuaderno.checked,pago:f.pago.value};
-  layer='';put(p,true);S.me.view='cliente';S.me.loan=p.id;render();toast('Préstamo creado');
+  const cuaderno=f.cuaderno.checked;
+  const p={id:uid(),k:'prestamo',cliente:cl.id,monto:x.monto,pct:x.pct,tipo:cfg().interesTipo,frec:x.frec,dias:x.dias,n:x.n,total:x.total,cuota:Math.round(x.total/x.n),inicio:f.inicio.value||today(),fechas:x.fechas,previas:0,cuaderno,pago:f.pago.value};
+  put(p,true);
+  if(cuaderno){const sch=loanSched(p);const t=today();sch.filter(c=>c.f<t).forEach(c=>{const st=f._cm[c.i]||'p';if(st==='n')return;
+    let fe=st==='p'?c.f:addDays(c.f,1);if(fe>=t)fe=addDays(t,-1);put({id:uid(),k:'pago',prestamo:p.id,fecha:fe,monto:c.v,alloc:[{i:c.i,m:c.v}],cuaderno:true,pago:p.pago},true)})}
+  layer='';S.me.view='cliente';S.me.loan=p.id;S.me.calm=null;render();toast('Préstamo creado');
 }
 /* ficha del cliente */
 function vCliente(){
@@ -727,7 +763,7 @@ function vCliente(){
   h+=`<div class="sec">Pagos</div><div class="card">`;
   if(p.previas)h+=`<div class="pp"><span class="ini">${ic('editar','width:16px;height:16px')}</span><span class="t"><b>${p.previas} cuotas del cuaderno</b><span class="sub">Antes de usar la app</span></span></div>`;
   if(!s.pagos.length&&!p.previas)h+=`<div class="empty" style="padding:12px">Aún no hay pagos</div>`;
-  s.pagos.slice().reverse().forEach(x=>{h+=`<div class="pp"><span class="ini" style="background:var(--cobra);color:#042420">${ic('cobra','width:16px;height:16px')}</span><span class="t"><b>${money(x.monto+(x.mora||0))}</b><span class="sub">${fdate(x.fecha)} · ${esc(x.pago||'')}${x.mora?' · mora '+money(x.mora):''}</span></span>${canEdit()?`<button class="act a-ver mini" data-a="delpago" data-v="${x.id}" aria-label="Borrar pago">${ic('trash','width:16px;height:16px')}</button>`:''}</div>`});
+  s.pagos.slice().reverse().forEach(x=>{h+=`<div class="pp"><span class="ini" style="background:var(--cobra);color:#042420">${ic('cobra','width:16px;height:16px')}</span><span class="t"><b>${money(x.monto+(x.mora||0))}</b><span class="sub">${fdate(x.fecha)} · ${x.cuaderno?'del cuaderno':esc(x.pago||'')}${x.manual?' · corregido':''}${x.mora?' · mora '+money(x.mora):''}${x.alloc&&x.alloc.length?' · cuota '+x.alloc.map(a=>a.i+1).join(', '):''}</span></span>${canEdit()?`<button class="act a-ver mini" data-a="delpago" data-v="${x.id}" aria-label="Borrar pago">${ic('trash','width:16px;height:16px')}</button>`:''}</div>`});
   h+=`</div><div class="sec">Datos del cliente</div><div class="card">
    ${[['Celular',cl.cel],['Cédula',cl.cedula],['Dirección',cl.dir],['Codeudor',cl.codeudor],['Notas',cl.notas]].filter(x=>x[1]).map(([k,v])=>`<div class="row" style="padding:5px 0"><span class="sub">${k}</span><b style="font-size:.9em;text-align:right">${esc(v)}</b></div>`).join('')||'<div class="sub">Sin datos</div>'}
    <div class="sub" style="margin-top:6px">Préstamo del ${fdate(p.inicio)}${others.length?` · ${others.length} préstamo(s) más`:''}</div>
@@ -748,40 +784,68 @@ function calendar(s,p){
   h+=`</div><div class="leg"><span><i style="background:var(--venta)"></i>Pagó</span><span><i style="background:var(--hoy)"></i>Pagó tarde</span><span><i style="background:var(--mal)"></i>No pagó</span><span><i style="background:linear-gradient(180deg,var(--venta) 55%,#7F1D1D 55%)"></i>Abono</span><span><i style="border:1.5px dashed var(--sub)"></i>Falta</span></div></div>`;
   return h;
 }
+/* candado: PIN o Face ID para corregir préstamos ya creados (dura 5 minutos) */
+let LOCKU=0,LOCKCB=null;
+function withLock(cb){if(!S.me.pin||LOCKU>Date.now())return cb();LOCKCB=cb;sheetAuth()}
+function sheetAuth(){
+  layer=`<div class="dim" data-a="close"></div><div class="sheet"><div class="grab"></div><h2 style="justify-content:center">🔒 Confirma que eres tú</h2>
+  <p class="sub" style="text-align:center;margin:-4px 0 12px">Para cambiar un préstamo ya creado se pide tu PIN o Face ID. Queda abierto 5 minutos.</p>
+  <form id="fauth"><input class="tin" name="pin" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]*" placeholder="PIN ••••" autofocus style="letter-spacing:.5em;font-size:1.4em;text-align:center;margin-top:0">
+  <button class="bigbtn a-ver" type="submit">Desbloquear</button></form>
+  ${S.me.face&&faceOK()?`<button class="bigbtn a-presta" data-a="authface">${ic('face')}Usar Face ID</button>`:''}
+  <button class="bigbtn" data-a="close" style="color:var(--sub)">Cancelar</button></div>`;render();
+}
+function authOK(){LOCKU=Date.now()+5*60e3;const cb=LOCKCB;LOCKCB=null;layer='';if(cb)cb();else render()}
+async function faceVerify(){try{await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),allowCredentials:[{type:'public-key',id:ub64(S.me.face)}],userVerification:'required',timeout:60000}});return true}catch(e){return false}}
 function sheetCuota(pid,i){
   const p=S.items[pid];const s=loanStatus(p);const c=s.cuotas[i];
   const txt={p:'Pagada a tiempo',t:`Pagada tarde (${c.pf?fdate(c.pf):''})`,n:'No pagó',ab:`Abono: falta ${money(c.falta||0)}`,hoy:'Vence hoy',f:'Falta (próxima)'}[c.st];
-  layer=`<div class="dim" data-a="close"></div><div class="sheet"><div class="grab"></div><div class="card"><div class="row" style="justify-content:flex-start;gap:12px"><span class="ini" style="width:52px;height:52px;border-radius:14px;font-size:1.2em;background:var(--card2)">${c.i+1}</span><div><div class="mid">Cuota ${c.i+1} · ${fdate(c.f)}</div><div class="sub">${money(c.v)} · ${txt}</div></div></div></div>
-  ${canEdit()?`${c.st!=='p'&&c.st!=='t'?`<button class="bigbtn a-cobra" data-a="cobrar" data-v="${pid}">${ic('cobra')}Cobrar</button>`:''}
-  <label class="field" style="margin-top:10px"><span>Mover la fecha de cobro</span><input type="date" id="mvdate" value="${c.f}"></label><button class="bigbtn a-ver" data-a="mvcuota" data-v="${pid}" data-i="${i}">${ic('editar')}Guardar nueva fecha</button>`:''}
-  <button class="bigbtn" data-a="close" style="color:var(--sub)">Cerrar</button></div>`;render();
+  const pays=c.pays.filter(y=>!y.prev).map(y=>`${money(y.m)} el ${fdate(y.fecha)}${S.items[y.id]&&S.items[y.id].cuaderno?' (cuaderno)':''}`);if(c.pays.some(y=>y.prev))pays.unshift('Pagada en el cuaderno');
+  const ed=canEdit();const mode=c.st==='p'||c.st==='t'?c.st:c.st==='ab'?'ab':'n';
+  layer=`<div class="dim" data-a="close"></div><div class="sheet"><div class="grab"></div><div class="card"><div class="row" style="justify-content:flex-start;gap:12px"><span class="ini" style="width:52px;height:52px;border-radius:14px;font-size:1.2em;background:var(--card2)">${c.i+1}</span><div><div class="mid">Cuota ${c.i+1} · ${fdate(c.f)}</div><div class="sub">${money(c.v)} · ${txt}</div>${pays.length?`<div class="sub">${pays.map(esc).join(' · ')}</div>`:''}</div></div></div>
+  ${ed&&c.st!=='p'&&c.st!=='t'?`<button class="bigbtn a-cobra" data-a="cobrar1" data-v="${pid}" data-i="${i}">${ic('cobra')}Cobrar esta cuota</button>`:''}
+  ${ed?`<div class="card" style="margin-top:10px"><div class="row"><b>🔒 Corregir esta cuota</b><span class="sub">pide PIN o Face ID</span></div>
+   <form id="ffix" data-p="${pid}" data-i="${i}" style="margin-top:9px"><div class="seg">${[['p','Pagó ese día'],['t','Pagó otro día'],['ab','Abonó'],['n','No pagó']].map(([k,l])=>`<button type="button" data-a="fixmode" data-v="${k}" class="${k===mode?'on':''}">${l}</button>`).join('')}</div><input type="hidden" name="mode" value="${mode}">
+   <div id="fixextra"></div><button class="bigbtn a-ver" type="submit">Guardar corrección</button></form>
+   <label class="field" style="margin-top:12px"><span>Mover la fecha de cobro</span><input type="date" id="mvdate" value="${c.f}"></label><button class="bigbtn a-ver" data-a="mvcuota" data-v="${pid}" data-i="${i}">${ic('editar')}Guardar nueva fecha</button></div>`:''}
+  <button class="bigbtn" data-a="close" style="color:var(--sub)">Cerrar</button></div>`;render();fixExtra();
 }
-function sheetCobrar(pid){
+function fixExtra(){const f=$('#ffix');if(!f)return;const m=f.mode.value;const p=S.items[f.dataset.p];const c=loanSched(p)[+f.dataset.i];const methods=(cfg().pagos||['Efectivo']);
+  $('#fixextra').innerHTML=(m==='t'||m==='ab'?`<label class="field"><span>¿Qué día pagó?</span><input type="date" name="fecha" value="${m==='t'?addDays(c.f,1)>today()?today():addDays(c.f,1):today()}"></label>`:'')+
+   (m==='ab'?`<label class="field"><span>¿Cuánto abonó?</span><input name="monto" inputmode="numeric" data-money="1" placeholder="${thou(Math.round(c.v/2))}"></label>`:'')+
+   (m!=='n'?`<label class="field"><span>Recibí en</span><select name="metodo">${methods.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label>`:'')+
+   `<div class="sub" style="margin:-2px 2px 4px">${m==='n'?'Se quita cualquier pago de esta cuota.':m==='p'?`Queda pagada el ${fdate(c.f)}.`:'Reemplaza lo que tenía esta cuota.'}</div>`}
+function sheetCobrar(pid,only){
   const p=S.items[pid];const s=loanStatus(p);const cl=S.items[p.cliente];const c=cfg();
-  const pend=s.cuotas.filter(x=>x.st!=='p'&&x.st!=='t');const suggestN=Math.max(1,pend.filter(x=>x.f<=today()).length);
+  const pend=s.cuotas.filter(x=>x.st!=='p'&&x.st!=='t');const due=pend.filter(x=>x.f<=today());
+  const sel=only!==undefined?[only]:(due.length?due:pend.slice(0,1)).map(x=>x.i);
   layer=`<div class="dim" data-a="close"></div><div class="sheet"><div class="grab"></div><div style="text-align:center"><span class="sub">Cobrar a</span><div class="mid">${esc(cl.nombre)}</div></div>
-  <form id="fcob" data-p="${pid}"><div class="card" style="margin-top:10px"><div class="row"><b style="font-size:.92em">¿Cuántas cuotas pagó?</b><div class="row" style="gap:12px"><button type="button" class="act a-ver mini" data-a="ncuo" data-v="-1" style="width:42px">−</button><b class="mid" id="ncuo">${suggestN}</b><button type="button" class="act a-cobra mini" data-a="ncuo" data-v="1" style="width:42px">+</button></div></div></div>
+  <form id="fcob" data-p="${pid}"><div class="card" style="margin-top:10px"><div class="row"><b style="font-size:.92em">¿Cuántas cuotas pagó?</b><div class="row" style="gap:12px"><button type="button" class="act a-ver mini" data-a="ncuo" data-v="-1" style="width:42px">−</button><b class="mid" id="ncuo"></b><button type="button" class="act a-cobra mini" data-a="ncuo" data-v="1" style="width:42px">+</button></div></div>
+  <div class="sub" style="margin-top:6px">Se marcan en orden. Si es un caso especial (ej. "hoy me pagó la de ayer"), toca las cuotas que quieras.</div></div>
   <div class="card" id="cuolist"></div>
   <label class="field" style="border:2px solid var(--cobra)"><span>¿Cuánto recibiste?</span><input name="monto" inputmode="numeric" data-money="1" style="font-size:1.5em;color:var(--cobra)"></label>
-  <div class="sub" style="margin:-3px 2px 8px">Si te dio menos, lo que falte queda como abono.</div>
+  <div class="sub" style="margin:-3px 2px 8px">Si te dio menos, lo que falte queda como abono en la última marcada.</div>
   ${c.moraTipo&&c.moraTipo!=='No'?`<label class="field"><span>Mora cobrada ${s.mora?`(sugerida ${money(s.mora)})`:''}</span><input name="mora" inputmode="numeric" data-money="1" value="${s.mora?thou(s.mora):''}" placeholder="0"></label>`:''}
-  <div class="f2"><label class="field"><span>Recibí en</span><select name="pago">${(c.pagos||['Efectivo']).map(m=>`<option>${esc(m)}</option>`).join('')}</select></label><label class="field"><span>Fecha</span><input name="fecha" type="date" value="${today()}"></label></div>
+  <div class="f2"><label class="field"><span>Recibí en</span><select name="pago">${(c.pagos||['Efectivo']).map(m=>`<option>${esc(m)}</option>`).join('')}</select></label><label class="field"><span>Fecha del pago</span><input name="fecha" type="date" value="${today()}"></label></div>
   <button class="bigbtn a-cobra" type="submit" id="cobbtn">${ic('cobra')}Confirmar cobro</button></form></div>`;
-  render();cobCalc(suggestN,true);
+  render();const f=$('#fcob');f._sel=new Set(sel);cobCalc(true);
 }
-function cobCalc(n,setMonto){
+function cobCalc(setMonto){
   const f=$('#fcob');if(!f)return;const p=S.items[f.dataset.p];const s=loanStatus(p);const pend=s.cuotas.filter(x=>x.st!=='p'&&x.st!=='t');
-  n=Math.max(1,Math.min(pend.length,n));f._n=n;$('#ncuo').textContent=n;
-  let amt=0;const colors={n:'var(--mal)',ab:'linear-gradient(180deg,var(--venta) 55%,#7F1D1D 55%)',hoy:'var(--hoy)',f:'var(--card2)'};
-  $('#cuolist').innerHTML=pend.slice(0,Math.max(n+1,3)).map((c,k)=>{const v=c.st==='ab'?c.falta:c.v;if(k<n)amt+=v;
-    return `<div class="q"><span style="width:22px;text-align:center">${k<n?'✓':''}</span><span class="bar" style="background:${colors[c.st]||'var(--card2)'}"></span><span style="flex:1"><b>${fdate(c.f)} · cuota ${c.i+1}</b><br><span class="sub">${{n:'No pagó ese día',ab:'Falta resto del abono',hoy:'Hoy',f:'Adelantada'}[c.st]}</span></span><b style="${k<n?'':'opacity:.5'}">${money(v)}</b></div>`}).join('');
-  if(setMonto!==false)f.monto.value=thou(amt);
+  const sel=f._sel;$('#ncuo').textContent=sel.size;
+  const colors={n:'var(--mal)',ab:'linear-gradient(180deg,var(--venta) 55%,#7F1D1D 55%)',hoy:'var(--hoy)',f:'var(--card2)'};
+  const maxShown=Math.max(...[...sel].map(i=>pend.findIndex(c=>c.i===i)),0)+3;
+  let amt=0;$('#cuolist').innerHTML=pend.slice(0,Math.max(maxShown,4)).map(c=>{const v=c.rem;const on=sel.has(c.i);if(on)amt+=v;
+    return `<button type="button" class="q" data-a="csel" data-i="${c.i}" style="width:100%;text-align:left"><span style="width:24px;height:24px;border-radius:7px;border:2px solid var(--cobra);display:grid;place-items:center;background:${on?'var(--cobra)':'transparent'};color:#042420;flex:none">${on?'✓':''}</span><span class="bar" style="background:${colors[c.st]||'var(--card2)'}"></span><span style="flex:1"><b>${fdate(c.f)} · cuota ${c.i+1}</b><br><span class="sub">${{n:'No pagó ese día',ab:'Falta resto del abono',hoy:'Hoy',f:'Adelantada'}[c.st]}</span></span><b style="${on?'':'opacity:.5'}">${money(v)}</b></button>`}).join('')||'<div class="empty">No hay cuotas pendientes</div>';
+  if(setMonto!==false)f.monto.value=amt?thou(amt):'';
   $('#cobbtn').innerHTML=`${ic('cobra')}Confirmar cobro · ${money(intv(f.monto.value)+(f.mora?intv(f.mora.value):0))}`;
 }
 function saveCobro(f){
   const p=S.items[f.dataset.p];const monto=intv(f.monto.value);const mora=f.mora?intv(f.mora.value):0;if(!monto&&!mora){toast('Escribe cuánto recibiste');return}
   const s0=loanStatus(p);const m=Math.min(monto,s0.saldo);
-  const pago={id:uid(),k:'pago',prestamo:p.id,fecha:f.fecha.value||today(),monto:m,mora,pago:f.pago.value};put(pago,true);
+  const order=s0.cuotas.filter(c=>f._sel.has(c.i));let left=m;const alloc=[];
+  for(const c of order){if(left<=0.5)break;const a=Math.min(c.rem,left);alloc.push({i:c.i,m:a});left-=a}
+  const pago={id:uid(),k:'pago',prestamo:p.id,fecha:f.fecha.value||today(),monto:m,alloc,mora,pago:f.pago.value};put(pago,true);
   const s=loanStatus(p);const cl=S.items[p.cliente];
   layer=`<div class="dim" data-a="close"></div><div class="sheet"><div class="grab"></div><div class="empty"><div style="font-size:2.4em;color:var(--cobra)">✓</div><b>Cobro guardado: ${money(m+mora)}</b>${s.done?'¡Terminó de pagar el préstamo!':`Le falta ${money(s.saldo)}`}</div>
   ${cl.cel?`<button class="bigbtn a-enviar" data-a="sendrecibo" data-v="${pago.id}">${ic('enviar')}Enviar recibo por WhatsApp</button>`:''}<button class="bigbtn a-ver" data-a="close">Listo</button></div>`;render();
@@ -819,11 +883,11 @@ function vReporte(){
   const per=S.me.rp||'semana';const os=oroStats();const t=today();
   const range=per==='dia'?[t,t]:per==='semana'?[addDays(t,-((pd(t).getDay()+6)%7)),t]:per==='mes'?[t.slice(0,8)+'01',t]:[t.slice(0,5)+'01-01',t];
   const inR=f=>f>=range[0]&&f<=range[1];
-  const V=items('venta').filter(x=>inR(x.fecha)),C=items('compra').filter(x=>inR(x.fecha)),P=items('pago').filter(x=>inR(x.fecha));
+  const V=items('venta').filter(x=>inR(x.fecha)),C=items('compra').filter(x=>inR(x.fecha)),P=items('pago').filter(x=>inR(x.fecha)&&!x.cuaderno);
   const sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
   const vg=sum(V,x=>x.finos),vt=sum(V,x=>x.total),cg=sum(C,x=>x.finos),ct=sum(C,x=>x.total),gan=sum(V,x=>os.gan[x.id]||0);
   const cob=sum(P,x=>x.monto+(x.mora||0)),intr=sum(P,x=>{const p=S.items[x.prestamo];return (p?interesPart(p,x.monto):0)+(x.mora||0)});
-  const gas=sum(items('gasto').filter(x=>inR(x.fecha)),x=>x.monto);const prest=sum(items('prestamo').filter(x=>inR(x.inicio)&&!x.previas),x=>x.monto);
+  const gas=sum(items('gasto').filter(x=>inR(x.fecha)),x=>x.monto);const prest=sum(items('prestamo').filter(x=>inR(x.inicio)&&!x.previas&&!x.cuaderno),x=>x.monto);
   // barras: últimos 7 puntos
   const pts=[];for(let k=6;k>=0;k--){let a,b,l;if(per==='dia'||per==='semana'){a=b=addDays(t,-k);l=DOW[pd(a).getDay()].slice(0,1).toUpperCase()}else if(per==='mes'){b=addDays(t,-k*7);a=addDays(b,-6);l=pd(b).getDate()+''}else{const d=pd(t);d.setDate(1);d.setMonth(d.getMonth()-k);a=ymd(d);const e=new Date(d.getFullYear(),d.getMonth()+1,0);b=ymd(e);l=MES[d.getMonth()]}
     pts.push({l,v:sum(items('venta').filter(x=>x.fecha>=a&&x.fecha<=b),x=>x.total),c:sum(items('compra').filter(x=>x.fecha>=a&&x.fecha<=b),x=>x.total)})}
@@ -998,19 +1062,26 @@ document.addEventListener('click',async e=>{
     case 'purmode':{const f=$('#fcv');f.ley.dataset.k=v==='k'?'1':'0';$('#purl').textContent=v==='k'?'Quilates':'Ley';f.ley.placeholder=v==='k'?'18':'0,90';f.ley.value='';el.parentElement.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===el));cvCalc();break}
     case 'prestar':sheetPrestar();break;
     case 'frec':{const f=$('#fp');f.frec.value=v;el.parentElement.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===el));f.n.value=v==='Diario'?24:v==='Semanal'?10:v==='Quincenal'?6:4;f.first.value=firstDue(v);pCalc();break}
+    case 'dias':{const f=$('#fp');f.dias.value=v;el.parentElement.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===el));pCalc();break}
+    case 'cuad':{const f=$('#fp');const i=+el.dataset.i;const cur=f._cm[i]||'p';f._cm[i]=cur==='p'?'t':cur==='t'?'n':'p';cuadRender(f);break}
+    case 'cuadall':{const f=$('#fp');f._calc.fechas.forEach((d,i)=>f._cm[i]=v);cuadRender(f);break}
+    case 'fixmode':{const f=$('#ffix');f.mode.value=v;el.parentElement.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===el));fixExtra();break}
+    case 'cobrar1':sheetCobrar(v,+el.dataset.i);break;
+    case 'csel':{const f=$('#fcob');const i=+el.dataset.i;if(f._sel.has(i))f._sel.delete(i);else f._sel.add(i);cobCalc(true);break}
+    case 'authface':{if(await faceVerify())authOK();else toast('No se pudo con Face ID: usa el PIN');break}
     case 'cliente':layer='';S.me.view='cliente';S.me.loan=v;S.me.calm=null;persist();render();scrollTo(0,0);break;
     case 'pf':S.me.pf=v;render();break;
     case 'calm':if(v){S.me.calm=v;render()}break;
     case 'cuota':sheetCuota(v,+el.dataset.i);break;
-    case 'mvcuota':{const p=S.items[v];const nd=$('#mvdate').value;if(nd){p.fechas=p.fechas.slice();p.fechas[+el.dataset.i]=nd;p.fechas.sort();layer='';put(p);toast('Fecha cambiada')}break}
+    case 'mvcuota':{const p=S.items[v];const nd=$('#mvdate').value;const i=+el.dataset.i;if(nd)withLock(()=>{materialize(p);p.fechas=p.fechas.slice();p.fechas[i]=nd;layer='';put(p);toast('Fecha cambiada')});break}
     case 'cobrarpick':sheetPickCobro();break;
     case 'cobrar':sheetCobrar(v);break;
-    case 'ncuo':{const f=$('#fcob');cobCalc((f._n||1)+(+v));break}
+    case 'ncuo':{const f=$('#fcob');const p=S.items[f.dataset.p];const pend=loanStatus(p).cuotas.filter(x=>x.st!=='p'&&x.st!=='t');const n=Math.max(1,Math.min(pend.length,f._sel.size+(+v)));f._sel=new Set(pend.slice(0,n).map(x=>x.i));cobCalc(true);break}
     case 'wa':{const p=S.items[v];const cl=S.items[p.cliente];const s=loanStatus(p);if(el.dataset.k==='prox'&&!s.next){toast('No tiene cuotas pendientes');break}if(!cl.cel){toast('Este cliente no tiene celular guardado');}waOpen(cl.cel,waMsg(el.dataset.k,cl,s,p));break}
     case 'recibo':{const p=S.items[v];const s=loanStatus(p);const last=s.pagos[s.pagos.length-1];if(!last){toast('Aún no hay pagos para el recibo');break}const cl=S.items[p.cliente];waOpen(cl.cel,waMsg('recibo',cl,s,{pago:last,s,loan:p}));break}
     case 'sendrecibo':{const pg=S.items[v];const p=S.items[pg.prestamo];const cl=S.items[p.cliente];const s=loanStatus(p);layer='';render();waOpen(cl.cel,waMsg('recibo',cl,s,{pago:pg,s,loan:p}));break}
-    case 'delpago':if(confirm('¿Borrar este pago?')){const pg=S.items[v];del(v,`pago de ${money(pg.monto)}`)}break;
-    case 'delloan':if(confirm('¿Borrar este préstamo y sus pagos?')){items('pago').filter(x=>x.prestamo===v).forEach(x=>{x.del=true;put(x,true)});del(v,'un préstamo');S.me.view='prestamos';render()}break;
+    case 'delpago':withLock(()=>{if(confirm('¿Borrar este pago?')){const pg=S.items[v];layer='';del(v,`pago de ${money(pg.monto)}`)}else render()});break;
+    case 'delloan':withLock(()=>{layer='';if(confirm('¿Borrar este préstamo y sus pagos?')){items('pago').filter(x=>x.prestamo===v).forEach(x=>{x.del=true;put(x,true)});del(v,'un préstamo');S.me.view='prestamos'}render()});break;
     case 'editcl':sheetEditCl(v);break;
     case 'gasto':sheetGasto();break;
     case 'gcat':{const f=$('#fg');f.desc.value=v==='Otro'?'':v;el.parentElement.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===el));break}
@@ -1051,7 +1122,7 @@ document.addEventListener('input',e=>{
   if(t.dataset.wo!==undefined&&W){W.a[t.dataset.wo+'Val']=t.value}
   if(t.closest('#fcv'))cvCalc();
   if(t.closest('#fp'))pCalc();
-  if(t.closest('#fcob')){if(t.name==='monto'||t.name==='mora')cobCalc(t.form._n,false)}
+  if(t.closest('#fcob')){if(t.name==='monto'||t.name==='mora')cobCalc(false)}
   if(t.dataset.a2==='pq'){S.me.pq=t.value;const pos=t.selectionStart;render();const x=document.querySelector('[data-a2=pq]');if(x){x.focus();x.setSelectionRange(pos,pos)}}
 });
 document.addEventListener('change',e=>{const t=e.target;
@@ -1074,6 +1145,10 @@ document.addEventListener('submit',e=>{e.preventDefault();const f=e.target;
   else if(f.id==='fcl'){const cl=S.items[f.dataset.id];['nombre','cel','cedula','dir','codeudor','notas'].forEach(k=>cl[k]=f[k].value.trim());layer='';put(cl);toast('Datos guardados')}
   else if(f.id==='fpin'){if(!/^\d{4}$/.test(f.pin.value)){toast('El PIN debe tener 4 números');return}S.me.pin=f.pin.value;persist();toast('PIN cambiado');layer='';render()}
   else if(f.id==='fcloud')saveCloud(f);
+  else if(f.id==='fauth'){if(f.pin.value===S.me.pin)authOK();else{toast('PIN incorrecto');f.pin.value=''}}
+  else if(f.id==='ffix'){const mode=f.mode.value,pid=f.dataset.p,i=+f.dataset.i;const fecha=f.fecha?f.fecha.value:'';const monto=f.monto?intv(f.monto.value):0;const met=f.metodo?f.metodo.value:'';
+    if(mode==='ab'&&!monto){toast('Escribe cuánto abonó');return}
+    withLock(()=>{setCuota(pid,i,mode,fecha,monto,met);layer='';render();toast('Cuota corregida')})}
   else if(f.id==='fjoin'){if(S.me.yo===undefined||S.me.yo===null||S.me.yo<0){toast('Escoge quién eres');return}if(!/^\d{4}$/.test(f.pin.value)){toast('El PIN debe tener 4 números');return}S.me.pin=f.pin.value;S.me.unlocked=true;S.me.view='inicio';persist();render();setTimeout(()=>showColors(true),300)}
 });
 

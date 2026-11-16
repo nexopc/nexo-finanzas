@@ -71,3 +71,10 @@ Fase actual: 4 (código en `app/`, versión 1.0.0). Se publica en `docs/oro/` co
 ## App 1.1.0
 - Bienvenida con **Unirme a mi socio**: el 2.º celular se conecta a la nube sin llenar el cuestionario, y después escoge quién es y crea su PIN.
 - La nube no acepta datos de prueba (hay que Empezar de cero antes).
+
+## App 1.2.0
+- Cada préstamo escoge qué días se cobra: Todos los días (sugerido) · Sin domingos · Sin domingos ni festivos.
+- Los pagos quedan amarrados a cuotas (`alloc`). Pagos viejos sin `alloc` se reparten en orden y se convierten al corregir.
+- Corregir una cuota ya creada (pagó ese día / otro día / abonó / no pagó) y mover fechas pide PIN o Face ID; queda abierto 5 min.
+- Cobrar permite tocar cuotas específicas ("hoy me pagó la de ayer").
+- Cuaderno: se toca cada día pasado (verde → naranja → rojo), sin candado; esos pagos no cuentan en la caja.
