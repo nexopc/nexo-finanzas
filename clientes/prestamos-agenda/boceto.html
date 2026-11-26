@@ -51,7 +51,7 @@ figcaption b{color:var(--page-ink);display:block;font-size:15px}
 .ty .d{font-size:10.5px;color:var(--sub);margin-top:2px}
 .ty.cob{border-color:rgba(20,184,166,.45)}.ty.cob .t{color:#5EEAD4}
 .ty.cit{border-color:rgba(236,72,153,.45)}.ty.cit .t{color:#F9A8D4}
-.ty.tar{border-color:rgba(236,72,153,.3)}.ty.tar .t{color:#F9A8D4}
+.ty.tar{border-color:rgba(217,70,239,.4)}.ty.tar .t{color:#F0ABFC}
 .ty.ent{border-color:rgba(59,123,246,.45)}.ty.ent .t{color:#93B4FB}
 .ev{display:flex;gap:9px;padding:8px 0;border-top:1px solid var(--line);align-items:center}
 .ev:first-child{border-top:0}
@@ -111,20 +111,70 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.3;stro
 .cal i{aspect-ratio:1;border-radius:4px}
 .note{max-width:1200px;margin:40px auto 0;border:1px dashed var(--muted);border-radius:16px;padding:14px 16px;color:var(--muted);font-size:14px}
 .note b{color:var(--page-ink)}
+
+/* ===== Íconos premium ===== */
+svg.i{stroke-width:1.9}
+.ty .t svg.i{width:30px;height:30px;padding:6px;border-radius:10px;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -2px 4px rgba(0,0,0,.18),0 6px 12px -6px rgba(0,0,0,.6)}
+.ty .t{gap:7px}
+.ty.cob .t svg.i{background:linear-gradient(150deg,#5EEAD4,#0F766E)}
+.ty.cit .t svg.i{background:linear-gradient(150deg,#F9A8D4,#BE185D)}
+.ty.tar .t svg.i{background:linear-gradient(150deg,#F0ABFC,#A21CAF)}
+.ty.ent .t svg.i{background:linear-gradient(150deg,#93C5FD,#1D4ED8)}
+.ty{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--card)}
+.act{box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 8px 16px -10px rgba(0,0,0,.7)}
+.a-presta{background:linear-gradient(160deg,#6EA0FF,#2459D8)}
+.a-cobra{background:linear-gradient(160deg,#5EEAD4,#0E9384)}
+.a-enviar{background:linear-gradient(160deg,#A98BFA,#6D3FE0)}
+.a-recor{background:linear-gradient(160deg,#F78FC4,#D02A7C)}
+.sheet .act svg.i{width:42px;height:42px;padding:9px;border-radius:14px;background:rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+.sheet .act{padding:14px 6px 12px;gap:8px}
+.tabs svg.i{width:22px;height:22px}
+.tabs .on{color:var(--gold2)}
+.tabs .on::after{content:"";width:4px;height:4px;border-radius:50%;background:var(--gold);margin-top:1px}
+.plus{background:linear-gradient(150deg,#FFF1C2,#E9B949 45%,#A8741A)!important;color:#2A1A00!important;box-shadow:0 0 0 4px #0F0D0A,0 0 0 5px rgba(241,199,91,.35),0 10px 22px -6px rgba(233,185,73,.55)!important}
+.plus svg.i{stroke-width:2.6}
+.appi{position:relative;aspect-ratio:1;border-radius:23%;background:radial-gradient(120% 120% at 25% 15%,#3D3018 0%,#16120B 55%,#070605 100%);box-shadow:inset 0 1px 0 rgba(255,236,180,.25),inset 0 0 0 1px rgba(241,199,91,.18),0 10px 24px -10px rgba(0,0,0,.7);display:grid;place-items:center;overflow:hidden;flex:none}
+.appi::before{content:"";position:absolute;inset:0;background:linear-gradient(160deg,rgba(255,255,255,.14),rgba(255,255,255,0) 42%)}
+.appi svg{width:82%;height:82%;position:relative}
+.av.appi,.ntf .ic.appi{border:0;padding:0}
+.av.appi{width:32px;height:32px;border-radius:10px}
+.ntf .ic.appi{width:36px;height:36px;border-radius:10px}
+/* pantalla de inicio */
+.springboard{position:absolute;inset:0;background:radial-gradient(90% 60% at 20% 10%,#4B3A1A,transparent 60%),radial-gradient(80% 60% at 90% 90%,#1D2A3F,transparent 60%),#0D0B09;padding:62px 22px 0}
+.apps{display:grid;grid-template-columns:repeat(4,1fr);gap:20px 14px}
+.apps div{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10px;color:#EDE6D6}
+.apps .ph{width:100%;aspect-ratio:1;border-radius:23%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.06)}
+.apps .me .appi{width:100%}
+.apps .me span{font-weight:600}
+.dock2{position:absolute;left:12px;right:12px;bottom:14px;height:84px;border-radius:30px;background:rgba(255,255,255,.12);backdrop-filter:blur(10px);display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:14px 18px}
+.dock2 i{border-radius:23%;background:rgba(255,255,255,.14)}
+.sizes{display:flex;align-items:flex-end;gap:16px;justify-content:center;padding:26px 10px}
+.sizes .light{background:radial-gradient(120% 120% at 25% 15%,#FFFDF6,#F3E7C6 60%,#E2CC92)}
+.sizes .light::before{background:linear-gradient(160deg,rgba(255,255,255,.6),rgba(255,255,255,0) 45%)}
+.iconcard{background:var(--card);border:1px solid var(--line);border-radius:28px;color:var(--ink);padding:6px 16px 18px}
+.iconcard p{margin:0;font-size:12.5px;color:var(--sub);text-align:center}
+.set{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+.set div{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10.5px;color:var(--sub)}
+.set svg.i{width:44px;height:44px;padding:10px;border-radius:14px;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 14px -8px rgba(0,0,0,.7)}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
- <symbol id="cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></symbol>
- <symbol id="home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9H4z"/></symbol>
+ <defs>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF1C2"/><stop offset=".45" stop-color="#F1C75B"/><stop offset="1" stop-color="#A8741A"/></linearGradient>
+ </defs>
+ <symbol id="cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="4" fill="currentColor" fill-opacity=".26" stroke="none"/><path d="M3 10h18" /><rect x="3" y="5" width="18" height="16" rx="4"/><path d="M8 3v4M16 3v4"/><circle cx="8" cy="14.5" r=".9" fill="currentColor"/><circle cx="12" cy="14.5" r=".9" fill="currentColor"/><circle cx="16" cy="14.5" r=".9" fill="currentColor"/><circle cx="8" cy="18" r=".9" fill="currentColor"/></symbol>
+ <symbol id="cita" viewBox="0 0 24 24"><rect x="3" y="5" width="15" height="15" rx="4" fill="currentColor" fill-opacity=".26" stroke="none"/><path d="M3 9.5h15M7.5 3v4M13.5 3v4"/><path d="M18 20H7a4 4 0 01-4-4V9a4 4 0 014-4h7a4 4 0 014 4v2"/><circle cx="17.5" cy="17.5" r="4" fill="currentColor" fill-opacity=".26" stroke="none"/><circle cx="17.5" cy="17.5" r="4"/><path d="M17.5 15.8v1.9l1.2.8"/></symbol>
+ <symbol id="home" viewBox="0 0 24 24"><path d="M4 10.5L12 4l8 6.5V19a2 2 0 01-2 2H6a2 2 0 01-2-2z" fill="currentColor" fill-opacity=".26" stroke="none"/><path d="M4 10.5L12 4l8 6.5V19a2 2 0 01-2 2H6a2 2 0 01-2-2z"/><path d="M10 21v-5a2 2 0 014 0v5"/></symbol>
  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
- <symbol id="hand" viewBox="0 0 24 24"><path d="M3 14h4l3 2h6a2 2 0 000-4h-4M7 14V9h6l5 3"/></symbol>
- <symbol id="coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 10h3.5a1.5 1.5 0 010 3H11a1.5 1.5 0 000 3h3.5"/></symbol>
- <symbol id="bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 1112 0v5l2 2H4zM10 21h4"/></symbol>
- <symbol id="pin" viewBox="0 0 24 24"><path d="M12 21s-6-6-6-11a6 6 0 1112 0c0 5-6 11-6 11z"/><circle cx="12" cy="10" r="2"/></symbol>
- <symbol id="chart" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v8h8"/></symbol>
- <symbol id="list" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></symbol>
- <symbol id="send" viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-3-6z"/></symbol>
- <symbol id="check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+ <symbol id="hand" viewBox="0 0 24 24"><circle cx="15" cy="6.5" r="3.5" fill="currentColor" fill-opacity=".26" stroke="none"/><circle cx="15" cy="6.5" r="3.5"/><path d="M15 5.2v2.6"/><path d="M2.5 13.5h3.5l3 2h5.5a1.8 1.8 0 000-3.6H11" /><path d="M6 20.5v-7M6 19h8.5l6-4.2a1.7 1.7 0 00-2-2.7L14.5 14" /><path d="M2.5 20.5V13" /></symbol>
+ <symbol id="coin" viewBox="0 0 24 24"><ellipse cx="12" cy="7" rx="7.5" ry="3" fill="currentColor" fill-opacity=".26" stroke="none"/><ellipse cx="12" cy="7" rx="7.5" ry="3"/><path d="M4.5 7v5c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V7"/><path d="M4.5 12v5c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-5"/></symbol>
+ <symbol id="bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 1112 0v5.5l1.5 1.5h-15z" fill="currentColor" fill-opacity=".26" stroke="none"/><path d="M6 16.5V11a6 6 0 1112 0v5.5l1.5 1.5h-15z"/><path d="M10 21h4"/><path d="M19.5 3.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z" fill="currentColor" stroke="none"/></symbol>
+ <symbol id="task" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="4" fill="currentColor" fill-opacity=".26" stroke="none"/><rect x="4" y="3" width="16" height="18" rx="4"/><path d="M8 9l1.5 1.5L12 8M8 15l1.5 1.5L12 14M14.5 9.5H16M14.5 15.5H16"/></symbol>
+ <symbol id="chart" viewBox="0 0 24 24"><path d="M12 3a9 9 0 019 9h-9z" fill="currentColor" fill-opacity=".26" stroke="none"/><path d="M12 3a9 9 0 019 9h-9z"/><path d="M10 5.2A7.5 7.5 0 1018.8 14H10z"/></symbol>
+ <symbol id="list" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="3" fill="currentColor" fill-opacity=".26" stroke="none"/><rect x="3" y="4" width="18" height="7" rx="3"/><rect x="3" y="14" width="18" height="7" rx="3"/><circle cx="7" cy="7.5" r="1" fill="currentColor"/><circle cx="7" cy="17.5" r="1" fill="currentColor"/><path d="M10.5 7.5h6M10.5 17.5h6"/></symbol>
+ <symbol id="send" viewBox="0 0 24 24"><path d="M3.5 11.2L20 4l-6.8 16.5-2.6-6.9z" fill="currentColor" fill-opacity=".26" stroke="none"/><path d="M3.5 11.2L20 4l-6.8 16.5-2.6-6.9z"/><path d="M10.6 13.6L20 4"/></symbol>
+ <symbol id="check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="currentColor" fill-opacity=".26" stroke="none"/><path d="M7.5 12.3l3 3 6-6.6"/></symbol>
+ <symbol id="logo" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="url(#gold)" stroke-width="2.2"/><circle cx="50" cy="50" r="32.5" fill="none" stroke="url(#gold)" stroke-width=".8" stroke-opacity=".55"/><g stroke="url(#gold)" stroke-width="2.2" stroke-linecap="round"><path d="M50 9v5M91 50h-5M50 91v-5M9 50h5"/></g><path d="M31 66V36l19 21 19-21v30" fill="none" stroke="url(#gold)" stroke-width="6.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="76" cy="24" r="3" fill="url(#gold)"/></symbol>
 </svg>
 
 <header>
@@ -141,6 +191,42 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.3;stro
 </header>
 
 <section class="part">
+  <h2>0 · El ícono de la app</h2>
+  <p>Un monograma dorado dentro de un aro que es moneda y reloj a la vez: cobros y agenda en un solo símbolo. La letra sale del nombre del negocio que ponga ella en el asistente de inicio.</p>
+  <div class="grid">
+  <figure><div class="phone"><div class="island"></div>
+    <div class="springboard">
+      <div class="apps">
+        <div><i class="ph"></i>Fotos</div><div><i class="ph"></i>Calendario</div><div><i class="ph"></i>Notas</div><div><i class="ph"></i>Mapas</div>
+        <div><i class="ph"></i>Nequi</div><div><i class="ph"></i>WhatsApp</div><div class="me"><i class="appi"><svg><use href="#logo"/></svg></i><span>Cobros M</span></div><div><i class="ph"></i>Reloj</div>
+        <div><i class="ph"></i>Cámara</div><div><i class="ph"></i>Clima</div><div><i class="ph"></i>Ajustes</div><div><i class="ph"></i>Música</div>
+      </div>
+      <div class="dock2"><i></i><i></i><i></i><i></i></div>
+    </div></div>
+    <figcaption><b>En la pantalla de inicio</b>Se distingue entre las demás apps por el negro y el dorado.</figcaption></figure>
+  <figure><div class="iconcard">
+      <div class="sizes">
+        <i class="appi" style="width:110px"><svg><use href="#logo"/></svg></i>
+        <i class="appi" style="width:60px"><svg><use href="#logo"/></svg></i>
+        <i class="appi light" style="width:60px"><svg><use href="#logo"/></svg></i>
+      </div>
+      <p>Grande · normal · versión clara (modo día)</p>
+      <div class="set">
+        <div><svg class="i" style="background:linear-gradient(150deg,#5EEAD4,#0F766E)"><use href="#coin"/></svg>Cobrar</div>
+        <div><svg class="i" style="background:linear-gradient(150deg,#93C5FD,#1D4ED8)"><use href="#hand"/></svg>Prestar</div>
+        <div><svg class="i" style="background:linear-gradient(150deg,#F9A8D4,#BE185D)"><use href="#cita"/></svg>Cita</div>
+        <div><svg class="i" style="background:linear-gradient(150deg,#F78FC4,#D02A7C)"><use href="#bell"/></svg>Recordar</div>
+        <div><svg class="i" style="background:linear-gradient(150deg,#F0ABFC,#A21CAF)"><use href="#task"/></svg>Tarea</div>
+        <div><svg class="i" style="background:linear-gradient(150deg,#A98BFA,#6D3FE0)"><use href="#send"/></svg>WhatsApp</div>
+        <div><svg class="i" style="background:linear-gradient(150deg,#FFF1C2,#A8741A);color:#2A1A00"><use href="#chart"/></svg>Reporte</div>
+        <div><svg class="i" style="background:linear-gradient(150deg,#5A5244,#2A251D)"><use href="#list"/></svg>Préstamos</div>
+      </div>
+    </div>
+    <figcaption><b>El juego de íconos</b>Cada ícono tiene relleno suave y trazo fino, y va sobre una ficha con degradado del color de su acción.</figcaption></figure>
+  </div>
+</section>
+
+<section class="part">
   <h2>1 · Avisos y su día</h2>
   <p>La notificación le llega aunque la app esté cerrada. Al abrirla ve su día en tarjetas por tipo.</p>
   <div class="grid">
@@ -148,19 +234,19 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.3;stro
   <figure><div class="phone"><div class="island"></div>
     <div class="lock">
       <div class="clk">7:00</div><div class="dt">jueves, 26 de noviembre</div>
-      <div class="ntf"><div class="ic">M</div><div><b>Cobros M · Tu día</b><p>Hoy: 5 cobros por $520.000 · 1 cita · 2 tareas. Hay 2 atrasados.</p></div></div>
-      <div class="ntf"><div class="ic">M</div><div><b>Cobros M · en 15 min</b><p>11:00 Cita en el banco</p></div></div>
-      <div class="ntf"><div class="ic">M</div><div><b>Cobros M · Préstamo por terminar</b><p>A Rosa P. le quedan 2 cuotas. ¿Le renuevas?</p></div></div>
+      <div class="ntf"><div class="ic appi"><svg><use href="#logo"/></svg></div><div><b>Cobros M · Tu día</b><p>Hoy: 5 cobros por $520.000 · 1 cita · 2 tareas. Hay 2 atrasados.</p></div></div>
+      <div class="ntf"><div class="ic appi"><svg><use href="#logo"/></svg></div><div><b>Cobros M · en 15 min</b><p>11:00 Cita en el banco</p></div></div>
+      <div class="ntf"><div class="ic appi"><svg><use href="#logo"/></svg></div><div><b>Cobros M · Préstamo por terminar</b><p>A Rosa P. le quedan 2 cuotas. ¿Le renuevas?</p></div></div>
     </div></div>
     <figcaption><b>Pantalla bloqueada</b>Aviso de la mañana a la hora que ella escoja, aviso 15 minutos antes de cada cita y aviso de renovación.</figcaption></figure>
 
   <figure><div class="phone"><div class="island"></div><div class="status"><span>8:14</span><span>●●● 92 %</span></div>
     <div class="scr">
-      <div class="top"><h3>Hoy<small>jueves 26 nov</small></h3><div class="av">M</div></div>
+      <div class="top"><h3>Hoy<small>jueves 26 nov</small></h3><div class="av appi"><svg><use href="#logo"/></svg></div></div>
       <div class="types">
         <div class="ty cob"><div class="t"><svg class="i"><use href="#coin"/></svg>Cobros</div><div class="n">5</div><div class="d">$380.000 de $520.000</div></div>
-        <div class="ty cit"><div class="t"><svg class="i"><use href="#cal"/></svg>Citas</div><div class="n">1</div><div class="d">11:00 Banco</div></div>
-        <div class="ty tar"><div class="t"><svg class="i"><use href="#bell"/></svg>Tareas</div><div class="n">2</div><div class="d">1 hecha</div></div>
+        <div class="ty cit"><div class="t"><svg class="i"><use href="#cita"/></svg>Citas</div><div class="n">1</div><div class="d">11:00 Banco</div></div>
+        <div class="ty tar"><div class="t"><svg class="i"><use href="#task"/></svg>Tareas</div><div class="n">2</div><div class="d">1 hecha</div></div>
         <div class="ty ent"><div class="t"><svg class="i"><use href="#hand"/></svg>Entregas</div><div class="n">1</div><div class="d">2:00 p. m. · $500.000</div></div>
       </div>
       <div class="sec">Ahora sigue <span>por hora</span></div>
@@ -224,8 +310,8 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.3;stro
       <div class="mon" id="mon"></div>
       <div class="sec" style="margin-top:12px">Viernes 27 <span>toque para ver</span></div>
       <div class="types">
-        <div class="ty cob"><div class="t">Cobros</div><div class="n">7</div><div class="d">$610.000</div></div>
-        <div class="ty cit"><div class="t">Citas y tareas</div><div class="n">0</div><div class="d">Libre</div></div>
+        <div class="ty cob"><div class="t"><svg class="i"><use href="#coin"/></svg>Cobros</div><div class="n">7</div><div class="d">$610.000</div></div>
+        <div class="ty cit"><div class="t"><svg class="i"><use href="#cita"/></svg>Citas y tareas</div><div class="n">0</div><div class="d">Libre</div></div>
       </div>
     </div>
     <div class="tabs"><div><svg class="i"><use href="#home"/></svg>Inicio</div><div class="on"><svg class="i"><use href="#cal"/></svg>Agenda</div><div class="plus"><svg class="i"><use href="#plus"/></svg></div><div><svg class="i"><use href="#list"/></svg>Préstamos</div><div><svg class="i"><use href="#chart"/></svg>Reportes</div></div>
@@ -261,7 +347,7 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.3;stro
       <div class="act a-presta"><svg class="i"><use href="#hand"/></svg>Prestar</div>
       <div class="act a-cobra"><svg class="i"><use href="#coin"/></svg>Cobrar</div>
       <div class="act a-recor"><svg class="i"><use href="#bell"/></svg>Recordatorio</div>
-      <div class="act a-recor"><svg class="i"><use href="#cal"/></svg>Cita</div>
+      <div class="act a-recor"><svg class="i"><use href="#cita"/></svg>Cita</div>
     </div></div>
     <div class="tabs"><div><svg class="i"><use href="#home"/></svg>Inicio</div><div><svg class="i"><use href="#cal"/></svg>Agenda</div><div class="plus"><svg class="i"><use href="#plus"/></svg></div><div><svg class="i"><use href="#list"/></svg>Préstamos</div><div><svg class="i"><use href="#chart"/></svg>Reportes</div></div>
   </div><figcaption><b>Botón +</b>Las 4 acciones que escogiste, cada una con su color.</figcaption></figure>

@@ -36,3 +36,4 @@ Negocio (nombre/logo) · Préstamos (tipo, interés, frecuencia, días, mora, ab
 - Botón +: Prestar (azul) · Cobrar (turquesa) · Recordatorio y Cita (rosa).
 - Cliente: solo número de cédula, sin foto. Recibo de pago por WhatsApp.
 - Boceto: `boceto.html` (fase 4).
+- Íconos premium: duotono (relleno suave + trazo fino) sobre fichas con degradado; ícono de la app = monograma dorado dentro de un aro moneda/reloj (versión oscura y clara).
