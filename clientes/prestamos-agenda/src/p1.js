@@ -2,7 +2,7 @@
 const APP_VERSION='1.0.0';
 /* Servidor de avisos (Cloudflare Worker). Se llenan al publicar; también se pueden poner en Ajustes → Avisos. */
 const PUSH_URL='';
-const PUSH_KEY='';
+const PUSH_KEY='BDByMhR_ZXytK35XVfBvh4x4ct1BRnoc4fTryHHrqYWY4F5cBo_8orkzzrwy8Lw9PbOz4CQjwmNsPgKYfAtkuSA';
 /*@A*/
 const DOWL=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 const cap=s=>String(s||'').charAt(0).toUpperCase()+String(s||'').slice(1);
