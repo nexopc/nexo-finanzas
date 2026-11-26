@@ -1,0 +1,189 @@
+<title>Cuestionario App de Cobros</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: una columna tipo app de iPhone, mismas fichas y colores de la app de oro y préstamos; barra fija abajo para copiar/enviar */
+:root{--bg:#F6F3EC;--card:#FFFFFF;--ink:#1C1912;--sub:#6B6456;--line:#E4DDCF;--gold:#B7861C;--goldbg:#FBF1D9;--ok:#1F8A4C;--chip:#F1ECE1;--presta:#3B7BF6;--cobra:#0F9C8D;--recor:#D63A85;--wa:#1F9D55}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F0D0A;--card:#1B1813;--ink:#F3EDE0;--sub:#A9A08D;--line:#332D24;--gold:#E0A526;--goldbg:#2E2513;--ok:#4CC27E;--chip:#26221B;--presta:#6E9CFA;--cobra:#2DD4BF;--recor:#F472B6;--wa:#25B566;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0F0D0A;--card:#1B1813;--ink:#F3EDE0;--sub:#A9A08D;--line:#332D24;--gold:#E0A526;--goldbg:#2E2513;--ok:#4CC27E;--chip:#26221B;--presta:#6E9CFA;--cobra:#2DD4BF;--recor:#F472B6;--wa:#25B566;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;padding-block:12px calc(env(safe-area-inset-bottom,0px) + 130px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:640px;margin:0 auto}
+.head{padding:8px 2px 12px}
+.head h1{font-size:25px;letter-spacing:-.02em;margin:0;text-wrap:balance}
+.head p{color:var(--sub);font-size:14.5px;margin:6px 0 0}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.legend span{font-size:12.5px;padding:4px 9px;border-radius:99px;background:var(--chip);border:1px solid var(--line);color:var(--sub)}
+.prog{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:8px 0 10px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--gold);border-radius:99px;transition:width .25s}
+.prog small{display:block;color:var(--sub);font-size:12.5px;margin-top:4px;font-variant-numeric:tabular-nums}
+.part{margin:26px 2px 4px;font-size:20px;letter-spacing:-.01em}
+.part em{font-style:normal;color:var(--sub);font-size:14px;font-weight:500;display:block}
+h2{font-size:13.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin:20px 2px 8px}
+.q{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:10px}
+.q.done{border-color:color-mix(in srgb,var(--ok) 55%,var(--line))}
+.q b{display:block;font-size:16px}
+.q .n{color:var(--sub);font-weight:500;margin-right:5px;font-variant-numeric:tabular-nums}
+.hint{color:var(--sub);font-size:13.5px;margin-top:3px}
+.tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:6px;margin-left:6px;vertical-align:2px;background:var(--chip);color:var(--sub)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chips button{font:inherit;font-size:15px;border:1.5px solid var(--line);background:var(--chip);color:var(--ink);border-radius:12px;padding:9px 13px;min-height:44px;cursor:pointer;text-align:left}
+.chips button:focus-visible,.dock button:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.chips button.on{background:var(--gold);border-color:var(--gold);color:#1E1400;font-weight:650}
+.chips button .rec{font-size:11px;font-weight:700;opacity:.8;margin-left:4px}
+input[type=text],textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--chip);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px;min-height:46px}
+textarea{min-height:84px;resize:vertical}
+.ex{background:var(--goldbg);border-radius:12px;padding:9px 11px;font-size:13.5px;margin-top:9px}
+.note{border:1px dashed var(--line);border-radius:16px;padding:12px 14px;font-size:14px;color:var(--sub);margin-top:16px}
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:20;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:10px max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 10px) max(16px,env(safe-area-inset-left,0px))}
+.dock div{max-width:640px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dock button,.dock a{font:inherit;font-size:15px;font-weight:650;border:0;border-radius:14px;min-height:48px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.dock .cp{background:var(--gold);color:#1E1400}
+.dock .wa{background:var(--wa);color:#fff}
+.dock .bl{grid-column:1/-1;background:var(--chip);color:var(--ink);border:1px solid var(--line);min-height:40px;font-size:14px}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 140px);transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14.5px;opacity:0;pointer-events:none;transition:.2s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<main>
+  <div class="head">
+    <h1>App de cobros y agenda · Preguntas para definirla</h1>
+    <p>20 preguntas de un toque y 10 abiertas. Las respondes tú (y le preguntas a tu clienta lo que no sepas). Al final tocas <b>Copiar respuestas</b> y me las pegas en el chat.</p>
+    <div class="legend"><span>· sugerido = mi recomendación</span><span>Varias = puedes marcar más de una</span></div>
+  </div>
+  <div class="prog"><div class="bar"><i id="bar"></i></div><small id="cnt">0 de 30 respondidas</small></div>
+  <div id="form"></div>
+  <div class="note">🔒 Lo que marques se guarda solo en este celular. No escribas nombres ni cédulas de los clientes de ella: eso se llena después dentro de la app, en privado.</div>
+</main>
+<div class="dock"><div>
+  <button class="cp" id="copy" type="button">Copiar respuestas</button>
+  <a class="wa" id="send" href="https://wa.me/" target="_blank" rel="noopener">Enviar por WhatsApp</a>
+  <button class="bl" id="blank" type="button">Copiar preguntas en blanco (para tu clienta)</button>
+</div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const Q=[
+ {p:'Parte 1 · Opción múltiple',d:'20 preguntas · se responden con un toque'},
+ {s:'Los préstamos de tu clienta'},
+ {id:'tipo',t:'¿Qué tipo de préstamos hace?',multi:true,opts:['Diarios (cuota cada día)','Semanales o quincenales','Mensuales','Con garantía o empeño']},
+ {id:'clientes',t:'¿Cuántos clientes activos tiene más o menos?',opts:['Menos de 20','20 a 50','50 a 150','Más de 150'],hint:'La app aguanta cualquier cantidad; esto define qué tan rápido debe ser buscar y ordenar.'},
+ {id:'interes',t:'¿Cómo cobra el interés?',opts:['% fijo sobre lo prestado','% cada mes sobre lo que debe','Cambia según el cliente'],ex:'Fijo: presta $500.000 al 20 % → le pagan $600.000 en cuotas.'},
+ {id:'frecuencia',t:'¿Cada cuánto le pagan las cuotas?',multi:true,opts:['Diario','Semanal','Quincenal','Mensual']},
+ {id:'dias',t:'¿Qué días cobra?',opts:['Todos los días','Sin domingos','Sin domingos ni festivos','Que se escoja en cada préstamo*']},
+ {id:'mora',t:'Si un cliente se atrasa, ¿cobra mora?',opts:['No cobra','Sí, un % de la cuota','Sí, un valor fijo por día','Lo decide en cada caso']},
+ {id:'pagos',t:'¿Cómo le pagan?',opts:['Solo cuotas completas','Cuotas y abonos*','Cuotas, abonos y adelantos de varias cuotas']},
+ {id:'medios',t:'¿Por dónde recibe la plata?',multi:true,opts:['Efectivo','Nequi','Daviplata','Bancolombia','Otro banco']},
+
+ {s:'Recordatorios y notificaciones'},
+ {id:'avisos',t:'¿Qué avisos quiere recibir?',multi:true,opts:['Cobros de hoy','Cuotas atrasadas','Préstamo por terminar (para renovar)','Citas y tareas de su agenda','Resumen al cerrar el día']},
+ {id:'hora',t:'¿A qué hora el aviso de la mañana?',opts:['6:00 a. m.','7:00 a. m.*','8:00 a. m.','9:00 a. m.']},
+ {id:'push',t:'¿Cómo deben llegar las notificaciones?',opts:['Aunque la app esté cerrada (servidor gratis)*','Solo cuando ella abre la app','Como evento en el Calendario del iPhone'],hint:'En iPhone, una app web no puede programarse sola un aviso a las 7 a. m.: necesita un pequeño servidor que lo mande. Hay opciones gratis.'},
+ {id:'whatsapp',t:'¿Mensaje de cobro por WhatsApp?',opts:['Sí, tono amable*','Sí, tono formal','No lo necesita'],ex:'Amable: "Buenos días, Don Luis 😊 le recuerdo su cuota de $25.000 de hoy. ¡Gracias!"'},
+
+ {s:'Agenda'},
+ {id:'vista',t:'¿Qué vista ve primero al abrir la agenda?',opts:['Día*','Semana','Mes'],hint:'Las tres vistas van incluidas; esto es solo cuál sale primero.'},
+ {id:'agenda',t:'¿Qué cosas van en la agenda?',multi:true,opts:['Cobros','Préstamos nuevos por entregar','Visitas y citas','Tareas personales','Pagos que ella debe hacer']},
+
+ {s:'Reportes'},
+ {id:'reportes',t:'¿Qué debe decir el reporte?',multi:true,opts:['Cobrado vs. lo que debía cobrar','Plata en la calle (capital prestado)','Ganancia por intereses','Clientes atrasados','Mejores y peores pagadores','Cuánto va a entrar la próxima semana']},
+ {id:'formato',t:'¿Cómo quiere ver o compartir el reporte?',opts:['En pantalla con gráficas','Pantalla + PDF para compartir*','Pantalla + PDF + Excel']},
+
+ {s:'Seguridad, diseño y precio'},
+ {id:'datos',t:'¿Dónde se guardan los datos?',opts:['Solo en el iPhone + respaldo manual','En el iPhone + copia automática cifrada en la nube*','En la nube en tiempo real (para usarla también en PC)'],hint:'Si solo queda en el iPhone y se le pierde o daña, se pierden todos los préstamos.'},
+ {id:'bloqueo',t:'¿Cómo se bloquea la app?',opts:['PIN de 4 dígitos','Face ID + PIN de respaldo*','Sin bloqueo']},
+ {id:'interfaz',t:'¿A qué app se debe parecer?',opts:['App de oro y préstamos (oscuro y dorado, un color por acción)*','Misma estructura, otro color principal','NEXO Finanzas (naranja y morado)']},
+ {id:'precio',t:'¿Cuánto le vas a cobrar?',opts:['$800.000 + $40.000/mes','$1.200.000 + $60.000/mes*','$1.500.000 + $80.000/mes'],other:'Otro precio',hint:'Sugerido: reutilizo la parte de préstamos de la app de oro, así que es menos trabajo, pero suma agenda, avisos con servidor y reportes.'},
+
+ {p:'Parte 2 · Preguntas abiertas',d:'10 preguntas · respuesta corta, como hablando'},
+ {s:'Para aclarar mis dudas'},
+ {id:'nombre',t:'¿Cómo se llama la app y el negocio? ¿Tiene logo?',type:'area',ph:'Ej: "Cobros Martha" · no tiene logo'},
+ {id:'iphone',t:'¿Qué iPhone tiene y qué versión de iOS?',type:'area',ph:'Ej: iPhone 13 · iOS 26.1',hint:'Ajustes → General → Información. Con iOS menor a 16.4 no hay notificaciones.'},
+ {id:'hoy',t:'¿Cómo lleva hoy los préstamos y cuántos activos hay que pasar a la app?',type:'area',ph:'Ej: cuaderno, unos 35 préstamos activos'},
+ {id:'ejemplo',t:'Dame un préstamo real de ejemplo (sin nombre).',type:'area',ph:'Ej: $500.000 al 20 % en 24 cuotas diarias de $25.000, sin domingos'},
+ {id:'ficha',t:'¿Qué datos pide a cada cliente?',type:'area',ph:'Ej: nombre, celular, cédula, dirección, barrio, foto, fiador'},
+ {id:'dolor',t:'¿Qué es lo que más le cuesta hoy al cobrar?',type:'area',ph:'Ej: se le olvida a quién cobrar, clientes que dicen que ya pagaron, las cuentas no le cuadran'},
+ {id:'dia',t:'Además de cobrar, ¿qué cosas quiere anotar en su agenda? Cuéntame un día normal de ella.',type:'area',ph:'Ej: 8 a. m. ruta de cobro, 2 p. m. entregar préstamo, citas del médico'},
+ {id:'parecido',t:'Cuando dices "similar a las otras apps": ¿qué pantallas o detalles quieres repetir y qué NO te gustó?',type:'area',ph:'Ej: el calendario de colores y el botón +, pero no el oro'},
+ {id:'renovar',t:'Cuando un cliente termina o deja de pagar, ¿qué hace ella?',type:'area',ph:'Ej: le renueva y le descuenta lo que debe · al moroso lo pasa a "cobro difícil"'},
+ {id:'entrega',t:'¿Para cuándo la necesita, cómo te paga y la usaría también en un PC?',type:'area',ph:'Ej: en 2 semanas, 50 % al empezar, solo iPhone'},
+];
+const KEY='cuest-cobros-agenda-v1';
+let A={};try{A=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(A))}catch(e){};progress()};
+const qs=Q.filter(q=>q.id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function render(){
+  let n=0,h='';
+  for(const q of Q){
+    if(q.p){h+=`<h3 class="part">${q.p}<em>${q.d}</em></h3>`;continue}
+    if(q.s){h+=`<h2>${q.s}</h2>`;continue}
+    n++;q.n=n;const v=A[q.id];
+    h+=`<div class="q" id="q-${q.id}"><b><span class="n">${n}.</span>${esc(q.t)}${q.multi?'<span class="tag">Varias</span>':''}</b>`;
+    if(q.hint)h+=`<div class="hint">${esc(q.hint)}</div>`;
+    if(q.opts){
+      h+=`<div class="chips">`;
+      for(const o of q.opts){const rec=o.endsWith('*'),lab=o.replace('*','');
+        const on=q.multi?(v||[]).includes(lab):v===lab;
+        h+=`<button type="button" data-q="${q.id}" data-v="${esc(lab)}" class="${on?'on':''}" aria-pressed="${on}">${esc(lab)}${rec?'<span class="rec">· sugerido</span>':''}</button>`}
+      h+=`</div>`;
+      if(q.other)h+=`<input type="text" id="o-${q.id}" data-o="${q.id}" inputmode="text" placeholder="${esc(q.other)} (opcional)" value="${esc(A[q.id+'_otro']||'')}">`;
+    }else{h+=`<textarea id="t-${q.id}" data-t="${q.id}" placeholder="${esc(q.ph)}">${esc(v||'')}</textarea>`}
+    if(q.ex)h+=`<div class="ex">${esc(q.ex)}</div>`;
+    h+=`</div>`;
+  }
+  document.getElementById('form').innerHTML=h;progress();
+}
+function answered(q){const v=A[q.id];return Array.isArray(v)?v.length>0:!!(v&&String(v).trim())||!!(A[q.id+'_otro']||'').trim()}
+function progress(){
+  const d=qs.filter(answered).length;
+  document.getElementById('bar').style.width=(d/qs.length*100)+'%';
+  document.getElementById('cnt').textContent=`${d} de ${qs.length} respondidas`;
+  qs.forEach(q=>{const el=document.getElementById('q-'+q.id);if(el)el.classList.toggle('done',answered(q))});
+  document.getElementById('send').href='https://wa.me/?text='+encodeURIComponent(textAnswers());
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button[data-q]');if(!b)return;
+  const q=qs.find(x=>x.id===b.dataset.q),v=b.dataset.v;
+  if(q.multi){let a=A[q.id]||[];a=a.includes(v)?a.filter(x=>x!==v):[...a,v];A[q.id]=a}
+  else A[q.id]=A[q.id]===v?'':v;
+  b.parentElement.querySelectorAll('button').forEach(x=>{const on=q.multi?A[q.id].includes(x.dataset.v):x.dataset.v===A[q.id];x.classList.toggle('on',on);x.setAttribute('aria-pressed',on)});
+  save();
+});
+document.addEventListener('input',e=>{
+  const t=e.target;if(t.dataset.t){A[t.dataset.t]=t.value;save()}
+  if(t.dataset.o){A[t.dataset.o+'_otro']=t.value;save()}
+});
+function textAnswers(){
+  const out=['*Respuestas – App de cobros y agenda*'];
+  for(const q of Q){
+    if(q.p){out.push('','*'+q.p+'*');continue}
+    if(q.s)continue;
+    let v=A[q.id];v=Array.isArray(v)?v.join(', '):(v||'').trim();
+    const o=(A[q.id+'_otro']||'').trim();if(o)v+=(v?' · ':'')+o;
+    out.push(`${q.n}. ${q.t}`,`   → ${v||'(sin responder)'}`);
+  }
+  return out.join('\n');
+}
+function textBlank(){
+  const out=['*Preguntas para tu app de cobros y agenda*','Responde con el número, ej: "10: 7 a. m."'];
+  for(const q of Q){
+    if(q.p){out.push('','*'+q.p+'*');continue}
+    if(q.s)continue;
+    let l=`${q.n}. ${q.t}`;
+    if(q.opts)l+=`\n   (${q.opts.map(o=>o.replace('*','')).join(' / ')})`;
+    out.push(l);
+  }
+  return out.join('\n');
+}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1900)}
+function copy(txt,msg){
+  const fb=()=>{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(_){}ta.remove();toast(ok?msg:'No se pudo copiar: mantén presionado y copia')};
+  try{navigator.clipboard.writeText(txt).then(()=>toast(msg),fb)}catch(e){fb()}
+}
+document.getElementById('copy').onclick=()=>copy(textAnswers(),'Respuestas copiadas: pégalas en el chat');
+document.getElementById('blank').onclick=()=>copy(textBlank(),'Preguntas copiadas: pégalas en WhatsApp');
+render();
+</script>
