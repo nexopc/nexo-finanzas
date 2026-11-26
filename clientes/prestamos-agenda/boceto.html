@@ -156,6 +156,41 @@ svg.i{stroke-width:1.9}
 .set{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
 .set div{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10.5px;color:var(--sub)}
 .set svg.i{width:44px;height:44px;padding:10px;border-radius:14px;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 14px -8px rgba(0,0,0,.7)}
+
+/* ===== Cita rápida y agenda con íconos ===== */
+.g-team{background:linear-gradient(150deg,#F9A8D4,#BE185D)}.g-phone{background:linear-gradient(150deg,#86EFAC,#15803D)}
+.g-brief{background:linear-gradient(150deg,#FCD34D,#B45309)}.g-doc{background:linear-gradient(150deg,#93C5FD,#1D4ED8)}
+.g-food{background:linear-gradient(150deg,#FDBA74,#C2410C)}.g-med{background:linear-gradient(150deg,#FDA4AF,#BE123C)}
+.g-bank{background:linear-gradient(150deg,#A5B4FC,#4338CA)}.g-bill{background:linear-gradient(150deg,#FCA5A5,#B91C1C)}
+.g-cake{background:linear-gradient(150deg,#F0ABFC,#A21CAF)}.g-coin{background:linear-gradient(150deg,#5EEAD4,#0F766E)}
+.g-bell{background:linear-gradient(150deg,#F78FC4,#D02A7C)}.g-more{background:linear-gradient(150deg,#5A5244,#2A251D)}
+.g-hand{background:linear-gradient(150deg,#93C5FD,#1D4ED8)}.g-gold{background:linear-gradient(150deg,#FFF1C2,#A8741A);color:#2A1A00!important}
+.g-task{background:linear-gradient(150deg,#F0ABFC,#A21CAF)}.g-alert{background:linear-gradient(150deg,#FCA5A5,#B91C1C)}
+.tile{color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -2px 4px rgba(0,0,0,.18),0 6px 12px -7px rgba(0,0,0,.7)}
+.qlab{font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.06em;margin:10px 2px 6px;display:flex;justify-content:space-between}
+.qlab em{font-style:normal;color:var(--gold);text-transform:none;letter-spacing:0;font-weight:600}
+.qg{display:grid;grid-template-columns:repeat(4,1fr);gap:7px 5px}
+.qt{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;color:var(--ink);position:relative;border-radius:14px;padding:5px 0 4px}
+.qt svg.i{width:36px;height:36px;padding:8px;border-radius:12px}
+.qt.on{background:rgba(241,199,91,.12);outline:1.5px solid var(--gold)}
+.qt.on::after{content:"✓";position:absolute;top:1px;right:5px;width:14px;height:14px;border-radius:50%;background:var(--gold);color:#1B1300;font-size:9px;font-weight:800;display:grid;place-items:center}
+.chs{display:flex;flex-wrap:wrap;gap:5px}
+.ch{font-size:11.5px;padding:7px 10px;border-radius:10px;background:var(--card2);border:1px solid var(--line);font-variant-numeric:tabular-nums}
+.ch.on{background:var(--ink);color:#1B1300;font-weight:700;border-color:var(--ink)}
+.fav{display:flex;gap:6px;overflow:hidden}
+.fv{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:5px 8px 5px 5px;font-size:10.5px;white-space:nowrap;flex:none}
+.fv svg.i{width:22px;height:22px;padding:4px;border-radius:7px}
+.fv small{display:block;color:var(--sub);font-size:9.5px}
+.opt{display:flex;align-items:center;gap:8px;background:var(--card2);border-radius:12px;padding:8px 10px;font-size:11.5px;color:var(--sub);margin-top:9px}
+.opt svg.i{color:var(--gold)}
+.savebtn{margin-top:10px;border-radius:14px;padding:11px;text-align:center;font-weight:750;font-size:13px;color:#fff;background:linear-gradient(160deg,#F78FC4,#D02A7C);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 10px 18px -10px rgba(208,42,124,.8)}
+.savebtn small{display:block;font-weight:500;font-size:10.5px;opacity:.9}
+.badge3{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:#1B1300;background:linear-gradient(150deg,#FFF1C2,#E9B949);border-radius:99px;padding:3px 8px}
+.badge3 svg.i{width:11px;height:11px;stroke:none}
+.pill{display:inline-flex;align-items:center;gap:4px}
+.pill svg.pi{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ev svg.tl{width:28px;height:28px;padding:6px;border-radius:9px;flex:none}
+.wd .es{gap:5px}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -175,6 +210,19 @@ svg.i{stroke-width:1.9}
  <symbol id="send" viewBox="0 0 24 24"><path d="M3.5 11.2L20 4l-6.8 16.5-2.6-6.9z" fill="currentColor" fill-opacity=".26" stroke="none"/><path d="M3.5 11.2L20 4l-6.8 16.5-2.6-6.9z"/><path d="M10.6 13.6L20 4"/></symbol>
  <symbol id="check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="currentColor" fill-opacity=".26" stroke="none"/><path d="M7.5 12.3l3 3 6-6.6"/></symbol>
  <symbol id="logo" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="url(#gold)" stroke-width="2.2"/><circle cx="50" cy="50" r="32.5" fill="none" stroke="url(#gold)" stroke-width=".8" stroke-opacity=".55"/><g stroke="url(#gold)" stroke-width="2.2" stroke-linecap="round"><path d="M50 9v5M91 50h-5M50 91v-5M9 50h5"/></g><path d="M31 66V36l19 21 19-21v30" fill="none" stroke="url(#gold)" stroke-width="6.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="76" cy="24" r="3" fill="url(#gold)"/></symbol>
+ <symbol id="team" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2" fill="currentColor" fill-opacity=".26" stroke="none"/><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5a6 6 0 0112 0z" fill="currentColor" fill-opacity=".26" stroke="none"/><path d="M3 19.5a6 6 0 0112 0"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14a5 5 0 014.5 5"/></symbol>
+ <symbol id="phone" viewBox="0 0 24 24"><path d="M5 3.5h3.5l1.8 4.5-2.3 1.4a11 11 0 005.6 5.6l1.4-2.3 4.5 1.8V18a2.5 2.5 0 01-2.7 2.5A16 16 0 012.5 6.2 2.5 2.5 0 015 3.5z" fill="currentColor" fill-opacity=".26" stroke="none"/><path d="M5 3.5h3.5l1.8 4.5-2.3 1.4a11 11 0 005.6 5.6l1.4-2.3 4.5 1.8V18a2.5 2.5 0 01-2.7 2.5A16 16 0 012.5 6.2 2.5 2.5 0 015 3.5z"/></symbol>
+ <symbol id="brief" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="3" fill="currentColor" fill-opacity=".26" stroke="none"/><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M9 7V5.5A1.5 1.5 0 0110.5 4h3A1.5 1.5 0 0115 5.5V7M3 12.5h18M11 12.5v2h2v-2"/></symbol>
+ <symbol id="doc" viewBox="0 0 24 24"><path d="M6 3h8l5 5v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2z" fill="currentColor" fill-opacity=".26" stroke="none"/><path d="M6 3h8l5 5v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2z"/><path d="M14 3v5h5M8 13h8M8 17h5"/></symbol>
+ <symbol id="food" viewBox="0 0 24 24"><path d="M4 12h16a8 8 0 01-16 0z" fill="currentColor" fill-opacity=".26" stroke="none"/><path d="M4 12h16a8 8 0 01-16 0zM3 20h18"/><path d="M9 8c0-1.5 1.5-1.5 1.5-3M13.5 8c0-1.5 1.5-1.5 1.5-3"/></symbol>
+ <symbol id="med" viewBox="0 0 24 24"><path d="M12 20.5s-8-4.6-8-10.4A4.4 4.4 0 0112 7.6a4.4 4.4 0 018 2.5c0 5.8-8 10.4-8 10.4z" fill="currentColor" fill-opacity=".26" stroke="none"/><path d="M12 20.5s-8-4.6-8-10.4A4.4 4.4 0 0112 7.6a4.4 4.4 0 018 2.5c0 5.8-8 10.4-8 10.4z"/><path d="M12 10.5v5M9.5 13h5"/></symbol>
+ <symbol id="bank" viewBox="0 0 24 24"><path d="M3 9.5L12 4l9 5.5z" fill="currentColor" fill-opacity=".26" stroke="none"/><path d="M3 9.5L12 4l9 5.5zM5 9.5v8M9.7 9.5v8M14.3 9.5v8M19 9.5v8M3 20.5h18"/></symbol>
+ <symbol id="bill" viewBox="0 0 24 24"><path d="M5 3h14v18l-2.3-1.5L14.3 21 12 19.5 9.7 21l-2.4-1.5L5 21z" fill="currentColor" fill-opacity=".26" stroke="none"/><path d="M5 3h14v18l-2.3-1.5L14.3 21 12 19.5 9.7 21l-2.4-1.5L5 21zM9 8h6M9 12h6M9 16h3"/></symbol>
+ <symbol id="cake" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="9" rx="2.5" fill="currentColor" fill-opacity=".26" stroke="none"/><rect x="4" y="11" width="16" height="9" rx="2.5"/><path d="M4 15c2 1.3 4 1.3 5.3 0s4-1.3 5.4 0 4 1.3 5.3 0M8 11V8M12 11V8M16 11V8"/><path d="M8 5.5l.01.01M12 5.5l.01.01M16 5.5l.01.01" stroke-width="2.6"/></symbol>
+ <symbol id="alert" viewBox="0 0 24 24"><path d="M12 3.5l9.5 16.5h-19z" fill="currentColor" fill-opacity=".26" stroke="none"/><path d="M12 3.5l9.5 16.5h-19zM12 10v4.5M12 17.3v.1"/></symbol>
+ <symbol id="mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor" fill-opacity=".26" stroke="none"/><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0013 0M12 17.5V21"/></symbol>
+ <symbol id="bolt" viewBox="0 0 24 24"><path d="M13 2.5L4.5 13.5H11l-1 8 8.5-11H12z" fill="currentColor" stroke="none"/></symbol>
+ <symbol id="dots" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="18.5" cy="12" r="1.6" fill="currentColor"/></symbol>
 </svg>
 
 <header>
@@ -234,8 +282,8 @@ svg.i{stroke-width:1.9}
   <figure><div class="phone"><div class="island"></div>
     <div class="lock">
       <div class="clk">7:00</div><div class="dt">jueves, 26 de noviembre</div>
-      <div class="ntf"><div class="ic appi"><svg><use href="#logo"/></svg></div><div><b>Cobros M · Tu día</b><p>Hoy: 5 cobros por $520.000 · 1 cita · 2 tareas. Hay 2 atrasados.</p></div></div>
-      <div class="ntf"><div class="ic appi"><svg><use href="#logo"/></svg></div><div><b>Cobros M · en 15 min</b><p>11:00 Cita en el banco</p></div></div>
+      <div class="ntf"><div class="ic appi"><svg><use href="#logo"/></svg></div><div><b>Cobros M · Tu día</b><p>Hoy: 5 cobros por $520.000 · 2 citas · 2 tareas. Hay 2 atrasados.</p></div></div>
+      <div class="ntf"><div class="ic appi"><svg><use href="#logo"/></svg></div><div><b>Cobros M · en 15 min</b><p>9:00 Reunión de equipo · Sala 2</p></div></div>
       <div class="ntf"><div class="ic appi"><svg><use href="#logo"/></svg></div><div><b>Cobros M · Préstamo por terminar</b><p>A Rosa P. le quedan 2 cuotas. ¿Le renuevas?</p></div></div>
     </div></div>
     <figcaption><b>Pantalla bloqueada</b>Aviso de la mañana a la hora que ella escoja, aviso 15 minutos antes de cada cita y aviso de renovación.</figcaption></figure>
@@ -245,15 +293,15 @@ svg.i{stroke-width:1.9}
       <div class="top"><h3>Hoy<small>jueves 26 nov</small></h3><div class="av appi"><svg><use href="#logo"/></svg></div></div>
       <div class="types">
         <div class="ty cob"><div class="t"><svg class="i"><use href="#coin"/></svg>Cobros</div><div class="n">5</div><div class="d">$380.000 de $520.000</div></div>
-        <div class="ty cit"><div class="t"><svg class="i"><use href="#cita"/></svg>Citas</div><div class="n">1</div><div class="d">11:00 Banco</div></div>
+        <div class="ty cit"><div class="t"><svg class="i"><use href="#cita"/></svg>Citas</div><div class="n">2</div><div class="d">9:00 Reunión · 11:00 Banco</div></div>
         <div class="ty tar"><div class="t"><svg class="i"><use href="#task"/></svg>Tareas</div><div class="n">2</div><div class="d">1 hecha</div></div>
         <div class="ty ent"><div class="t"><svg class="i"><use href="#hand"/></svg>Entregas</div><div class="n">1</div><div class="d">2:00 p. m. · $500.000</div></div>
       </div>
       <div class="sec">Ahora sigue <span>por hora</span></div>
       <div class="card" style="padding:4px 12px">
-        <div class="ev"><div class="h">11:00</div><div class="bar" style="background:var(--recor)"></div><div class="x"><b>Cita en el banco</b><span class="sub">Llevar extractos</span></div></div>
-        <div class="ev"><div class="h">2:00</div><div class="bar" style="background:var(--presta)"></div><div class="x"><b>Entregar a Carlos M.</b><span class="sub">$500.000 · 24 cuotas</span></div></div>
-        <div class="ev"><div class="h">6:00</div><div class="bar" style="background:var(--gold)"></div><div class="x"><b>Cierre del día</b><span class="sub">Contar la plata</span></div></div>
+        <div class="ev"><div class="h">9:00</div><svg class="i tl tile g-team"><use href="#team"/></svg><div class="x"><b>Reunión de equipo</b><span class="sub">Sala 2 · cada lunes y jueves</span></div></div><div class="ev"><div class="h">11:00</div><svg class="i tl tile g-bank"><use href="#bank"/></svg><div class="x"><b>Banco</b><span class="sub">Llevar extractos</span></div></div>
+        <div class="ev"><div class="h">2:00</div><svg class="i tl tile g-hand"><use href="#hand"/></svg><div class="x"><b>Entregar a Carlos M.</b><span class="sub">$500.000 · 24 cuotas</span></div></div>
+        <div class="ev"><div class="h">6:00</div><svg class="i tl tile g-gold"><use href="#chart"/></svg><div class="x"><b>Cierre del día</b><span class="sub">Contar la plata</span></div></div>
       </div>
       <div class="sec">Atrasados <span class="chip c-mal">2</span></div>
       <div class="card" style="padding:8px 12px"><div class="row"><div class="row" style="gap:8px"><div class="ini">LR</div><div><b>Luis R.</b><div class="sub">2 cuotas · $50.000</div></div></div><span class="act a-enviar mini"><svg class="i"><use href="#send"/></svg>Avisar</span></div></div>
@@ -283,7 +331,7 @@ svg.i{stroke-width:1.9}
 
 <section class="part">
   <h2>2 · Agenda: semana y mes</h2>
-  <p>Lo decidí pensando en la agenda: la semana muestra qué hay cada día y el mes marca con puntos los días ocupados. Tocar un día abre sus tarjetas.</p>
+  <p>La agenda es lo principal: cada cita lleva su ícono y crear una toma 3 toques, sin escribir. La semana muestra qué hay cada día y el mes marca con puntos los días ocupados.</p>
   <div class="grid">
 
   <figure><div class="phone"><div class="island"></div><div class="status"><span>8:20</span><span>●●● 91 %</span></div>
@@ -291,17 +339,17 @@ svg.i{stroke-width:1.9}
       <div class="top"><h3>Agenda<small>23 – 29 nov</small></h3></div>
       <div class="seg"><span>Día</span><span class="on">Semana</span><span>Mes</span></div>
       <div class="card" style="padding:2px 12px">
-        <div class="wd"><div class="dd"><small>Lun</small><b>23</b></div><div class="es"><span class="pill p-cob">5 cobros · $480 mil ✓</span></div></div>
-        <div class="wd"><div class="dd"><small>Mar</small><b>24</b></div><div class="es"><span class="pill p-cob">6 cobros ✓</span><span class="pill p-rec">Médico 9:00</span></div></div>
-        <div class="wd"><div class="dd"><small>Mié</small><b>25</b></div><div class="es"><span class="pill p-cob">5 cobros</span><span class="pill p-mal">2 sin pagar</span></div></div>
-        <div class="wd today"><div class="dd"><small>Hoy</small><b>26</b></div><div class="es"><span class="pill p-cob">5 cobros</span><span class="pill p-rec">Banco 11:00</span><span class="pill p-ent">Entrega 2:00</span><span class="pill p-rec">2 tareas</span></div></div>
-        <div class="wd"><div class="dd"><small>Vie</small><b>27</b></div><div class="es"><span class="pill p-cob">7 cobros · $610 mil</span></div></div>
-        <div class="wd"><div class="dd"><small>Sáb</small><b>28</b></div><div class="es"><span class="pill p-cob">4 cobros</span><span class="pill p-rec">Cumpleaños mamá</span></div></div>
+        <div class="wd"><div class="dd"><small>Lun</small><b>23</b></div><div class="es"><span class="pill p-cob"><svg class="pi"><use href="#coin"/></svg>5 cobros ✓</span><span class="pill p-rec"><svg class="pi"><use href="#team"/></svg>Reunión 9:00</span></div></div>
+        <div class="wd"><div class="dd"><small>Mar</small><b>24</b></div><div class="es"><span class="pill p-cob"><svg class="pi"><use href="#coin"/></svg>6 cobros ✓</span><span class="pill p-rec"><svg class="pi"><use href="#doc"/></svg>Informe 5:00</span><span class="pill p-rec"><svg class="pi"><use href="#med"/></svg>Médico 9:00</span></div></div>
+        <div class="wd"><div class="dd"><small>Mié</small><b>25</b></div><div class="es"><span class="pill p-cob"><svg class="pi"><use href="#coin"/></svg>5 cobros</span><span class="pill p-mal"><svg class="pi"><use href="#alert"/></svg>2 sin pagar</span></div></div>
+        <div class="wd today"><div class="dd"><small>Hoy</small><b>26</b></div><div class="es"><span class="pill p-cob"><svg class="pi"><use href="#coin"/></svg>5 cobros</span><span class="pill p-rec"><svg class="pi"><use href="#team"/></svg>Reunión 9:00</span><span class="pill p-rec"><svg class="pi"><use href="#bank"/></svg>Banco 11:00</span><span class="pill p-ent"><svg class="pi"><use href="#hand"/></svg>Entrega 2:00</span><span class="pill p-rec"><svg class="pi"><use href="#task"/></svg>2 tareas</span></div></div>
+        <div class="wd"><div class="dd"><small>Vie</small><b>27</b></div><div class="es"><span class="pill p-cob"><svg class="pi"><use href="#coin"/></svg>7 cobros</span><span class="pill p-rec"><svg class="pi"><use href="#phone"/></svg>Llamar proveedor 3:00</span></div></div>
+        <div class="wd"><div class="dd"><small>Sáb</small><b>28</b></div><div class="es"><span class="pill p-cob"><svg class="pi"><use href="#coin"/></svg>4 cobros</span><span class="pill p-rec"><svg class="pi"><use href="#cake"/></svg>Cumpleaños mamá</span></div></div>
         <div class="wd"><div class="dd"><small>Dom</small><b>29</b></div><div class="es"><span class="sub">Sin cobro</span></div></div>
       </div>
     </div>
     <div class="tabs"><div><svg class="i"><use href="#home"/></svg>Inicio</div><div class="on"><svg class="i"><use href="#cal"/></svg>Agenda</div><div class="plus"><svg class="i"><use href="#plus"/></svg></div><div><svg class="i"><use href="#list"/></svg>Préstamos</div><div><svg class="i"><use href="#chart"/></svg>Reportes</div></div>
-  </div><figcaption><b>Semana</b>Una fila por día con etiquetas de color: cobros, citas, entregas y atrasos.</figcaption></figure>
+  </div><figcaption><b>Semana</b>Una fila por día; cada etiqueta lleva el ícono de lo que es (reunión, llamada, médico, cobro…) para entenderla de un vistazo.</figcaption></figure>
 
   <figure><div class="phone"><div class="island"></div><div class="status"><span>8:21</span><span>●●● 91 %</span></div>
     <div class="scr">
@@ -309,26 +357,35 @@ svg.i{stroke-width:1.9}
       <div class="seg"><span>Día</span><span>Semana</span><span class="on">Mes</span></div>
       <div class="mon" id="mon"></div>
       <div class="sec" style="margin-top:12px">Viernes 27 <span>toque para ver</span></div>
-      <div class="types">
-        <div class="ty cob"><div class="t"><svg class="i"><use href="#coin"/></svg>Cobros</div><div class="n">7</div><div class="d">$610.000</div></div>
-        <div class="ty cit"><div class="t"><svg class="i"><use href="#cita"/></svg>Citas y tareas</div><div class="n">0</div><div class="d">Libre</div></div>
+      <div class="card" style="padding:2px 12px">
+        <div class="ev"><div class="h">Todo el día</div><svg class="i tl tile g-coin"><use href="#coin"/></svg><div class="x"><b>7 cobros</b><span class="sub">$610.000</span></div></div>
+        <div class="ev"><div class="h">3:00</div><svg class="i tl tile g-phone"><use href="#phone"/></svg><div class="x"><b>Llamar proveedor</b><span class="sub">Te aviso 15 min antes</span></div></div>
       </div>
     </div>
     <div class="tabs"><div><svg class="i"><use href="#home"/></svg>Inicio</div><div class="on"><svg class="i"><use href="#cal"/></svg>Agenda</div><div class="plus"><svg class="i"><use href="#plus"/></svg></div><div><svg class="i"><use href="#list"/></svg>Préstamos</div><div><svg class="i"><use href="#chart"/></svg>Reportes</div></div>
   </div><figcaption><b>Mes</b>Puntos por día: turquesa cobros, rosa citas, azul entregas y rojo atrasos. Tocar un día muestra sus tarjetas.</figcaption></figure>
 
   <figure><div class="phone"><div class="island"></div><div class="status"><span>8:22</span><span>●●● 91 %</span></div>
-    <div class="scr">
-      <div class="top"><h3>Nuevo recordatorio</h3></div>
-      <div class="field"><small>Qué</small>Cita en el banco</div>
-      <div class="row" style="gap:7px"><div class="field" style="flex:1"><small>Día</small>Jue 26 nov</div><div class="field" style="flex:1"><small>Hora</small>11:00 a. m.</div></div>
-      <div class="field"><small>Avisarme</small>15 minutos antes</div>
-      <div class="field"><small>Repetir</small>No se repite · Cada semana · Cada mes</div>
-      <div class="field"><small>Tipo</small><span class="pill p-rec">Cita</span> <span class="pill" style="background:var(--card);color:var(--sub)">Tarea</span></div>
-      <div class="field"><small>Nota</small>Llevar extractos</div>
-      <div class="act a-recor" style="margin-top:12px;padding:12px"><svg class="i"><use href="#bell"/></svg>Guardar recordatorio</div>
+    <div class="scr" style="padding-bottom:12px">
+      <div class="top" style="margin-bottom:4px"><h3>Cita rápida</h3><span class="badge3"><svg class="i"><use href="#bolt"/></svg>3 toques</span></div>
+      <div class="qlab">Las de siempre <em>1 toque</em></div>
+      <div class="fav">
+        <div class="fv"><svg class="i tile g-team"><use href="#team"/></svg><div>Reunión de equipo<small>Lun 9:00 · cada semana</small></div></div>
+        <div class="fv"><svg class="i tile g-phone"><use href="#phone"/></svg><div>Llamar al jefe<small>Hoy 3:00</small></div></div>
+      </div>
+      <div class="qlab">1 · ¿Qué es?</div>
+      <div class="qg">
+        <div class="qt on"><svg class="i tile g-team"><use href="#team"/></svg>Reunión</div><div class="qt"><svg class="i tile g-phone"><use href="#phone"/></svg>Llamada</div><div class="qt"><svg class="i tile g-brief"><use href="#brief"/></svg>Cliente</div><div class="qt"><svg class="i tile g-doc"><use href="#doc"/></svg>Informe</div>
+        <div class="qt"><svg class="i tile g-food"><use href="#food"/></svg>Almuerzo</div><div class="qt"><svg class="i tile g-med"><use href="#med"/></svg>Médico</div><div class="qt"><svg class="i tile g-bank"><use href="#bank"/></svg>Banco</div><div class="qt"><svg class="i tile g-bill"><use href="#bill"/></svg>Pagar</div>
+        <div class="qt"><svg class="i tile g-cake"><use href="#cake"/></svg>Cumpleaños</div><div class="qt"><svg class="i tile g-coin"><use href="#coin"/></svg>Cobro</div><div class="qt"><svg class="i tile g-bell"><use href="#bell"/></svg>Recordar</div><div class="qt"><svg class="i tile g-more"><use href="#dots"/></svg>Otro</div>
+      </div>
+      <div class="qlab">2 · ¿Cuándo?</div>
+      <div class="chs"><span class="ch">Hoy</span><span class="ch on">Mañana</span><span class="ch">Lun 30</span><span class="ch">Mar 1</span><span class="ch pill"><svg class="pi"><use href="#cal"/></svg>Otro día</span></div>
+      <div class="chs" style="margin-top:5px"><span class="ch">En 1 hora</span><span class="ch">8:00</span><span class="ch">9:00</span><span class="ch on">10:00</span><span class="ch">11:00</span><span class="ch">2:00</span><span class="ch">3:00</span><span class="ch">4:00</span></div>
+      <div class="opt"><svg class="i"><use href="#mic"/></svg>Nombre o nota (opcional) · toca y dicta</div>
+      <div class="savebtn">3 · Guardar reunión<small>Mañana 10:00 a. m. · te aviso 15 min antes</small></div>
     </div>
-  </div><figcaption><b>Recordatorio o cita</b>Lo crea en 10 segundos con la hora y el aviso. También sirve para cosas personales.</figcaption></figure>
+  </div><figcaption><b>Cita rápida en 3 toques</b>Qué (12 opciones de oficina y personales) → cuándo (día y hora en botones) → Guardar. Las que más usa salen arriba y se crean con 1 toque. No hay que escribir nada; la nota es opcional y se puede dictar.</figcaption></figure>
   </div>
 </section>
 
@@ -347,10 +404,10 @@ svg.i{stroke-width:1.9}
       <div class="act a-presta"><svg class="i"><use href="#hand"/></svg>Prestar</div>
       <div class="act a-cobra"><svg class="i"><use href="#coin"/></svg>Cobrar</div>
       <div class="act a-recor"><svg class="i"><use href="#bell"/></svg>Recordatorio</div>
-      <div class="act a-recor"><svg class="i"><use href="#cita"/></svg>Cita</div>
+      <div class="act a-recor"><svg class="i"><use href="#cita"/></svg>Cita rápida</div>
     </div></div>
     <div class="tabs"><div><svg class="i"><use href="#home"/></svg>Inicio</div><div><svg class="i"><use href="#cal"/></svg>Agenda</div><div class="plus"><svg class="i"><use href="#plus"/></svg></div><div><svg class="i"><use href="#list"/></svg>Préstamos</div><div><svg class="i"><use href="#chart"/></svg>Reportes</div></div>
-  </div><figcaption><b>Botón +</b>Las 4 acciones que escogiste, cada una con su color.</figcaption></figure>
+  </div><figcaption><b>Botón +</b>Las 4 acciones que escogiste. "Cita rápida" abre la pantalla de 3 toques.</figcaption></figure>
 
   <figure><div class="phone"><div class="island"></div><div class="status"><span>8:31</span><span>●●● 90 %</span></div>
     <div class="scr">

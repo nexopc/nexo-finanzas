@@ -37,3 +37,6 @@ Negocio (nombre/logo) · Préstamos (tipo, interés, frecuencia, días, mora, ab
 - Cliente: solo número de cédula, sin foto. Recibo de pago por WhatsApp.
 - Boceto: `boceto.html` (fase 4).
 - Íconos premium: duotono (relleno suave + trazo fino) sobre fichas con degradado; ícono de la app = monograma dorado dentro de un aro moneda/reloj (versión oscura y clara).
+- **Cita rápida en 3 toques** (la clienta trabaja en oficina): Qué (12 plantillas: Reunión, Llamada, Cliente, Informe, Almuerzo, Médico, Banco, Pagar, Cumpleaños, Cobro, Recordar, Otro) → Cuándo (botones de día y hora, "en 1 hora") → Guardar. Aviso 15 min antes por defecto.
+  "Las de siempre": las más usadas salen arriba y se crean con 1 toque. Nota opcional (dictado del teclado del iPhone).
+- Cada evento muestra el ícono de su plantilla en Inicio, Semana y Mes.
