@@ -5,7 +5,7 @@ compatibility_date = "2025-06-01"
 
 [[kv_namespaces]]
 binding = "AVISOS"
-id = "PEGA_AQUI_EL_ID_DEL_KV"
+id = "1b6c2d6677fb4419bcc7965c1cfb3d26"
 
 [triggers]
 crons = ["* * * * *"]

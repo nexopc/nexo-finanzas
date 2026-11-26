@@ -54,3 +54,8 @@ Negocio (nombre/logo) · Préstamos (tipo, interés, frecuencia, días, mora, ab
 - Ícono: ✓ dorado por defecto; antes de instalar se puede escoger la letra (Safari toma el ícono dibujado al agregar a inicio).
 - Datos: localStorage `cobros-agenda-v1` (solo en el iPhone) + copia semanal recordada en Inicio. Entrega: `ENTREGA.md`.
 - Pendiente: probar avisos en un iPhone real con el Worker publicado.
+
+## Servidor de avisos (montado)
+- Cuenta Cloudflare de NEXO PC. Worker `avisos-cobros` → https://avisos-cobros.nexopc2.workers.dev · KV `AVISOS` (id 1b6c2d6677fb4419bcc7965c1cfb3d26) · cron cada minuto.
+- Variables: VAPID_PUBLIC, VAPID_PRIVATE_JWK (secreto), VAPID_SUBJECT. La privada solo vive en Cloudflare.
+- `PUSH_URL` y `PUSH_KEY` ya están en `src/p1.js`.
