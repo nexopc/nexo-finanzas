@@ -12,3 +12,18 @@ Fase actual: 1–2 (preguntas). Archivo: `preguntas.html` (20 de opción múltip
 - Agenda diaria, semanal y mensual.
 - Interfaz parecida a las apps de préstamos anteriores (base: `clientes/oro-prestamos/app`).
 - Reporte de préstamos.
+
+## Decisiones de Cristóbal (fase 1–2)
+- Avisos: servidor gratis (Cloudflare, cuenta nueva de NEXO PC) → llegan con la app cerrada.
+- Datos: solo en el iPhone + respaldo manual (exportar/importar). Recordatorio de respaldo dentro de la app.
+- Bloqueo: Face ID + PIN. Modo prueba con datos de ejemplo: sí.
+- Base: app de oro (toda la mecánica de préstamos: calendario de colores, botón +, préstamo en 3 pasos, cierre del día).
+- Pestañas: Inicio · Agenda · (+) · Préstamos · Reportes. Reportes en pantalla + PDF.
+- Extras: recibo de pago por WhatsApp, foto del cliente/cédula (solo en el iPhone).
+- iPhone 18 Pro Max (iOS reciente → push OK).
+- Asistente de inicio lo llenan juntos al instalar. Préstamos del cuaderno los pasa ella.
+- Entrega en persona. Precio: $500.000, sin mensualidad, todo al entregar. Plazo: 1 semana.
+
+## Asistente de inicio (lo responde la clienta dentro de la app)
+Negocio (nombre/logo) · Préstamos (tipo, interés, frecuencia, días, mora, abonos) · Medios de pago
+· Avisos (cuáles, hora, tono WhatsApp) · Agenda (vista inicial, qué anota) · Datos del cliente.
