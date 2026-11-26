@@ -27,3 +27,12 @@ Fase actual: 1–2 (preguntas). Archivo: `preguntas.html` (20 de opción múltip
 ## Asistente de inicio (lo responde la clienta dentro de la app)
 Negocio (nombre/logo) · Préstamos (tipo, interés, frecuencia, días, mora, abonos) · Medios de pago
 · Avisos (cuáles, hora, tono WhatsApp) · Agenda (vista inicial, qué anota) · Datos del cliente.
+
+## Diseño (fase 3)
+- Tema sigue al iPhone (claro de día / oscuro de noche), dorado. Letra normal. Ícono: inicial dorada sobre negro.
+- **Lo principal es la agenda y los recordatorios.** Inicio = agenda del día en tarjetas por tipo (Cobros · Citas · Tareas · Entregas).
+- Semana: fila por día con etiquetas de color. Mes: puntos por tipo; tocar un día muestra sus tarjetas.
+- Reporte: dona capital vs interés (día/semana/mes) + PDF.
+- Botón +: Prestar (azul) · Cobrar (turquesa) · Recordatorio y Cita (rosa).
+- Cliente: solo número de cédula, sin foto. Recibo de pago por WhatsApp.
+- Boceto: `boceto.html` (fase 4).

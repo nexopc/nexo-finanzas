@@ -1,0 +1,324 @@
+<title>Boceto App de Cobros</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: página de presentación con celulares en cuadrícula; dentro de cada celular, la app oscura y dorada de la app de oro */
+:root{
+  --bg:#F4F1EA;--page-ink:#1D1A14;--muted:#6E675A;--frame:#2A2621;
+  --phone:#0F0D0A;--card:#1B1813;--card2:#26221B;--line:#352F25;
+  --ink:#F5EFE2;--sub:#B3AA96;--gold:#E0A526;--gold2:#F1D58E;
+  --presta:#3B7BF6;--cobra:#14B8A6;--enviar:#8B5CF6;--recor:#EC4899;--hoy:#F97316;--mal:#EF4444;--ok:#22A55B;--ver:#3A342B;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B0A08;--page-ink:#EDE6D6;--muted:#9B9282;--frame:#3A352D;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0B0A08;--page-ink:#EDE6D6;--muted:#9B9282;--frame:#3A352D;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--page-ink);font:15px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;padding-block:24px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header,.part{max-width:1200px;margin:0 auto}
+header h1{font-size:26px;letter-spacing:-.02em;margin:0;text-wrap:balance}
+header p{color:var(--muted);max-width:760px;margin:6px 0 0}
+.keys{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.keys span{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.keys i{width:12px;height:12px;border-radius:4px;display:inline-block}
+.part{margin-top:40px}
+.part h2{font-size:20px;margin:0}
+.part>p{color:var(--muted);margin:4px 0 18px;max-width:760px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:34px 22px;justify-items:center}
+figure{width:100%;max-width:330px;margin:0}
+figcaption{margin-top:12px;font-size:14px;color:var(--muted)}
+figcaption b{color:var(--page-ink);display:block;font-size:15px}
+.phone{position:relative;width:100%;aspect-ratio:390/844;background:var(--phone);border-radius:44px;border:9px solid var(--frame);box-shadow:0 20px 40px -18px rgba(0,0,0,.5);overflow:hidden;color:var(--ink);font-size:13px}
+.island{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:92px;height:26px;background:#000;border-radius:20px;z-index:6}
+.status{display:flex;justify-content:space-between;padding:12px 24px 0;font-size:12px;font-weight:600;height:40px}
+.scr{position:absolute;inset:40px 0 0;overflow:hidden;padding:6px 14px 84px}
+.top{display:flex;justify-content:space-between;align-items:center;margin:4px 0 10px;gap:8px}
+.top h3{font-size:21px;letter-spacing:-.02em;margin:0}
+.top small{display:block;color:var(--sub);font-size:11.5px;font-weight:500}
+.av{width:30px;height:30px;border-radius:50%;background:var(--card2);display:grid;place-items:center;font-size:12px;color:var(--gold)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px;margin-bottom:9px}
+.lbl{font-size:10.5px;color:var(--sub);text-transform:uppercase;letter-spacing:.06em}
+.big{font-size:24px;font-weight:750;letter-spacing:-.02em;color:var(--gold2);font-variant-numeric:tabular-nums}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sub{color:var(--sub);font-size:11.5px}
+.sec{font-size:13px;font-weight:650;margin:11px 2px 6px;display:flex;justify-content:space-between;align-items:center}
+.sec span{color:var(--sub);font-weight:500;font-size:11.5px}
+.chip{font-size:10.5px;padding:2px 8px;border-radius:99px;white-space:nowrap;font-weight:600}
+.c-ok{background:rgba(34,165,91,.18);color:#5FD08E}.c-mal{background:rgba(239,68,68,.18);color:#FF8A80}
+.c-hoy{background:rgba(249,115,22,.18);color:#FFA463}.c-rec{background:rgba(236,72,153,.18);color:#F9A8D4}
+/* Tarjetas por tipo */
+.types{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px}
+.ty{border-radius:16px;padding:10px;border:1px solid var(--line);background:var(--card)}
+.ty .n{font-size:22px;font-weight:750;font-variant-numeric:tabular-nums}
+.ty .t{font-size:11.5px;font-weight:650;display:flex;align-items:center;gap:5px}
+.ty .d{font-size:10.5px;color:var(--sub);margin-top:2px}
+.ty.cob{border-color:rgba(20,184,166,.45)}.ty.cob .t{color:#5EEAD4}
+.ty.cit{border-color:rgba(236,72,153,.45)}.ty.cit .t{color:#F9A8D4}
+.ty.tar{border-color:rgba(236,72,153,.3)}.ty.tar .t{color:#F9A8D4}
+.ty.ent{border-color:rgba(59,123,246,.45)}.ty.ent .t{color:#93B4FB}
+.ev{display:flex;gap:9px;padding:8px 0;border-top:1px solid var(--line);align-items:center}
+.ev:first-child{border-top:0}
+.ev .h{width:42px;font-size:11.5px;color:var(--sub);font-variant-numeric:tabular-nums;flex:none}
+.ev .bar{width:4px;align-self:stretch;border-radius:4px;flex:none}
+.ev .x{flex:1;min-width:0}.ev .x b{display:block;font-size:13px}
+.ini{width:30px;height:30px;border-radius:50%;background:var(--card2);display:grid;place-items:center;font-size:11.5px;font-weight:600;flex:none}
+svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.act{display:flex;align-items:center;justify-content:center;gap:6px;border-radius:12px;font-weight:700;font-size:12.5px;padding:9px 8px;color:#fff}
+.a-presta{background:var(--presta)}.a-cobra{background:var(--cobra);color:#042420}.a-enviar{background:var(--enviar)}.a-recor{background:var(--recor)}.a-ver{background:var(--ver);color:var(--ink)}.a-mal{background:var(--mal)}
+.mini{font-size:11px;padding:6px 9px;border-radius:10px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);background:var(--card2);border-radius:11px;padding:3px;margin-bottom:10px;font-size:12px;text-align:center}
+.seg span{padding:6px;border-radius:8px;color:var(--sub)}.seg .on{background:var(--ink);color:#1B1300;font-weight:700}
+/* semana */
+.wd{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.wd:first-child{border-top:0}
+.wd .dd{width:34px;text-align:center;flex:none}
+.wd .dd b{display:block;font-size:17px}.wd .dd small{font-size:10px;color:var(--sub);text-transform:uppercase}
+.wd.today .dd b{color:var(--hoy)}
+.wd .es{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start}
+.pill{font-size:10.5px;padding:3px 7px;border-radius:8px;font-weight:600}
+.p-cob{background:rgba(20,184,166,.16);color:#5EEAD4}.p-rec{background:rgba(236,72,153,.16);color:#F9A8D4}.p-ent{background:rgba(59,123,246,.18);color:#93B4FB}.p-mal{background:rgba(239,68,68,.18);color:#FF8A80}
+/* mes */
+.mon{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:11px}
+.mon .wh{color:var(--sub);font-size:9.5px;padding-bottom:2px}
+.mon div.d{aspect-ratio:1;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:var(--card)}
+.mon .d.o{opacity:.35}.mon .d.t{outline:2px solid var(--hoy)}.mon .d.s{background:var(--ink);color:#1B1300;font-weight:700}
+.dots{display:flex;gap:2px;height:5px}.dots i{width:5px;height:5px;border-radius:50%}
+.dc{background:var(--cobra)}.dr{background:var(--recor)}.de{background:var(--presta)}.dm{background:var(--mal)}
+/* tabs */
+.tabs{position:absolute;left:0;right:0;bottom:0;height:72px;background:rgba(20,18,14,.97);border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:flex-start;padding-top:9px;font-size:10px;color:var(--sub);z-index:2}
+.tabs div{text-align:center;width:56px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tabs .on{color:var(--gold2)}
+.plus{width:50px!important;height:50px;margin-top:-22px;border-radius:50%;background:var(--ink);color:#1B1300;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.5)}
+.plus svg.i{width:24px;height:24px}
+/* + abierto */
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:3}
+.sheet{position:absolute;left:10px;right:10px;bottom:84px;z-index:4;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:12px}
+.sheet .g{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sheet .act{flex-direction:column;padding:14px 6px;font-size:13px}
+.sheet .act svg.i{width:24px;height:24px}
+/* bloqueo */
+.lock{position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 0%,#3A2E15,#0F0D0A 70%);padding:60px 12px 0;text-align:center}
+.lock .clk{font-size:64px;font-weight:300;letter-spacing:-.03em;line-height:1}
+.lock .dt{font-size:14px;color:var(--sub);margin-bottom:26px}
+.ntf{background:rgba(40,36,30,.88);border-radius:18px;padding:10px 12px;text-align:left;margin-bottom:8px;display:flex;gap:9px}
+.ntf .ic{width:34px;height:34px;border-radius:9px;background:#000;color:var(--gold);display:grid;place-items:center;font-weight:800;font-size:17px;flex:none;border:1px solid #4A3B1C}
+.ntf b{font-size:12.5px}.ntf p{margin:1px 0 0;font-size:12px;color:#E7DFCF}
+/* dona */
+.donut{display:flex;gap:14px;align-items:center}
+.donut svg{width:110px;height:110px;flex:none}
+.lg{font-size:12px;display:flex;flex-direction:column;gap:7px}
+.lg span{display:flex;gap:6px;align-items:center}.lg i{width:10px;height:10px;border-radius:3px}
+.field{background:var(--card2);border-radius:12px;padding:9px 11px;margin-bottom:7px}
+.field small{display:block;color:var(--sub);font-size:10.5px}
+.cal{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin-top:8px}
+.cal i{aspect-ratio:1;border-radius:4px}
+.note{max-width:1200px;margin:40px auto 0;border:1px dashed var(--muted);border-radius:16px;padding:14px 16px;color:var(--muted);font-size:14px}
+.note b{color:var(--page-ink)}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+ <symbol id="cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></symbol>
+ <symbol id="home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9H4z"/></symbol>
+ <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+ <symbol id="hand" viewBox="0 0 24 24"><path d="M3 14h4l3 2h6a2 2 0 000-4h-4M7 14V9h6l5 3"/></symbol>
+ <symbol id="coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 10h3.5a1.5 1.5 0 010 3H11a1.5 1.5 0 000 3h3.5"/></symbol>
+ <symbol id="bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 1112 0v5l2 2H4zM10 21h4"/></symbol>
+ <symbol id="pin" viewBox="0 0 24 24"><path d="M12 21s-6-6-6-11a6 6 0 1112 0c0 5-6 11-6 11z"/><circle cx="12" cy="10" r="2"/></symbol>
+ <symbol id="chart" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v8h8"/></symbol>
+ <symbol id="list" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+ <symbol id="send" viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-3-6z"/></symbol>
+ <symbol id="check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+</svg>
+
+<header>
+  <h1>Boceto · App de cobros y agenda</h1>
+  <p>Así se vería en el iPhone 18 Pro Max de tu clienta. La agenda es lo principal: Inicio es su día y los préstamos entran como cobros dentro de la agenda. Usa la misma mecánica de la app de oro. Todos los datos son de ejemplo.</p>
+  <div class="keys">
+    <span><i style="background:var(--cobra)"></i>Cobrar</span>
+    <span><i style="background:var(--presta)"></i>Prestar / entregar</span>
+    <span><i style="background:var(--recor)"></i>Recordatorio y cita</span>
+    <span><i style="background:var(--enviar)"></i>WhatsApp / recibo / PDF</span>
+    <span><i style="background:var(--hoy)"></i>Vence hoy</span>
+    <span><i style="background:var(--mal)"></i>Atrasado</span>
+  </div>
+</header>
+
+<section class="part">
+  <h2>1 · Avisos y su día</h2>
+  <p>La notificación le llega aunque la app esté cerrada. Al abrirla ve su día en tarjetas por tipo.</p>
+  <div class="grid">
+
+  <figure><div class="phone"><div class="island"></div>
+    <div class="lock">
+      <div class="clk">7:00</div><div class="dt">jueves, 26 de noviembre</div>
+      <div class="ntf"><div class="ic">M</div><div><b>Cobros M · Tu día</b><p>Hoy: 5 cobros por $520.000 · 1 cita · 2 tareas. Hay 2 atrasados.</p></div></div>
+      <div class="ntf"><div class="ic">M</div><div><b>Cobros M · en 15 min</b><p>11:00 Cita en el banco</p></div></div>
+      <div class="ntf"><div class="ic">M</div><div><b>Cobros M · Préstamo por terminar</b><p>A Rosa P. le quedan 2 cuotas. ¿Le renuevas?</p></div></div>
+    </div></div>
+    <figcaption><b>Pantalla bloqueada</b>Aviso de la mañana a la hora que ella escoja, aviso 15 minutos antes de cada cita y aviso de renovación.</figcaption></figure>
+
+  <figure><div class="phone"><div class="island"></div><div class="status"><span>8:14</span><span>●●● 92 %</span></div>
+    <div class="scr">
+      <div class="top"><h3>Hoy<small>jueves 26 nov</small></h3><div class="av">M</div></div>
+      <div class="types">
+        <div class="ty cob"><div class="t"><svg class="i"><use href="#coin"/></svg>Cobros</div><div class="n">5</div><div class="d">$380.000 de $520.000</div></div>
+        <div class="ty cit"><div class="t"><svg class="i"><use href="#cal"/></svg>Citas</div><div class="n">1</div><div class="d">11:00 Banco</div></div>
+        <div class="ty tar"><div class="t"><svg class="i"><use href="#bell"/></svg>Tareas</div><div class="n">2</div><div class="d">1 hecha</div></div>
+        <div class="ty ent"><div class="t"><svg class="i"><use href="#hand"/></svg>Entregas</div><div class="n">1</div><div class="d">2:00 p. m. · $500.000</div></div>
+      </div>
+      <div class="sec">Ahora sigue <span>por hora</span></div>
+      <div class="card" style="padding:4px 12px">
+        <div class="ev"><div class="h">11:00</div><div class="bar" style="background:var(--recor)"></div><div class="x"><b>Cita en el banco</b><span class="sub">Llevar extractos</span></div></div>
+        <div class="ev"><div class="h">2:00</div><div class="bar" style="background:var(--presta)"></div><div class="x"><b>Entregar a Carlos M.</b><span class="sub">$500.000 · 24 cuotas</span></div></div>
+        <div class="ev"><div class="h">6:00</div><div class="bar" style="background:var(--gold)"></div><div class="x"><b>Cierre del día</b><span class="sub">Contar la plata</span></div></div>
+      </div>
+      <div class="sec">Atrasados <span class="chip c-mal">2</span></div>
+      <div class="card" style="padding:8px 12px"><div class="row"><div class="row" style="gap:8px"><div class="ini">LR</div><div><b>Luis R.</b><div class="sub">2 cuotas · $50.000</div></div></div><span class="act a-enviar mini"><svg class="i"><use href="#send"/></svg>Avisar</span></div></div>
+    </div>
+    <div class="tabs"><div class="on"><svg class="i"><use href="#home"/></svg>Inicio</div><div><svg class="i"><use href="#cal"/></svg>Agenda</div><div class="plus"><svg class="i"><use href="#plus"/></svg></div><div><svg class="i"><use href="#list"/></svg>Préstamos</div><div><svg class="i"><use href="#chart"/></svg>Reportes</div></div>
+  </div><figcaption><b>Inicio = su día</b>Cuatro tarjetas por tipo (tocar una abre la lista), lo que sigue por hora y los atrasados con el botón de WhatsApp.</figcaption></figure>
+
+  <figure><div class="phone"><div class="island"></div><div class="status"><span>8:15</span><span>●●● 92 %</span></div>
+    <div class="scr">
+      <div class="top"><h3>Cobros de hoy<small>5 · faltan $140.000</small></h3></div>
+      <div class="card" style="padding:4px 12px">
+        <div class="ev"><div class="ini">AM</div><div class="x"><b>Ana M.</b><span class="sub">Cuota 8 de 24 · $25.000</span></div><span class="chip c-ok">Pagó</span></div>
+        <div class="ev"><div class="ini">JP</div><div class="x"><b>Jorge P.</b><span class="sub">Cuota 3 de 20 · $40.000</span></div><span class="chip c-ok">Pagó</span></div>
+        <div class="ev"><div class="ini">RP</div><div class="x"><b>Rosa P.</b><span class="sub">Cuota 22 de 24 · $25.000</span></div><span class="act a-cobra mini"><svg class="i"><use href="#check"/></svg>Cobrar</span></div>
+        <div class="ev"><div class="ini">DV</div><div class="x"><b>Diana V.</b><span class="sub">Semanal · $75.000</span></div><span class="act a-cobra mini"><svg class="i"><use href="#check"/></svg>Cobrar</span></div>
+        <div class="ev"><div class="ini">MT</div><div class="x"><b>Mario T.</b><span class="sub">Abonó $20.000 de $40.000</span></div><span class="chip c-hoy">Falta</span></div>
+      </div>
+      <div class="card"><div class="lbl">Al tocar Cobrar</div>
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><span class="pill p-cob">Cuota completa</span><span class="pill p-cob">Abono</span><span class="pill p-cob">Varias cuotas</span></div>
+        <div class="row" style="margin-top:10px"><span class="sub">Efectivo · Nequi · Daviplata</span><span class="act a-enviar mini"><svg class="i"><use href="#send"/></svg>Recibo</span></div>
+      </div>
+    </div>
+    <div class="tabs"><div class="on"><svg class="i"><use href="#home"/></svg>Inicio</div><div><svg class="i"><use href="#cal"/></svg>Agenda</div><div class="plus"><svg class="i"><use href="#plus"/></svg></div><div><svg class="i"><use href="#list"/></svg>Préstamos</div><div><svg class="i"><use href="#chart"/></svg>Reportes</div></div>
+  </div><figcaption><b>Tarjeta "Cobros" abierta</b>Cobrar con un toque: cuota completa, abono o varias cuotas. Después sale el recibo por WhatsApp.</figcaption></figure>
+  </div>
+</section>
+
+<section class="part">
+  <h2>2 · Agenda: semana y mes</h2>
+  <p>Lo decidí pensando en la agenda: la semana muestra qué hay cada día y el mes marca con puntos los días ocupados. Tocar un día abre sus tarjetas.</p>
+  <div class="grid">
+
+  <figure><div class="phone"><div class="island"></div><div class="status"><span>8:20</span><span>●●● 91 %</span></div>
+    <div class="scr">
+      <div class="top"><h3>Agenda<small>23 – 29 nov</small></h3></div>
+      <div class="seg"><span>Día</span><span class="on">Semana</span><span>Mes</span></div>
+      <div class="card" style="padding:2px 12px">
+        <div class="wd"><div class="dd"><small>Lun</small><b>23</b></div><div class="es"><span class="pill p-cob">5 cobros · $480 mil ✓</span></div></div>
+        <div class="wd"><div class="dd"><small>Mar</small><b>24</b></div><div class="es"><span class="pill p-cob">6 cobros ✓</span><span class="pill p-rec">Médico 9:00</span></div></div>
+        <div class="wd"><div class="dd"><small>Mié</small><b>25</b></div><div class="es"><span class="pill p-cob">5 cobros</span><span class="pill p-mal">2 sin pagar</span></div></div>
+        <div class="wd today"><div class="dd"><small>Hoy</small><b>26</b></div><div class="es"><span class="pill p-cob">5 cobros</span><span class="pill p-rec">Banco 11:00</span><span class="pill p-ent">Entrega 2:00</span><span class="pill p-rec">2 tareas</span></div></div>
+        <div class="wd"><div class="dd"><small>Vie</small><b>27</b></div><div class="es"><span class="pill p-cob">7 cobros · $610 mil</span></div></div>
+        <div class="wd"><div class="dd"><small>Sáb</small><b>28</b></div><div class="es"><span class="pill p-cob">4 cobros</span><span class="pill p-rec">Cumpleaños mamá</span></div></div>
+        <div class="wd"><div class="dd"><small>Dom</small><b>29</b></div><div class="es"><span class="sub">Sin cobro</span></div></div>
+      </div>
+    </div>
+    <div class="tabs"><div><svg class="i"><use href="#home"/></svg>Inicio</div><div class="on"><svg class="i"><use href="#cal"/></svg>Agenda</div><div class="plus"><svg class="i"><use href="#plus"/></svg></div><div><svg class="i"><use href="#list"/></svg>Préstamos</div><div><svg class="i"><use href="#chart"/></svg>Reportes</div></div>
+  </div><figcaption><b>Semana</b>Una fila por día con etiquetas de color: cobros, citas, entregas y atrasos.</figcaption></figure>
+
+  <figure><div class="phone"><div class="island"></div><div class="status"><span>8:21</span><span>●●● 91 %</span></div>
+    <div class="scr">
+      <div class="top"><h3>Noviembre<small>2026</small></h3></div>
+      <div class="seg"><span>Día</span><span>Semana</span><span class="on">Mes</span></div>
+      <div class="mon" id="mon"></div>
+      <div class="sec" style="margin-top:12px">Viernes 27 <span>toque para ver</span></div>
+      <div class="types">
+        <div class="ty cob"><div class="t">Cobros</div><div class="n">7</div><div class="d">$610.000</div></div>
+        <div class="ty cit"><div class="t">Citas y tareas</div><div class="n">0</div><div class="d">Libre</div></div>
+      </div>
+    </div>
+    <div class="tabs"><div><svg class="i"><use href="#home"/></svg>Inicio</div><div class="on"><svg class="i"><use href="#cal"/></svg>Agenda</div><div class="plus"><svg class="i"><use href="#plus"/></svg></div><div><svg class="i"><use href="#list"/></svg>Préstamos</div><div><svg class="i"><use href="#chart"/></svg>Reportes</div></div>
+  </div><figcaption><b>Mes</b>Puntos por día: turquesa cobros, rosa citas, azul entregas y rojo atrasos. Tocar un día muestra sus tarjetas.</figcaption></figure>
+
+  <figure><div class="phone"><div class="island"></div><div class="status"><span>8:22</span><span>●●● 91 %</span></div>
+    <div class="scr">
+      <div class="top"><h3>Nuevo recordatorio</h3></div>
+      <div class="field"><small>Qué</small>Cita en el banco</div>
+      <div class="row" style="gap:7px"><div class="field" style="flex:1"><small>Día</small>Jue 26 nov</div><div class="field" style="flex:1"><small>Hora</small>11:00 a. m.</div></div>
+      <div class="field"><small>Avisarme</small>15 minutos antes</div>
+      <div class="field"><small>Repetir</small>No se repite · Cada semana · Cada mes</div>
+      <div class="field"><small>Tipo</small><span class="pill p-rec">Cita</span> <span class="pill" style="background:var(--card);color:var(--sub)">Tarea</span></div>
+      <div class="field"><small>Nota</small>Llevar extractos</div>
+      <div class="act a-recor" style="margin-top:12px;padding:12px"><svg class="i"><use href="#bell"/></svg>Guardar recordatorio</div>
+    </div>
+  </div><figcaption><b>Recordatorio o cita</b>Lo crea en 10 segundos con la hora y el aviso. También sirve para cosas personales.</figcaption></figure>
+  </div>
+</section>
+
+<section class="part">
+  <h2>3 · Botón +, préstamos y reportes</h2>
+  <p>Toda la mecánica de la app de oro: préstamo en 3 pasos, calendario de colores por cliente, cierre del día. Lo nuevo es el reporte con la dona.</p>
+  <div class="grid">
+
+  <figure><div class="phone"><div class="island"></div><div class="status"><span>8:30</span><span>●●● 90 %</span></div>
+    <div class="scr" style="filter:blur(1px)">
+      <div class="top"><h3>Hoy<small>jueves 26 nov</small></h3></div>
+      <div class="types"><div class="ty cob"><div class="n">5</div></div><div class="ty cit"><div class="n">1</div></div><div class="ty tar"><div class="n">2</div></div><div class="ty ent"><div class="n">1</div></div></div>
+    </div>
+    <div class="dim"></div>
+    <div class="sheet"><div class="lbl" style="margin-bottom:8px">¿Qué vas a hacer?</div><div class="g">
+      <div class="act a-presta"><svg class="i"><use href="#hand"/></svg>Prestar</div>
+      <div class="act a-cobra"><svg class="i"><use href="#coin"/></svg>Cobrar</div>
+      <div class="act a-recor"><svg class="i"><use href="#bell"/></svg>Recordatorio</div>
+      <div class="act a-recor"><svg class="i"><use href="#cal"/></svg>Cita</div>
+    </div></div>
+    <div class="tabs"><div><svg class="i"><use href="#home"/></svg>Inicio</div><div><svg class="i"><use href="#cal"/></svg>Agenda</div><div class="plus"><svg class="i"><use href="#plus"/></svg></div><div><svg class="i"><use href="#list"/></svg>Préstamos</div><div><svg class="i"><use href="#chart"/></svg>Reportes</div></div>
+  </div><figcaption><b>Botón +</b>Las 4 acciones que escogiste, cada una con su color.</figcaption></figure>
+
+  <figure><div class="phone"><div class="island"></div><div class="status"><span>8:31</span><span>●●● 90 %</span></div>
+    <div class="scr">
+      <div class="top"><h3>Rosa P.</h3><span class="chip c-hoy">Vence hoy</span></div>
+      <div class="card"><div class="lbl">Debe</div><div class="big">$50.000</div><div class="sub">$500.000 al 20 % · 24 cuotas diarias de $25.000 · sin domingos</div>
+        <div class="cal" id="cal"></div>
+        <div class="row" style="margin-top:8px;font-size:10.5px;color:var(--sub)"><span>🟩 pagó · 🟧 hoy · 🟥 no pagó · ⬜ falta</span></div></div>
+      <div class="card"><div class="lbl">Ficha</div><div style="margin-top:4px">C.C. 1.077.xxx.xxx · 310 xxx xxxx</div><div class="sub">Barrio Yesca Grande</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="act a-cobra"><svg class="i"><use href="#coin"/></svg>Cobrar</div>
+        <div class="act a-enviar"><svg class="i"><use href="#send"/></svg>WhatsApp</div>
+        <div class="act a-presta"><svg class="i"><use href="#hand"/></svg>Renovar</div>
+        <div class="act a-ver">Editar</div>
+      </div>
+    </div>
+    <div class="tabs"><div><svg class="i"><use href="#home"/></svg>Inicio</div><div><svg class="i"><use href="#cal"/></svg>Agenda</div><div class="plus"><svg class="i"><use href="#plus"/></svg></div><div class="on"><svg class="i"><use href="#list"/></svg>Préstamos</div><div><svg class="i"><use href="#chart"/></svg>Reportes</div></div>
+  </div><figcaption><b>Préstamo de un cliente</b>Calendario de colores como en la app de oro. Solo el número de cédula, sin foto.</figcaption></figure>
+
+  <figure><div class="phone"><div class="island"></div><div class="status"><span>6:05</span><span>●●● 41 %</span></div>
+    <div class="scr">
+      <div class="top"><h3>Reportes</h3><span class="act a-enviar mini"><svg class="i"><use href="#send"/></svg>PDF</span></div>
+      <div class="seg"><span>Día</span><span class="on">Semana</span><span>Mes</span></div>
+      <div class="card"><div class="lbl">Cobrado 23 – 29 nov</div><div class="big">$2.850.000</div><div class="sub">de $3.100.000 esperados · 92 %</div>
+        <div class="donut" style="margin-top:10px">
+          <svg viewBox="0 0 42 42"><circle cx="21" cy="21" r="15.9" fill="none" stroke="#26221B" stroke-width="6"/><circle cx="21" cy="21" r="15.9" fill="none" stroke="#14B8A6" stroke-width="6" stroke-dasharray="83 17" stroke-dashoffset="25"/><circle cx="21" cy="21" r="15.9" fill="none" stroke="#E0A526" stroke-width="6" stroke-dasharray="17 83" stroke-dashoffset="42"/><text x="21" y="23.5" text-anchor="middle" font-size="7" font-weight="700" fill="#F5EFE2">92 %</text></svg>
+          <div class="lg"><span><i style="background:var(--cobra)"></i>Capital $2.375.000</span><span><i style="background:var(--gold)"></i>Interés $475.000</span><span><i style="background:var(--card2)"></i>Faltó $250.000</span></div>
+        </div></div>
+      <div class="card" style="padding:6px 12px">
+        <div class="ev"><div class="x"><b>Plata en la calle</b></div><b>$8.400.000</b></div>
+        <div class="ev"><div class="x"><b>Préstamos activos</b></div><b>38</b></div>
+        <div class="ev"><div class="x"><b>Clientes atrasados</b></div><span class="chip c-mal">4</span></div>
+        <div class="ev"><div class="x"><b>Entra la otra semana</b></div><b>$3.050.000</b></div>
+      </div>
+      <div class="act a-ver" style="padding:11px">Cierre del día de hoy</div>
+    </div>
+    <div class="tabs"><div><svg class="i"><use href="#home"/></svg>Inicio</div><div><svg class="i"><use href="#cal"/></svg>Agenda</div><div class="plus"><svg class="i"><use href="#plus"/></svg></div><div><svg class="i"><use href="#list"/></svg>Préstamos</div><div class="on"><svg class="i"><use href="#chart"/></svg>Reportes</div></div>
+  </div><figcaption><b>Reporte con dona</b>Cuánto de lo cobrado fue capital y cuánto interés, por día, semana o mes, en PDF para compartir.</figcaption></figure>
+  </div>
+</section>
+
+<div class="note"><b>Esto no se ve en el boceto pero va en la app:</b> el asistente de inicio que llenan juntos (6 pasos), Face ID + PIN, el modo prueba con datos de ejemplo, el botón de respaldo con un aviso semanal de "haz tu copia" (como los datos quedan solo en el iPhone, es obligatorio), el tema claro de día y oscuro de noche, y el ícono con la inicial dorada.</div>
+
+<script>
+(function(){
+  const m=document.getElementById('mon');let h='';
+  ['L','M','M','J','V','S','D'].forEach(d=>h+=`<div class="wh">${d}</div>`);
+  const ev={2:'cr',4:'c',9:'cre',11:'cm',16:'c',18:'cr',23:'c',24:'cr',25:'cm',26:'crer',27:'c',28:'cr'};
+  const mk=s=>s?'<span class="dots">'+[...s].map(k=>`<i class="d${k}"></i>`).join('')+'</span>':'<span class="dots"></span>';
+  for(let i=0;i<6;i++)h+=`<div class="d o">${26+i}<span class="dots"></span></div>`;
+  for(let d=1;d<=30;d++){const sun=(d-1)%7===0;const e=sun?'':(ev[d]||'c');h+=`<div class="d${d===26?' t':''}${d===27?' s':''}">${d}${mk(e)}</div>`}
+  for(let i=1;i<=6;i++)h+=`<div class="d o">${i}<span class="dots"></span></div>`;
+  m.innerHTML=h;
+  const c=document.getElementById('cal');let g='';
+  for(let i=1;i<=24;i++){const col=i<=19?'var(--ok)':i===20?'var(--mal)':i===21?'var(--ok)':i===22?'var(--hoy)':'var(--card2)';g+=`<i style="background:${col}"></i>`}
+  c.innerHTML=g;
+})();
+</script>
