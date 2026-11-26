@@ -1,0 +1,18 @@
+{
+  "id": "./",
+  "name": "Cobros y Agenda",
+  "short_name": "Cobros",
+  "description": "Agenda del día, cobros de préstamos, recordatorios y reportes.",
+  "lang": "es-CO",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F0D0A",
+  "theme_color": "#0F0D0A",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

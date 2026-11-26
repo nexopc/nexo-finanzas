@@ -1,0 +1,11 @@
+# Solo si usas la terminal (wrangler). Si lo haces desde la página de Cloudflare, ignora este archivo.
+name = "avisos-cobros"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+
+[[kv_namespaces]]
+binding = "AVISOS"
+id = "PEGA_AQUI_EL_ID_DEL_KV"
+
+[triggers]
+crons = ["* * * * *"]

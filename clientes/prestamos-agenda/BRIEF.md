@@ -40,3 +40,17 @@ Negocio (nombre/logo) · Préstamos (tipo, interés, frecuencia, días, mora, ab
 - **Cita rápida en 3 toques** (la clienta trabaja en oficina): Qué (12 plantillas: Reunión, Llamada, Cliente, Informe, Almuerzo, Médico, Banco, Pagar, Cumpleaños, Cobro, Recordar, Otro) → Cuándo (botones de día y hora, "en 1 hora") → Guardar. Aviso 15 min antes por defecto.
   "Las de siempre": las más usadas salen arriba y se crean con 1 toque. Nota opcional (dictado del teclado del iPhone).
 - Cada evento muestra el ícono de su plantilla en Inicio, Semana y Mes.
+
+## App 1.0.0 (fase 5) — terminada
+- `app/index.html` (toda la app), `app/sw.js` (sin internet + avisos push), `app/manifest.webmanifest`, `app/icons/`.
+- Se arma con `python3 src/armar.py`: junta el código nuevo (`src/p1–p4.js`, `src/head.html`) con la parte de préstamos de `clientes/oro-prestamos/app/index.html` (cálculos, prestar, cobrar, corregir cuota con candado, cuaderno, ficha del cliente, PIN/Face ID). **Editar en `src/` y volver a armar**, no `app/index.html` a mano.
+- Publica en `docs/cobros/` con `python3 build.py`.
+- Inicio = su día (tarjetas Cobros · Citas · Tareas · Entregas, toque = filtro) + Cita rápida + Cobrar + Por hora + Atrasados.
+- Agenda Día/Semana/Mes. Eventos (`k:'ev'`): tipo (12 plantillas + entrega), fecha, hora, aviso (min), rep (no/lab/sem/mes/ano), hechos{fecha}, skip{fecha}.
+- Cita rápida: favoritas automáticas (se repiten 2+ veces), horas según su horario, "En 1 hora", Todo el día, otra fecha/hora, Deshacer.
+- Préstamo con "Hora de entrega" opcional → crea evento Entrega en la agenda.
+- Reportes: dona capital/interés/faltó (día/semana/mes), plata en la calle, atrasados, mejores pagadores, PDF. Cierre del día con conteo de efectivo.
+- Avisos: `avisos-worker/` (Cloudflare Worker + KV + cron cada minuto, Web Push cifrado). La app manda los avisos de 21 días cada vez que cambia algo. Pasos en `AVISOS.md`. Pruebas: `node avisos-worker/prueba.mjs`.
+- Ícono: ✓ dorado por defecto; antes de instalar se puede escoger la letra (Safari toma el ícono dibujado al agregar a inicio).
+- Datos: localStorage `cobros-agenda-v1` (solo en el iPhone) + copia semanal recordada en Inicio. Entrega: `ENTREGA.md`.
+- Pendiente: probar avisos en un iPhone real con el Worker publicado.
