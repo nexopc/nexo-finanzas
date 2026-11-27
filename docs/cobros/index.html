@@ -320,7 +320,7 @@ svg.i{stroke-width:2}
 <script>
 'use strict';
 /* =============== Cobros y Agenda · NEXO PC =============== */
-const APP_VERSION='1.0.1';
+const APP_VERSION='1.0.2';
 /* Servidor de avisos (Cloudflare Worker). Se llenan al publicar; también se pueden poner en Ajustes → Avisos. */
 const PUSH_URL='https://avisos-cobros.nexopc2.workers.dev';
 const PUSH_KEY='BDByMhR_ZXytK35XVfBvh4x4ct1BRnoc4fTryHHrqYWY4F5cBo_8orkzzrwy8Lw9PbOz4CQjwmNsPgKYfAtkuSA';
@@ -766,7 +766,7 @@ function monthView(d){
 function sheetEv(id,d){
   const e=S.items[id];if(!e)return;const t=tplOf(e.tipo);const dn=isDone(e,d);const rep=e.rep&&e.rep!=='no';
   layer=`<div class="dim" data-a="close"></div><div class="sheet"><div class="grab"></div>
-  <div class="row" style="justify-content:flex-start;gap:12px;margin-bottom:12px"><svg class="i tile ${t.g}" style="width:54px;height:54px;padding:12px;border-radius:16px"><use href="#${t.i}"/></svg><div style="min-width:0"><div class="mid">${esc(evTitle(e))}</div><div class="sub">${cap(dayWord(d))} · ${e.hora?fmtH(e.hora):'Todo el día'}${rep?' · '+REPL[e.rep]:''}</div>${e.nota?`<div class="sub">${esc(e.nota)}</div>`:''}<div class="sub">${e.hora&&e.aviso>=0?'🔔 '+AVISOS.find(a=>a[0]===e.aviso)[1]:'Sin aviso'}</div></div></div>
+  <div class="row" style="justify-content:flex-start;gap:12px;margin-bottom:12px"><svg class="i tile ${t.g}" style="width:54px;height:54px;padding:12px;border-radius:16px"><use href="#${t.i}"/></svg><div style="min-width:0"><div class="mid">${esc(evTitle(e))}</div><div class="sub">${cap(dayWord(d))} · ${e.hora?fmtH(e.hora):'Todo el día'}${rep?' · '+REPL[e.rep]:''}</div>${e.nota?`<div class="sub">${esc(e.nota)}</div>`:''}<div class="sub">${e.hora&&e.aviso>=0?'🔔 '+(e.aviso===0?'A la hora':AVISOS.find(a=>a[0]===e.aviso)[1]+' y a la hora'):'Sin aviso'}</div></div></div>
   <button class="bigbtn ${dn?'a-ver':'a-ok'}" data-a="evdone" data-v="${id}" data-d="${d}" data-close="1">${ic('check')}${dn?'Marcar como pendiente':'Listo, ya lo hice'}</button>
   <div class="qlab">Mover ${rep?'(solo este día)':''}</div>
   <div class="chs">${e.hora?`<button class="ch" data-a="evmove" data-v="${id}" data-d="${d}" data-m="h1">+1 hora</button>`:''}<button class="ch" data-a="evmove" data-v="${id}" data-d="${d}" data-m="d1">Al otro día</button><button class="ch" data-a="evmove" data-v="${id}" data-d="${d}" data-m="d7">En una semana</button><label class="ch pick">${ic('cal','width:15px;height:15px')}Otro día<input type="date" data-a3="evmovedate" data-v="${id}" data-d="${d}" aria-label="Otro día"></label></div>
@@ -800,7 +800,7 @@ function renderQuick(first){
   const n1=new Date(Date.now()+60*60e3);const inHour=pad2(n1.getHours())+':'+(n1.getMinutes()<30?'00':'30');
   const dayLab=x=>x===T?'Hoy':x===addDays(T,1)?'Mañana':cap(DOW[pd(x).getDay()])+' '+pd(x).getDate();
   const customDay=!days.includes(Q.d),customH=Q.h&&!hours.includes(Q.h);
-  const avTxt=Q.h&&Q.aviso>=0?(Q.aviso===0?' · te aviso a la hora':` · te aviso ${AVISOS.find(a=>a[0]===Q.aviso)[1]}`):'';
+  const avTxt=Q.h&&Q.aviso>=0?(Q.aviso===0?' · te aviso a la hora':` · te aviso ${AVISOS.find(a=>a[0]===Q.aviso)[1]} y a la hora`):'';
   layer=`<div class="dim" data-a="close"></div><div class="sheet" id="qs"><div class="grab"></div>
   <div class="row"><h2 style="margin:0">${Q.id?'Editar':'Cita rápida'}</h2>${Q.id?'':`<span class="badge3">${ic('bolt')}3 toques</span>`}</div>
   ${fv.length?`<div class="qlab">Las de siempre <em>1 toque</em></div><div class="fav">${fv.map(e=>{const tt=tplOf(e.tipo);const dd=favDay(e);return `<button class="fv" data-a="favgo" data-v="${e.id}"><svg class="i tile ${tt.g}"><use href="#${tt.i}"/></svg><span><b>${esc(evTitle(e))}</b><small>${cap(dayWord(dd))}${e.hora?' · '+fmtH(e.hora):''}</small></span></button>`}).join('')}</div>`:''}
@@ -1112,10 +1112,11 @@ const Push={
     if(!S.me.push||!S.me.push.on||!this.url()||!this.supported()||Notification.permission!=='granted'){if(strict)throw new Error('permiso '+(window.Notification?Notification.permission:'no disponible'));return}
     if(!sub){const reg=await navigator.serviceWorker.ready;sub=await reg.pushManager.getSubscription()}
     if(!sub){if(strict)throw new Error('no hay suscripción: toca Activar avisos otra vez');return}
-    const r=await fetch(this.url()+'/api/sync',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:S.me.push.id,secret:S.me.push.secret,sub:sub.toJSON(),items:buildSchedule()})});
+    const r=await fetch(this.url()+'/api/sync',{method:'POST',keepalive:true,headers:{'content-type':'application/json'},body:JSON.stringify({id:S.me.push.id,secret:S.me.push.secret,sub:sub.toJSON(),items:buildSchedule()})});
     if(r.ok){S.me.pushAt=Date.now();persist()}else if(strict){const j=await r.json().catch(()=>({}));throw new Error('servidor '+r.status+(j.error?' '+j.error:''))}
   },
-  later(){clearTimeout(this._t);this._t=setTimeout(()=>this.sync().catch(()=>{}),2500)},
+  later(){clearTimeout(this._t);this._t=setTimeout(()=>this.sync().catch(()=>{}),600)},
+  flush(){clearTimeout(this._t);this.sync().catch(()=>{})},
   async test(){let paso='sincronizar';try{await this.sync(null,true);paso='enviar';const r=await fetch(this.url()+'/api/test',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:S.me.push.id,secret:S.me.push.secret})});const j=await r.json().catch(()=>({}));
     S.me.pushDiag=`Prueba: HTTP ${r.status}${j.status?' · Apple '+j.status:''}${j.error?' · '+j.error:''}`;persist();toast(r.ok?'Enviado: te llega en unos segundos. Bloquea la pantalla para verlo':'Falló: '+S.me.pushDiag);if(layer)sheetAvisos()}
     catch(e){S.me.pushDiag=`Error al ${paso}: ${e.message||e}`;persist();toast(S.me.pushDiag);if(layer)sheetAvisos()}}
@@ -1135,14 +1136,17 @@ function buildSchedule(){
   const c=cfg();if(!c)return [];const av=c.avisos||[];const out=[];const now=Date.now();
   for(let k=0;k<21;k++){const d=addDays(today(),k);
     if(av.includes('Resumen de la mañana')){const at=atTime(d,c.horaAviso||'07:00');if(at>now)out.push({at,title:k===0?'Tu día de hoy':'Tu día · '+fdate(d),body:summaryText(d,k===0),tag:'dia-'+d})}
-    if(av.includes('Citas y tareas'))for(const e of eventsOn(d)){if(!e.hora||e.aviso<0||isDone(e,d))continue;const at=atTime(d,e.hora)-(e.aviso||0)*60e3;
-      if(at>now)out.push({at,title:(e.aviso===0?'Ahora: ':e.aviso>=1440?'Mañana: ':`En ${e.aviso>=60?e.aviso/60+' h':e.aviso+' min'}: `)+evTitle(e),body:[fmtH(e.hora),e.nota].filter(Boolean).join(' · '),tag:'ev-'+e.id+'-'+d})}}
+    if(av.includes('Citas y tareas'))for(const e of eventsOn(d)){if(!e.hora||e.aviso<0||isDone(e,d))continue;const at0=atTime(d,e.hora);if(at0<=now)continue;
+      const tit=evTitle(e),body=[fmtH(e.hora),e.nota].filter(Boolean).join(' · ');
+      if(e.aviso>0){let at=at0-e.aviso*60e3;if(at<=now)at=now+15e3;const m=Math.round((at0-at)/60e3);
+        if(at0-at>=90e3)out.push({at,title:(m>=1440?'Mañana: ':m>=60&&m%60===0?`En ${m/60} h: `:`En ${m} min: `)+tit,body,tag:'ev-'+e.id+'-'+d+'-antes'})}
+      out.push({at:at0,title:'Es hora: '+tit,body,tag:'ev-'+e.id+'-'+d})}}
   return out.sort((a,b)=>a.at-b.at).slice(0,250)}
 let lastAlert=Date.now();
 function inAppAlerts(){if(document.hidden||!cfg())return;const now=Date.now();
   for(const x of buildScheduleWindow(lastAlert,now))toast('⏰ '+x.title+(x.body?' · '+x.body:''));lastAlert=now}
 function buildScheduleWindow(a,b){if(Push.status()==='on')return [];const out=[];const d=today();
-  for(const e of eventsOn(d)){if(!e.hora||e.aviso<0||isDone(e,d))continue;const at=atTime(d,e.hora)-(e.aviso||0)*60e3;if(at>a&&at<=b)out.push({title:evTitle(e),body:fmtH(e.hora)})}return out}
+  for(const e of eventsOn(d)){if(!e.hora||e.aviso<0||isDone(e,d))continue;const at0=atTime(d,e.hora);for(const at of [at0-(e.aviso||0)*60e3,at0])if(at>a&&at<=b){out.push({title:evTitle(e),body:fmtH(e.hora)});break}}return out}
 function sheetAvisos(){
   const st=Push.status();const msg={on:'Los avisos están activos. Te llega el resumen de la mañana y el aviso antes de cada cita, aunque la app esté cerrada.',off:'Toca el botón y luego Permitir.',noinst:'Primero instala la app: Safari → Compartir → Agregar a pantalla de inicio. Luego ábrela desde el ícono.',nocfg:'NEXO PC tiene que configurar el servidor de avisos (abajo, en Configuración técnica).',denied:'Los bloqueaste. Ve a Ajustes del iPhone → Notificaciones → Cobros y actívalos.',nosup:'Este iPhone necesita iOS 16.4 o más nuevo para los avisos.'}[st];
   layer=`<div class="dim" data-a="close"></div><div class="sheet"><div class="grab"></div><h2>${ic('bell')}Avisos</h2>
@@ -1256,7 +1260,7 @@ document.addEventListener('click',async e=>{
     case 'qav':Q.aviso=+v;renderQuick();break;
     case 'qrep':Q.rep=v;renderQuick();break;
     case 'qmore':Q.more=!Q.more;renderQuick();break;
-    case 'qsave':saveQuick();break;
+    case 'qsave':saveQuick();Push.flush();break;
     case 'favgo':{const f=S.items[v];const d=favDay(f);const ne={id:uid(),k:'ev',tipo:f.tipo,titulo:f.titulo,nota:'',fecha:d,hora:f.hora||'',aviso:f.aviso??15,rep:'no',hechos:{}};put(ne,true);Q=null;layer='';render();
       toast(`Listo: ${evTitle(ne)} · ${dayWord(d)}${ne.hora?' '+fmtH(ne.hora):''}`,()=>{ne.del=true;put(ne)});break}
     /* préstamos y reportes */
@@ -1316,7 +1320,7 @@ if(S.me.view==='wz')S.me.view='inicio';
 if(S.me.iconL)setTouchIcon(S.me.iconL);
 let lastDay=today();
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){S.me.hiddenAt=Date.now();persist();return}
+  if(document.hidden){S.me.hiddenAt=Date.now();persist();Push.flush();return}
   if(S.me.pin&&S.me.hiddenAt&&Date.now()-S.me.hiddenAt>3*60e3){S.me.unlocked=false;chooseLockMode()}
   if(lastDay!==today()){lastDay=today();S.me.ad=today()}
   if(!layer)render();Push.later()});

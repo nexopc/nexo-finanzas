@@ -105,10 +105,11 @@ const Push={
     if(!S.me.push||!S.me.push.on||!this.url()||!this.supported()||Notification.permission!=='granted'){if(strict)throw new Error('permiso '+(window.Notification?Notification.permission:'no disponible'));return}
     if(!sub){const reg=await navigator.serviceWorker.ready;sub=await reg.pushManager.getSubscription()}
     if(!sub){if(strict)throw new Error('no hay suscripción: toca Activar avisos otra vez');return}
-    const r=await fetch(this.url()+'/api/sync',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:S.me.push.id,secret:S.me.push.secret,sub:sub.toJSON(),items:buildSchedule()})});
+    const r=await fetch(this.url()+'/api/sync',{method:'POST',keepalive:true,headers:{'content-type':'application/json'},body:JSON.stringify({id:S.me.push.id,secret:S.me.push.secret,sub:sub.toJSON(),items:buildSchedule()})});
     if(r.ok){S.me.pushAt=Date.now();persist()}else if(strict){const j=await r.json().catch(()=>({}));throw new Error('servidor '+r.status+(j.error?' '+j.error:''))}
   },
-  later(){clearTimeout(this._t);this._t=setTimeout(()=>this.sync().catch(()=>{}),2500)},
+  later(){clearTimeout(this._t);this._t=setTimeout(()=>this.sync().catch(()=>{}),600)},
+  flush(){clearTimeout(this._t);this.sync().catch(()=>{})},
   async test(){let paso='sincronizar';try{await this.sync(null,true);paso='enviar';const r=await fetch(this.url()+'/api/test',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:S.me.push.id,secret:S.me.push.secret})});const j=await r.json().catch(()=>({}));
     S.me.pushDiag=`Prueba: HTTP ${r.status}${j.status?' · Apple '+j.status:''}${j.error?' · '+j.error:''}`;persist();toast(r.ok?'Enviado: te llega en unos segundos. Bloquea la pantalla para verlo':'Falló: '+S.me.pushDiag);if(layer)sheetAvisos()}
     catch(e){S.me.pushDiag=`Error al ${paso}: ${e.message||e}`;persist();toast(S.me.pushDiag);if(layer)sheetAvisos()}}
@@ -128,14 +129,17 @@ function buildSchedule(){
   const c=cfg();if(!c)return [];const av=c.avisos||[];const out=[];const now=Date.now();
   for(let k=0;k<21;k++){const d=addDays(today(),k);
     if(av.includes('Resumen de la mañana')){const at=atTime(d,c.horaAviso||'07:00');if(at>now)out.push({at,title:k===0?'Tu día de hoy':'Tu día · '+fdate(d),body:summaryText(d,k===0),tag:'dia-'+d})}
-    if(av.includes('Citas y tareas'))for(const e of eventsOn(d)){if(!e.hora||e.aviso<0||isDone(e,d))continue;const at=atTime(d,e.hora)-(e.aviso||0)*60e3;
-      if(at>now)out.push({at,title:(e.aviso===0?'Ahora: ':e.aviso>=1440?'Mañana: ':`En ${e.aviso>=60?e.aviso/60+' h':e.aviso+' min'}: `)+evTitle(e),body:[fmtH(e.hora),e.nota].filter(Boolean).join(' · '),tag:'ev-'+e.id+'-'+d})}}
+    if(av.includes('Citas y tareas'))for(const e of eventsOn(d)){if(!e.hora||e.aviso<0||isDone(e,d))continue;const at0=atTime(d,e.hora);if(at0<=now)continue;
+      const tit=evTitle(e),body=[fmtH(e.hora),e.nota].filter(Boolean).join(' · ');
+      if(e.aviso>0){let at=at0-e.aviso*60e3;if(at<=now)at=now+15e3;const m=Math.round((at0-at)/60e3);
+        if(at0-at>=90e3)out.push({at,title:(m>=1440?'Mañana: ':m>=60&&m%60===0?`En ${m/60} h: `:`En ${m} min: `)+tit,body,tag:'ev-'+e.id+'-'+d+'-antes'})}
+      out.push({at:at0,title:'Es hora: '+tit,body,tag:'ev-'+e.id+'-'+d})}}
   return out.sort((a,b)=>a.at-b.at).slice(0,250)}
 let lastAlert=Date.now();
 function inAppAlerts(){if(document.hidden||!cfg())return;const now=Date.now();
   for(const x of buildScheduleWindow(lastAlert,now))toast('⏰ '+x.title+(x.body?' · '+x.body:''));lastAlert=now}
 function buildScheduleWindow(a,b){if(Push.status()==='on')return [];const out=[];const d=today();
-  for(const e of eventsOn(d)){if(!e.hora||e.aviso<0||isDone(e,d))continue;const at=atTime(d,e.hora)-(e.aviso||0)*60e3;if(at>a&&at<=b)out.push({title:evTitle(e),body:fmtH(e.hora)})}return out}
+  for(const e of eventsOn(d)){if(!e.hora||e.aviso<0||isDone(e,d))continue;const at0=atTime(d,e.hora);for(const at of [at0-(e.aviso||0)*60e3,at0])if(at>a&&at<=b){out.push({title:evTitle(e),body:fmtH(e.hora)});break}}return out}
 function sheetAvisos(){
   const st=Push.status();const msg={on:'Los avisos están activos. Te llega el resumen de la mañana y el aviso antes de cada cita, aunque la app esté cerrada.',off:'Toca el botón y luego Permitir.',noinst:'Primero instala la app: Safari → Compartir → Agregar a pantalla de inicio. Luego ábrela desde el ícono.',nocfg:'NEXO PC tiene que configurar el servidor de avisos (abajo, en Configuración técnica).',denied:'Los bloqueaste. Ve a Ajustes del iPhone → Notificaciones → Cobros y actívalos.',nosup:'Este iPhone necesita iOS 16.4 o más nuevo para los avisos.'}[st];
   layer=`<div class="dim" data-a="close"></div><div class="sheet"><div class="grab"></div><h2>${ic('bell')}Avisos</h2>

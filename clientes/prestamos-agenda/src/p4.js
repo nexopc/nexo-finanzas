@@ -41,7 +41,7 @@ document.addEventListener('click',async e=>{
     case 'qav':Q.aviso=+v;renderQuick();break;
     case 'qrep':Q.rep=v;renderQuick();break;
     case 'qmore':Q.more=!Q.more;renderQuick();break;
-    case 'qsave':saveQuick();break;
+    case 'qsave':saveQuick();Push.flush();break;
     case 'favgo':{const f=S.items[v];const d=favDay(f);const ne={id:uid(),k:'ev',tipo:f.tipo,titulo:f.titulo,nota:'',fecha:d,hora:f.hora||'',aviso:f.aviso??15,rep:'no',hechos:{}};put(ne,true);Q=null;layer='';render();
       toast(`Listo: ${evTitle(ne)} · ${dayWord(d)}${ne.hora?' '+fmtH(ne.hora):''}`,()=>{ne.del=true;put(ne)});break}
     /* préstamos y reportes */
@@ -101,7 +101,7 @@ if(S.me.view==='wz')S.me.view='inicio';
 if(S.me.iconL)setTouchIcon(S.me.iconL);
 let lastDay=today();
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){S.me.hiddenAt=Date.now();persist();return}
+  if(document.hidden){S.me.hiddenAt=Date.now();persist();Push.flush();return}
   if(S.me.pin&&S.me.hiddenAt&&Date.now()-S.me.hiddenAt>3*60e3){S.me.unlocked=false;chooseLockMode()}
   if(lastDay!==today()){lastDay=today();S.me.ad=today()}
   if(!layer)render();Push.later()});

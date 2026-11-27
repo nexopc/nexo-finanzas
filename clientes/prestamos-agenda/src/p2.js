@@ -109,7 +109,7 @@ function monthView(d){
 function sheetEv(id,d){
   const e=S.items[id];if(!e)return;const t=tplOf(e.tipo);const dn=isDone(e,d);const rep=e.rep&&e.rep!=='no';
   layer=`<div class="dim" data-a="close"></div><div class="sheet"><div class="grab"></div>
-  <div class="row" style="justify-content:flex-start;gap:12px;margin-bottom:12px"><svg class="i tile ${t.g}" style="width:54px;height:54px;padding:12px;border-radius:16px"><use href="#${t.i}"/></svg><div style="min-width:0"><div class="mid">${esc(evTitle(e))}</div><div class="sub">${cap(dayWord(d))} · ${e.hora?fmtH(e.hora):'Todo el día'}${rep?' · '+REPL[e.rep]:''}</div>${e.nota?`<div class="sub">${esc(e.nota)}</div>`:''}<div class="sub">${e.hora&&e.aviso>=0?'🔔 '+AVISOS.find(a=>a[0]===e.aviso)[1]:'Sin aviso'}</div></div></div>
+  <div class="row" style="justify-content:flex-start;gap:12px;margin-bottom:12px"><svg class="i tile ${t.g}" style="width:54px;height:54px;padding:12px;border-radius:16px"><use href="#${t.i}"/></svg><div style="min-width:0"><div class="mid">${esc(evTitle(e))}</div><div class="sub">${cap(dayWord(d))} · ${e.hora?fmtH(e.hora):'Todo el día'}${rep?' · '+REPL[e.rep]:''}</div>${e.nota?`<div class="sub">${esc(e.nota)}</div>`:''}<div class="sub">${e.hora&&e.aviso>=0?'🔔 '+(e.aviso===0?'A la hora':AVISOS.find(a=>a[0]===e.aviso)[1]+' y a la hora'):'Sin aviso'}</div></div></div>
   <button class="bigbtn ${dn?'a-ver':'a-ok'}" data-a="evdone" data-v="${id}" data-d="${d}" data-close="1">${ic('check')}${dn?'Marcar como pendiente':'Listo, ya lo hice'}</button>
   <div class="qlab">Mover ${rep?'(solo este día)':''}</div>
   <div class="chs">${e.hora?`<button class="ch" data-a="evmove" data-v="${id}" data-d="${d}" data-m="h1">+1 hora</button>`:''}<button class="ch" data-a="evmove" data-v="${id}" data-d="${d}" data-m="d1">Al otro día</button><button class="ch" data-a="evmove" data-v="${id}" data-d="${d}" data-m="d7">En una semana</button><label class="ch pick">${ic('cal','width:15px;height:15px')}Otro día<input type="date" data-a3="evmovedate" data-v="${id}" data-d="${d}" aria-label="Otro día"></label></div>
@@ -143,7 +143,7 @@ function renderQuick(first){
   const n1=new Date(Date.now()+60*60e3);const inHour=pad2(n1.getHours())+':'+(n1.getMinutes()<30?'00':'30');
   const dayLab=x=>x===T?'Hoy':x===addDays(T,1)?'Mañana':cap(DOW[pd(x).getDay()])+' '+pd(x).getDate();
   const customDay=!days.includes(Q.d),customH=Q.h&&!hours.includes(Q.h);
-  const avTxt=Q.h&&Q.aviso>=0?(Q.aviso===0?' · te aviso a la hora':` · te aviso ${AVISOS.find(a=>a[0]===Q.aviso)[1]}`):'';
+  const avTxt=Q.h&&Q.aviso>=0?(Q.aviso===0?' · te aviso a la hora':` · te aviso ${AVISOS.find(a=>a[0]===Q.aviso)[1]} y a la hora`):'';
   layer=`<div class="dim" data-a="close"></div><div class="sheet" id="qs"><div class="grab"></div>
   <div class="row"><h2 style="margin:0">${Q.id?'Editar':'Cita rápida'}</h2>${Q.id?'':`<span class="badge3">${ic('bolt')}3 toques</span>`}</div>
   ${fv.length?`<div class="qlab">Las de siempre <em>1 toque</em></div><div class="fav">${fv.map(e=>{const tt=tplOf(e.tipo);const dd=favDay(e);return `<button class="fv" data-a="favgo" data-v="${e.id}"><svg class="i tile ${tt.g}"><use href="#${tt.i}"/></svg><span><b>${esc(evTitle(e))}</b><small>${cap(dayWord(dd))}${e.hora?' · '+fmtH(e.hora):''}</small></span></button>`}).join('')}</div>`:''}
