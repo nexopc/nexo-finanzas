@@ -320,7 +320,7 @@ svg.i{stroke-width:2}
 <script>
 'use strict';
 /* =============== Cobros y Agenda · NEXO PC =============== */
-const APP_VERSION='1.0.0';
+const APP_VERSION='1.0.1';
 /* Servidor de avisos (Cloudflare Worker). Se llenan al publicar; también se pueden poner en Ajustes → Avisos. */
 const PUSH_URL='https://avisos-cobros.nexopc2.workers.dev';
 const PUSH_KEY='BDByMhR_ZXytK35XVfBvh4x4ct1BRnoc4fTryHHrqYWY4F5cBo_8orkzzrwy8Lw9PbOz4CQjwmNsPgKYfAtkuSA';
@@ -1106,17 +1106,19 @@ const Push={
       if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:ub64u(this.key())});
       const r=crypto.getRandomValues(new Uint8Array(18));S.me.push={on:true,id:(S.me.push&&S.me.push.id)||uid()+uid(),secret:(S.me.push&&S.me.push.secret)||b64u(r)};persist();
       await this.sync(sub);toast('¡Avisos activados!');render();return true}
-    catch(e){toast('No se pudo activar: revisa el internet e inténtalo otra vez');return false}
+    catch(e){S.me.pushDiag='Error al activar: '+(e.message||e);persist();toast(S.me.pushDiag);return false}
   },
-  async sync(sub){
-    if(!S.me.push||!S.me.push.on||!this.url()||!this.supported()||Notification.permission!=='granted')return;
+  async sync(sub,strict){
+    if(!S.me.push||!S.me.push.on||!this.url()||!this.supported()||Notification.permission!=='granted'){if(strict)throw new Error('permiso '+(window.Notification?Notification.permission:'no disponible'));return}
     if(!sub){const reg=await navigator.serviceWorker.ready;sub=await reg.pushManager.getSubscription()}
-    if(!sub)return;
+    if(!sub){if(strict)throw new Error('no hay suscripción: toca Activar avisos otra vez');return}
     const r=await fetch(this.url()+'/api/sync',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:S.me.push.id,secret:S.me.push.secret,sub:sub.toJSON(),items:buildSchedule()})});
-    if(r.ok){S.me.pushAt=Date.now();persist()}
+    if(r.ok){S.me.pushAt=Date.now();persist()}else if(strict){const j=await r.json().catch(()=>({}));throw new Error('servidor '+r.status+(j.error?' '+j.error:''))}
   },
   later(){clearTimeout(this._t);this._t=setTimeout(()=>this.sync().catch(()=>{}),2500)},
-  async test(){try{await this.sync();const r=await fetch(this.url()+'/api/test',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:S.me.push.id,secret:S.me.push.secret})});toast(r.ok?'Enviado: te llega en unos segundos':'El servidor no respondió')}catch(e){toast('Sin conexión con el servidor')}}
+  async test(){let paso='sincronizar';try{await this.sync(null,true);paso='enviar';const r=await fetch(this.url()+'/api/test',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:S.me.push.id,secret:S.me.push.secret})});const j=await r.json().catch(()=>({}));
+    S.me.pushDiag=`Prueba: HTTP ${r.status}${j.status?' · Apple '+j.status:''}${j.error?' · '+j.error:''}`;persist();toast(r.ok?'Enviado: te llega en unos segundos. Bloquea la pantalla para verlo':'Falló: '+S.me.pushDiag);if(layer)sheetAvisos()}
+    catch(e){S.me.pushDiag=`Error al ${paso}: ${e.message||e}`;persist();toast(S.me.pushDiag);if(layer)sheetAvisos()}}
 };
 function summaryText(d,isToday){
   const D=dayData(d);const parts=[];const pl=(n,a,b)=>`${n} ${n===1?a:b}`;
@@ -1144,7 +1146,8 @@ function buildScheduleWindow(a,b){if(Push.status()==='on')return [];const out=[]
 function sheetAvisos(){
   const st=Push.status();const msg={on:'Los avisos están activos. Te llega el resumen de la mañana y el aviso antes de cada cita, aunque la app esté cerrada.',off:'Toca el botón y luego Permitir.',noinst:'Primero instala la app: Safari → Compartir → Agregar a pantalla de inicio. Luego ábrela desde el ícono.',nocfg:'NEXO PC tiene que configurar el servidor de avisos (abajo, en Configuración técnica).',denied:'Los bloqueaste. Ve a Ajustes del iPhone → Notificaciones → Cobros y actívalos.',nosup:'Este iPhone necesita iOS 16.4 o más nuevo para los avisos.'}[st];
   layer=`<div class="dim" data-a="close"></div><div class="sheet"><div class="grab"></div><h2>${ic('bell')}Avisos</h2>
-  <div class="card"><div class="row"><b>Estado</b><span class="chip ${st==='on'?'c-ok':'c-hoy'}">${st==='on'?'Activos':'Inactivos'}</span></div><div class="sub" style="margin-top:6px">${msg}</div>${S.me.pushAt?`<div class="sub" style="margin-top:4px">Última sincronización: ${ago(S.me.pushAt)}</div>`:''}</div>
+  <div class="card"><div class="row"><b>Estado</b><span class="chip ${st==='on'?'c-ok':'c-hoy'}">${st==='on'?'Activos':'Inactivos'}</span></div><div class="sub" style="margin-top:6px">${msg}</div>${S.me.pushAt?`<div class="sub" style="margin-top:4px">Última sincronización: ${ago(S.me.pushAt)}</div>`:''}<div class="sub" style="margin-top:4px">Diagnóstico: ${esc(st)} · permiso ${window.Notification?Notification.permission:'—'} · ${standalone()?'instalada':'en navegador'}${S.me.pushDiag?' · '+esc(S.me.pushDiag):''}</div></div>
+  ${st==='on'?`<button class="bigbtn a-ver" data-a="pushon">${ic('refresh')}Volver a activar avisos</button>`:''}
   ${st==='off'?`<button class="bigbtn a-ok" data-a="pushon">${ic('bell')}Activar avisos</button>`:''}
   ${st==='on'?`<button class="bigbtn a-ok" data-a="pushtest">${ic('bell')}Enviarme un aviso de prueba</button>`:''}
   <div class="sub" style="margin:10px 2px">Qué avisos y a qué hora se cambian en Ajustes del negocio → Tus avisos.</div>
