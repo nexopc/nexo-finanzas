@@ -1,30 +1,13 @@
-"""Arma app/index.html juntando el código nuevo con la parte de préstamos de la app de oro.
+"""Arma app/index.html. La parte de préstamos (o_*.js) vino de la app de oro y ya es propia de esta app.
 Uso: python3 clientes/prestamos-agenda/src/armar.py"""
 import re, pathlib
 here=pathlib.Path(__file__).parent
-oro=(here.parent.parent/'oro-prestamos/app/index.html').read_text().split('\n')
-L=lambda a,b:'\n'.join(oro[a-1:b])
+rd=lambda n:(here/n).read_text().rstrip('\n')
+css=rd('o_css.css');A=rd('o_A.js');B=rd('o_B.js');C=rd('o_C.js');D=rd('o_D.js');E=rd('o_E.js');F=rd('o_F.js');O1=rd('o_O1.js');O2=rd('o_O2.js')
+oro=(here.parent.parent/'oro-prestamos/app/index.html').read_text().split('\n')  # solo para los íconos
 def must(s,old,new):
     assert old in s, 'no encontré: '+old[:70]
     return s.replace(old,new,1)
-
-css=L(16,153)
-A='\n'.join(l for l in oro[187:224] if not l.startswith('function toast('))
-B=L(274,324); C=L(351,368); D=L(492,526)+'\n'+L(528,528)
-E=L(671,852); F=L(1024,1036); O1=L(1063,1085); O2=L(1100,1108)
-
-# --- ajustes a la parte de préstamos ---
-E=must(E,"${dc.includes('Dirección')?","${dc.includes('Barrio')?`<label class=\"field\"><span>Barrio</span><input name=\"barrio\"></label>`:''}${dc.includes('Dirección')?")
-E=must(E,"${dc.includes('Codeudor')?`<label class=\"field\"><span>Codeudor</span>","${dc.includes('Fiador')?`<label class=\"field\"><span>Fiador</span>")
-E=must(E,'<label class="field"><span>Fecha del préstamo</span><input name="inicio" type="date" value="${today()}"></label></div>',
-  '<label class="field"><span>Fecha del préstamo</span><input name="inicio" type="date" value="${today()}"></label></div>\n   <label class="field"><span>Hora de entrega (opcional · sale en tu agenda)</span><input name="hent" type="time"></label>')
-E=must(E,"cedula:g('cedula'),dir:g('dir'),","cedula:g('cedula'),dir:g('dir'),barrio:g('barrio'),")
-E=must(E,"['cel','cedula','dir','codeudor','notas'].forEach","['cel','cedula','dir','barrio','codeudor','notas'].forEach")
-E=must(E,"  put(p,true);\n  if(cuaderno)","  put(p,true);\n  const hent=f.hent?f.hent.value:'';if(hent&&!cuaderno)put({id:uid(),k:'ev',tipo:'entrega',titulo:'Entregar a '+nombre,nota:money(x.monto),fecha:p.inicio,hora:hent,aviso:15,rep:'no',hechos:{},prestamo:p.id},true);\n  if(cuaderno)")
-E=must(E,"[['Celular',cl.cel],['Cédula',cl.cedula],['Dirección',cl.dir],['Codeudor',cl.codeudor]","[['Celular',cl.cel],['Cédula',cl.cedula],['Barrio',cl.barrio],['Dirección',cl.dir],['Fiador',cl.codeudor]")
-F=must(F,"['dir','Dirección'],['codeudor','Codeudor']","['barrio','Barrio'],['dir','Dirección'],['codeudor','Fiador']")
-F=must(F,'Guarda un archivo con todo. Si cambian de celular o se borra Safari, lo recuperan desde aquí.','Tus datos viven solo en este iPhone. Guarda una copia cada semana en Archivos (iCloud) o mándatela por WhatsApp. Si cambias de celular, la recuperas desde aquí.')
-D=must(D,'<div class="logo">${esc(initials(c.nombre))}</div>','<span class="appi xl">${logoSvg()}</span>')
 
 # --- íconos: los premium del boceto + los que usa la parte de préstamos ---
 bo=(here.parent/'boceto.html').read_text()
@@ -43,7 +26,7 @@ extra=f'''
 sym=sym.replace('</svg>',extra,1)
 
 head=(here/'head.html').read_text().replace('/*ORO_CSS*/',css).replace('/*SYMBOLS*/',sym)
-js=(here/'p1.js').read_text()+(here/'p2.js').read_text()+(here/'p3.js').read_text()+(here/'p4.js').read_text()
+js=(here/'p1.js').read_text()+(here/'p2.js').read_text()+(here/'p3.js').read_text()+(here/'p5.js').read_text()+(here/'p4.js').read_text()
 for k,v in {'/*@A*/':A,'/*@B*/':B,'/*@C*/':C,'/*@D*/':D,'/*@E*/':E,'/*@F*/':F,'/*@OLD1*/':O1,'/*@OLD2*/':O2}.items():
     js=must(js,k,v)
 # logo con la inicial del negocio

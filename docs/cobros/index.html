@@ -266,6 +266,27 @@ svg.i{stroke-width:2}
 .toast.undo{pointer-events:auto}
 .inst{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-top:16px;font-size:.84em;color:var(--sub);text-align:left;max-width:340px}
 .inst b{color:var(--ink)}
+/* 1.1.0 */
+.sheet{position:fixed}.xclose{position:absolute;top:10px;right:12px;width:40px;height:40px;border-radius:50%;background:var(--card2);color:var(--sub);font-size:1.05em;font-weight:700;display:grid;place-items:center;z-index:3}
+.sheet h2{padding-right:46px}
+.pkbtn{display:flex;align-items:center;gap:6px;width:100%;text-align:left;font-size:max(16px,1em);font-weight:650;padding:4px 0;min-height:34px;color:var(--ink)}
+.field .pkbtn{padding:3px 0}
+.pk-dim,.cf-dim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:60}
+.pk{position:fixed;left:0;right:0;bottom:0;z-index:61;background:var(--bg);border-radius:24px 24px 0 0;border-top:1px solid var(--line);padding:14px 16px calc(env(safe-area-inset-bottom) + 16px);max-width:560px;margin:0 auto;max-height:90vh;overflow:auto}
+.pkgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.pkgrid .ch{padding:9px 2px;font-size:.78em;text-align:center}
+.cf{position:fixed;left:16px;right:16px;top:50%;transform:translateY(-50%);z-index:71;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;max-width:420px;margin:0 auto;box-shadow:0 20px 40px rgba(0,0,0,.5)}
+.cf-dim{z-index:70}.cf b{font-size:1.15em;display:block}.cf p{margin:6px 0 4px}
+.festbox{background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.4);border-radius:14px;padding:10px;margin-top:10px}
+.festrow{padding:8px 0;border-top:1px solid var(--line);margin-top:6px}.festrow>span{display:block;font-weight:700;font-size:.88em;margin-bottom:6px}
+.manolist{display:flex;flex-wrap:wrap;gap:6px}.manolist .ch{font-size:.8em}
+.cmed{background:var(--card2);border-radius:12px;padding:10px;margin:2px 0 8px}
+.cal .pe{background:rgba(249,115,22,.22);color:var(--hoyt);border:1.5px solid var(--hoy)}
+.cal sup{font-size:.7em;margin-left:1px}
+.wdseg button{min-width:44px;padding:9px 4px}
+.cobroday{display:flex;align-items:center;gap:10px;border-radius:16px;padding:11px 12px;margin-bottom:10px;background:linear-gradient(140deg,rgba(20,184,166,.22),rgba(20,184,166,.06));border:1.5px solid rgba(20,184,166,.5)}
+.cobroday b{display:block}.cobroday .tile{width:38px;height:38px;padding:8px;border-radius:12px}
+.wd.cobro{background:linear-gradient(90deg,rgba(20,184,166,.12),transparent 60%);border-left:3px solid var(--cobra);padding-left:7px;margin-left:-10px}
+.md.mc:not(.s){background:rgba(20,184,166,.18)}
 </style>
 </head>
 <body>
@@ -273,6 +294,8 @@ svg.i{stroke-width:2}
 <div id="layer"></div>
 <div id="print"></div>
 <div class="toast" id="toast"></div>
+<div id="picker"></div>
+<div id="confirm"></div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
  <defs>
   <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF1C2"/><stop offset=".45" stop-color="#F1C75B"/><stop offset="1" stop-color="#A8741A"/></linearGradient>
@@ -320,7 +343,7 @@ svg.i{stroke-width:2}
 <script>
 'use strict';
 /* =============== Cobros y Agenda · NEXO PC =============== */
-const APP_VERSION='1.0.2';
+const APP_VERSION='1.1.0';
 /* Servidor de avisos (Cloudflare Worker). Se llenan al publicar; también se pueden poner en Ajustes → Avisos. */
 const PUSH_URL='https://avisos-cobros.nexopc2.workers.dev';
 const PUSH_KEY='BDByMhR_ZXytK35XVfBvh4x4ct1BRnoc4fTryHHrqYWY4F5cBo_8orkzzrwy8Lw9PbOz4CQjwmNsPgKYfAtkuSA';
@@ -442,26 +465,27 @@ function allocate(p){
   return {cuotas,pagos};
 }
 function loanStatus(p,ref){
-  ref=ref||today();
+  ref=ref||today();const g=graceOf(p);const beyond=c=>addDays(c.f,g)<ref;
   const {cuotas,pagos}=allocate(p);let paid=0;
   cuotas.forEach(c=>{paid+=c.got;const rem=c.v-c.got;c.rem=Math.max(0,rem);
-    if(rem<=0.5){let acc=0,pf=null;for(const y of c.pays.slice().sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:0)){acc+=y.m;if(acc>=c.v-0.5){pf=y.fecha;break}}c.pf=pf;c.st=pf<=c.f?'p':'t';c.rem=0}
+    if(rem<=0.5){let acc=0,pf=null;for(const y of c.pays.slice().sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:0)){acc+=y.m;if(acc>=c.v-0.5){pf=y.fecha;break}}c.pf=pf;c.st=(pf<=addDays(c.f,g)||pf==='0000-00-00')?'p':'t';c.rem=0}
     else if(c.got>0.5){c.st='ab';c.falta=rem}
-    else c.st=c.f<ref?'n':c.f===ref?'hoy':'f'});
-  const debeHoy=cuotas.filter(c=>c.f<=ref).reduce((s,c)=>s+c.rem,0);
-  const atraso=cuotas.filter(c=>c.f<ref).reduce((s,c)=>s+c.rem,0);
+    else c.st=c.f===ref?'hoy':c.f<ref?(beyond(c)?'n':'pend'):'f'});
   const unpaid=c=>c.st!=='p'&&c.st!=='t';
-  const vencidas=cuotas.filter(c=>c.f<=ref&&unpaid(c)).length;
-  const lateDays=(()=>{const c=cuotas.find(c=>c.f<ref&&unpaid(c));return c?Math.round((pd(ref)-pd(c.f))/864e5):0})();
+  const debeHoy=cuotas.filter(c=>c.f<=ref).reduce((s,c)=>s+c.rem,0);
+  const atraso=cuotas.filter(c=>c.f<ref&&beyond(c)).reduce((s,c)=>s+c.rem,0);
+  const pendSem=cuotas.filter(c=>c.f<ref&&!beyond(c)&&unpaid(c)).reduce((s,c)=>s+c.rem,0);
+  const vencidas=cuotas.filter(c=>c.f<ref&&beyond(c)&&unpaid(c)).length;
+  const lateDays=(()=>{const c=cuotas.find(c=>c.f<ref&&beyond(c)&&unpaid(c));return c?Math.round((pd(ref)-pd(c.f))/864e5):0})();
   const next=cuotas.find(c=>c.f>ref&&unpaid(c));
   const hoy=cuotas.find(c=>c.f===ref);
   const pagadas=cuotas.filter(c=>!unpaid(c)).length;
   const saldo=Math.max(0,p.total-paid);
   const c=cfg()||{};let mora=0;
   if(c.moraTipo&&c.moraTipo!=='No'&&atraso>0){const v=num(c.moraVal);
-    if(c.moraTipo.includes('%'))mora=cuotas.filter(x=>x.f<ref&&unpaid(x)).reduce((s,x)=>s+x.v*v/100,0);
+    if(c.moraTipo.includes('%'))mora=cuotas.filter(x=>x.f<ref&&beyond(x)&&unpaid(x)).reduce((s,x)=>s+x.v*v/100,0);
     else mora=v*lateDays}
-  return {cuotas,pagos,paid,debeHoy,atraso,vencidas,lateDays,next,hoy,pagadas,saldo,done:saldo<=0.5,mora}
+  return {cuotas,pagos,paid,debeHoy,atraso,pendSem,vencidas,lateDays,next,hoy,pagadas,saldo,done:saldo<=0.5,mora}
 }
 /* deja todos los pagos del préstamo amarrados a sus cuotas (para poder corregir una sola) */
 function materialize(p){
@@ -507,7 +531,9 @@ const WZ=[
   {id:'letra',t:'¿Tamaño de la letra?',opts:['Normal*','Grande']},
  ]},
  {s:'Tus préstamos',qs:[
-  {id:'frecs',t:'¿Cada cuánto te pagan?',multi:1,opts:['Diario','Semanal','Quincenal','Mensual']},
+  {id:'frecs',t:'¿Cada cuánto te pagan?',multi:1,opts:['Semanal','Diario','Quincenal','Mensual'],hint:'Marca todas las que uses. La primera sale de primera al prestar.'},
+  {id:'diaCobro',t:'¿Qué día cobras los préstamos semanales?',opts:['Lunes*','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'],hint:'Tienen plazo de toda la semana: solo salen atrasados desde el mismo día de la semana siguiente.'},
+  {id:'semanas',t:'¿Cuántas cuotas tiene casi siempre un préstamo semanal?',opts:['4','8*','10','12'],other:'Otro número'},
   {id:'interesTipo',t:'¿Cómo cobras el interés?',opts:['Un % fijo sobre lo prestado*','Un % cada mes'],ex:'Fijo: prestas $500.000 al 20 % → te pagan $600.000 en cuotas.'},
   {id:'interesPct',t:'¿Qué % usas casi siempre?',type:'num',ph:'20'},
   {id:'moraTipo',t:'Si un cliente se atrasa, ¿cobras mora?',opts:['No*','Sí, un % de la cuota','Sí, un valor fijo por día'],other:'¿Cuánto? (ej. 5 o 2.000)'},
@@ -534,7 +560,7 @@ const WZ=[
   {id:'pin',t:'Crea un PIN de 4 números para entrar',type:'pin',ph:'••••',req:1,hint:'Después puedes activar Face ID en Ajustes.'},
  ]},
 ];
-const DEF={letra:'Normal',frecs:['Diario','Semanal'],interesTipo:'Un % fijo sobre lo prestado',interesPct:20,moraTipo:'No',domingos:'Sin domingos',pagos:['Efectivo','Nequi'],tono:'Amable',
+const DEF={diaCobro:'Lunes',semanas:'8',letra:'Normal',frecs:['Semanal'],interesTipo:'Un % fijo sobre lo prestado',interesPct:20,moraTipo:'No',domingos:'Sin domingos',pagos:['Efectivo','Nequi'],tono:'Amable',
   avisos:['Resumen de la mañana','Citas y tareas','Préstamo por terminar'],horaAviso:'7:00 a. m.',vista:'Día',hIni:'8 a. m.',hFin:'5 p. m.',top:['Reunión','Llamada','Banco','Recordar'],datosCliente:['Celular','Cédula','Barrio']};
 const h24=s=>{const m=String(s||'').match(/(\d+)(?::(\d+))?\s*([ap])/i);if(!m)return 8;let H=+m[1]%12;if(m[3].toLowerCase()==='p')H+=12;return H};
 let W=null;
@@ -573,7 +599,8 @@ function finishWizard(){
   const c=Object.assign({},old,{id:'cfg',k:'cfg',ans:Object.assign({},a),nombre:String(a.nombre||'Mi negocio').trim(),duena:String(a.duena||'').trim(),letra:g('letra'),
     frecs:g('frecs'),interesTipo:g('interesTipo'),interesPct:num(g('interesPct'))||20,moraTipo:g('moraTipo'),moraVal:a.moraTipoVal||'',domingos:g('domingos'),
     pagos:g('pagos'),tono:g('tono'),avisos:g('avisos'),horaAviso:pad2(h24(g('horaAviso')))+':00',vista:g('vista'),hIni:h24(g('hIni')),hFin:h24(g('hFin')),
-    top:g('top').map(l=>(TPL.find(t=>t.l===l)||{}).id).filter(Boolean),datosCliente:g('datosCliente')});
+    top:g('top').map(l=>(TPL.find(t=>t.l===l)||{}).id).filter(Boolean),datosCliente:g('datosCliente'),
+    diaCobro:['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'].indexOf(g('diaCobro')),semanas:intv(a.semanasVal)||intv(g('semanas'))||8});
   if(a.pin&&/^\d{4}$/.test(a.pin))S.me.pin=a.pin;
   delete c.ans.pin;
   const first=!old.nombre;
@@ -592,22 +619,24 @@ function sheetListo(){
 function loadDemo(){
   S={v:1,items:{},me:{pin:'1234',demo:true,view:'inicio',unlocked:true,push:S.me.push,pushUrl:S.me.pushUrl,pushKey:S.me.pushKey,iconL:S.me.iconL}};
   const t=today();const D=n=>addDays(t,n);
-  const c={id:'cfg',k:'cfg',ans:{},nombre:'Cobros Martha',duena:'Martha',letra:'Normal',frecs:['Diario','Semanal'],interesTipo:'Un % fijo sobre lo prestado',interesPct:20,moraTipo:'No',moraVal:'',domingos:'Sin domingos',
+  const c={id:'cfg',k:'cfg',ans:{},nombre:'Cobros Martha',duena:'Martha',letra:'Normal',frecs:['Semanal','Diario'],diaCobro:1,semanas:8,interesTipo:'Un % fijo sobre lo prestado',interesPct:20,moraTipo:'No',moraVal:'',domingos:'Sin domingos',
     pagos:['Efectivo','Nequi'],tono:'Amable',avisos:DEF.avisos,horaAviso:'07:00',vista:'Día',hIni:8,hFin:17,top:['reunion','llamada','banco','recordar'],datosCliente:['Celular','Cédula','Barrio']};
   c.ans={nombre:c.nombre,duena:'Martha',interesPct:20,frecs:c.frecs,pagos:c.pagos,tono:'Amable',letra:'Normal',avisos:c.avisos,vista:'Día',hIni:'8 a. m.',hFin:'5 p. m.',top:['Reunión','Llamada','Banco','Recordar'],datosCliente:c.datosCliente,domingos:'Sin domingos'};
   const add=o=>{o.id=o.id||uid();o.ts=Date.now()-Math.random()*1e5;S.items[o.id]=o;return o};
   add(c);
+  const lun0=addDays(t,-((pd(t).getDay()+6)%7));
   const mk=(nombre,cel,barrio,monto,pct,frec,n,startOff,payPlan)=>{const cl=add({k:'cliente',nombre,cel,cedula:String(1077400000+Math.floor(Math.random()*99999)),barrio,dir:'',notas:''});
-    const ini=D(startOff);const fechas=makeDates(addDays(ini,frec==='Diario'?1:7),frec,n,'sindom');const total=Math.round(monto*(1+pct/100));
-    const p=add({k:'prestamo',cliente:cl.id,monto,pct,tipo:'fijo',frec,dias:'sindom',n,total,cuota:Math.round(total/n),inicio:ini,fechas,previas:0,pago:'Efectivo'});
+    const ini=frec==='Semanal'?addDays(lun0,startOff*7-3):D(startOff);const fechas=frec==='Semanal'?baseDates(addDays(lun0,(startOff+1)*7),'Semanal',n):makeDates(addDays(ini,1),frec,n,'sindom');const total=Math.round(monto*(1+pct/100));
+    const p=add({k:'prestamo',cliente:cl.id,monto,pct,tipo:'fijo',frec,wd:1,dias:'sindom',n,total,cuota:Math.round(total/n),inicio:ini,fechas,fest:{},previas:0,pago:'Efectivo'});
     const sch=loanSched(p);payPlan(sch).forEach(([i,fecha,m])=>add({k:'pago',prestamo:p.id,fecha,monto:m,alloc:[{i,m}],pago:Math.random()<.7?'Efectivo':'Nequi'}));return p};
   const upTo=s=>s.filter(c=>c.f<t);
-  mk('Ana Mosquera','3105550101','Yesca Grande',500000,20,'Diario',24,-10,s=>upTo(s).map(c=>[c.i,c.f,c.v]));
-  mk('Jorge Palacios','3105550142','Kennedy',800000,20,'Diario',24,-6,s=>upTo(s).map(c=>[c.i,c.f,c.v]));
-  mk('Rosa Perea','3105550177','Cristo Rey',500000,20,'Diario',24,-27,s=>upTo(s).map(c=>[c.i,c.f,c.v]));
-  mk('Diana Valencia','3105550188','La Aurora',1000000,20,'Semanal',10,-22,s=>upTo(s).map(c=>[c.i,c.f,c.v]));
-  mk('Luis Rentería','3105550199','Pandeyuca',600000,20,'Diario',24,-12,s=>upTo(s).filter((c,i,a)=>i<a.length-2).map(c=>[c.i,c.f,c.v]));
-  mk('Mario Torres','3105550111','Niño Jesús',800000,20,'Diario',20,-5,s=>upTo(s).map(c=>[c.i,c.f,c.v]));
+  const lunes=x=>x<lun0;
+  mk('Ana Mosquera','3105550101','Yesca Grande',500000,20,'Semanal',8,-4,s=>s.filter(c=>lunes(c.f)).map(c=>[c.i,c.f,c.v]));
+  mk('Jorge Palacios','3105550142','Kennedy',800000,20,'Semanal',8,-2,s=>s.filter(c=>lunes(c.f)).map(c=>[c.i,c.i===1?addDays(c.f,2):c.f,c.v]));
+  mk('Rosa Perea','3105550177','Cristo Rey',500000,20,'Semanal',8,-6,s=>s.filter(c=>lunes(c.f)).map(c=>[c.i,c.f,c.v]));
+  mk('Diana Valencia','3105550188','La Aurora',1000000,20,'Semanal',10,-5,s=>s.filter(c=>lunes(c.f)).map(c=>[c.i,c.f,c.v]));
+  mk('Luis Rentería','3105550199','Pandeyuca',600000,20,'Semanal',8,-4,s=>s.filter(c=>lunes(c.f)).filter((c,i,a)=>i<a.length-2).map(c=>[c.i,c.f,c.v]));
+  mk('Mario Torres','3105550111','Niño Jesús',300000,20,'Diario',20,-5,s=>upTo(s).map(c=>[c.i,c.f,c.v]));
   const mon=addDays(t,-((pd(t).getDay()+6)%7)),thu=addDays(mon,3);
   const ev=(tipo,titulo,fecha,hora,o={})=>add(Object.assign({k:'ev',tipo,titulo,fecha,hora,aviso:15,rep:'no',nota:'',hechos:{}},o));
   ev('reunion','Reunión de equipo',mon,'09:00',{rep:'sem',nota:'Sala 2'});ev('reunion','Reunión de equipo',thu,'09:00',{rep:'sem',nota:'Sala 2'});
@@ -663,13 +692,13 @@ function applyTheme(){const c=cfg()||{};document.documentElement.className='auto
 function render(){
   applyTheme();LSC={};const app=$('#app');
   if(!cfg()&&S.me.view!=='wz'){app.innerHTML=renderWelcome();$('#layer').innerHTML=layer;return}
-  if(S.me.view==='wz'&&W){app.innerHTML=renderWizard();$('#layer').innerHTML=layer;return}
+  if(S.me.view==='wz'&&W){app.innerHTML=renderWizard();$('#layer').innerHTML=layer;enhanceLayer();return}
   if(S.me.view==='wz'&&!W)S.me.view='inicio';
   if(needsLock()){app.innerHTML=renderLock();$('#layer').innerHTML='';return}
   const v=S.me.view||'inicio';let h;
   switch(v){case 'agenda':h=vAgenda();break;case 'prestamos':h=vPrestamos();break;case 'cliente':h=vCliente();break;case 'reportes':h=vReportes();break;case 'mas':h=vMas();break;default:h=vInicio()}
   app.innerHTML=h+tabs(v);
-  $('#layer').innerHTML=layer;
+  $('#layer').innerHTML=layer;enhanceLayer();
 }
 function tabs(v){const t=(id,ico,lab)=>`<button class="${v===id||(id==='prestamos'&&v==='cliente')?'on':''}" data-a="tab" data-v="${id}">${ic(ico)}${lab}</button>`;
   return `<nav class="tabs">${t('inicio','home','Inicio')}${t('agenda','cal','Agenda')}<button class="plus" data-a="plus" aria-label="Nueva acción">${ic('plus')}</button>${t('prestamos','list','Préstamos')}${t('reportes','chart','Reportes')}</nav>`}
@@ -694,14 +723,15 @@ function typeCards(D,f){
 function evRow(e,d){const t=tplOf(e.tipo);const dn=isDone(e,d);
   const sub=[e.nota||'',e.rep&&e.rep!=='no'?REPL[e.rep]:'',e.hora&&e.aviso>=0?'🔔':''].filter(Boolean).join(' · ')||t.l;
   return `<div class="ev${dn?' done':''}"><div class="h">${e.hora?fmtH(e.hora).replace(' ','<br>'):'Todo<br>el día'}</div><svg class="i tl tile ${t.g}"><use href="#${t.i}"/></svg><button class="x" data-a="evopen" data-v="${e.id}" data-d="${d}"><b>${esc(evTitle(e))}</b><span class="sub">${esc(sub)}</span></button><button class="ck${dn?' on':''}" data-a="evdone" data-v="${e.id}" data-d="${d}" aria-label="${dn?'Marcar pendiente':'Marcar hecho'}">${dn?'✓':''}</button></div>`}
-function cobRow(x){const late=!x.paid&&x.c.f<today();
+function cobRow(x){const late=x.c.st==='n',pend=x.c.st==='pend';
   const right=x.paid?'<span class="chip c-ok">Pagó</span>':x.c.f>today()?`<span class="chip c-gris">${money(x.amt)}</span>`:`<button class="act a-cobra mini" data-a="cobrar1" data-v="${x.p.id}" data-i="${x.c.i}">${ic('check','width:16px;height:16px')}Cobrar</button>`;
-  return `<div class="ev"><button class="ini" data-a="cliente" data-v="${x.p.id}" style="${late?'color:var(--badt)':''}">${esc(initials(x.cl.nombre))}</button><button class="x" data-a="cliente" data-v="${x.p.id}"><b>${esc(x.cl.nombre)}</b><span class="sub">Cuota ${x.c.i+1} de ${x.p.n} · ${money(x.c.v)}${x.c.st==='ab'?' · falta '+money(x.c.falta):''}${late?' · no pagó':''}</span></button>${right}</div>`}
+  return `<div class="ev"><button class="ini" data-a="cliente" data-v="${x.p.id}" style="${late?'color:var(--badt)':''}">${esc(initials(x.cl.nombre))}</button><button class="x" data-a="cliente" data-v="${x.p.id}"><b>${esc(x.cl.nombre)}</b><span class="sub">Cuota ${x.c.i+1} de ${x.p.n} · ${money(x.c.v)}${x.c.st==='ab'?' · falta '+money(x.c.falta):''}${late?' · atrasada':pend?' · pendiente esta semana':''}${x.paid&&x.c.pf&&x.c.pf!==x.c.f&&x.c.pf!=='0000-00-00'?' · pagó el '+fdate(x.c.pf):''}</span></button>${right}</div>`}
 function dayList(D,f){
   const d=D.d;const empty=t=>`<div class="empty" style="padding:14px 8px"><b>${t}</b>Toca <b>Cita rápida</b> para agregar algo en segundos.</div>`;
-  if(f==='cob'){const pend=D.cob.filter(x=>!x.paid);return `<div class="sec">Cobros <span class="sub">${pend.length?`faltan ${pend.length} · ${money(pend.reduce((s,x)=>s+x.amt,0))}`:D.cob.length?'✓ todos pagaron':''}</span></div><div class="card" style="padding:4px 13px">${D.cob.map(cobRow).join('')||'<div class="empty" style="padding:14px"><b>No hay cobros este día</b></div>'}</div>`}
+  const cd=D.cob.length&&pd(d).getDay()===((cfg()||{}).diaCobro??1)?`<div class="cobroday"><svg class="i tile g-coin"><use href="#coin"/></svg><div><b>Día de cobro</b><span class="sub">${D.cob.length} cliente(s) · ${money(D.cob.reduce((s,x)=>s+x.c.v,0))}${D.cob.some(x=>x.paid)?' · cobrado '+money(D.cob.reduce((s,x)=>s+Math.min(x.c.got||0,x.c.v),0)):''}</span></div></div>`:'';
+  if(f==='cob'){const pend=D.cob.filter(x=>!x.paid);return cd+`<div class="sec">Cobros <span class="sub">${pend.length?`faltan ${pend.length} · ${money(pend.reduce((s,x)=>s+x.amt,0))}`:D.cob.length?'✓ todos pagaron':''}</span></div><div class="card" style="padding:4px 13px">${D.cob.map(cobRow).join('')||'<div class="empty" style="padding:14px"><b>No hay cobros este día</b></div>'}</div>`}
   const list=f==='cit'?D.cit:f==='tar'?D.tar:f==='ent'?D.ent:D.ev;
-  let h=`<div class="sec">${f?({cit:'Citas',tar:'Tareas',ent:'Entregas'})[f]:'Por hora'} <span class="sub">${list.length?`${list.filter(e=>!isDone(e,d)).length} pendiente(s)`:''}</span></div><div class="card" style="padding:4px 13px">`;
+  let h=cd+`<div class="sec">${f?({cit:'Citas',tar:'Tareas',ent:'Entregas'})[f]:'Por hora'} <span class="sub">${list.length?`${list.filter(e=>!isDone(e,d)).length} pendiente(s)`:''}</span></div><div class="card" style="padding:4px 13px">`;
   if(!f&&D.cob.length){const pend=D.cob.filter(x=>!x.paid);h+=`<div class="ev"><div class="h">Todo<br>el día</div><svg class="i tl tile g-coin"><use href="#coin"/></svg><button class="x" data-a="dayf" data-v="cob"><b>${D.cob.length} cobro${D.cob.length>1?'s':''}</b><span class="sub">${pend.length?`Faltan ${pend.length} · ${money(pend.reduce((s,x)=>s+x.amt,0))}`:'✓ Todos pagaron'}</span></button>${ic('right')}</div>`}
   h+=list.map(e=>evRow(e,d)).join('');
   if(!list.length&&!(!f&&D.cob.length))h+=empty(f?'Nada aquí':'Día libre');
@@ -716,9 +746,12 @@ function vInicio(){
   else if(ps==='noinst')h+=`<div class="banner">${ic('bell')}<span>Para recibir avisos, instala la app: Safari → Compartir → <b>Agregar a pantalla de inicio</b>.</span></div>`;
   const nItems=Object.keys(S.items).length;
   if(!S.me.demo&&nItems>5&&(!S.me.lastBk||Date.now()-S.me.lastBk>7*864e5))h+=`<button class="banner" data-a="backup" style="width:100%;text-align:left">${ic('caja')}<span><b>Haz tu copia de la semana.</b> Tus datos viven solo en este iPhone. <u>Copiar ahora</u></span></button>`;
+  for(const F of festUpcoming())h+=`<button class="banner" data-a="festsheet" data-d="${F.d}" style="width:100%;text-align:left;background:rgba(249,115,22,.14);border-color:rgba(249,115,22,.5)">🎌<span><b>${F.d===t?'Hoy':cap(fdate(F.d))} es festivo</b> y tienes ${F.cs.length} cobro(s). <u>Decidir qué hago</u></span></button>`;
   h+=typeCards(D,f);
   h+=`<div class="quick2"><button class="act a-recor" data-a="quick">${ic('bolt')}Cita rápida</button><button class="act a-cobra" data-a="cobrarpick">${ic('coin')}Cobrar</button></div>`;
   h+=dayList(D,f);
+  const pen=la.filter(x=>x.s.pendSem>.5&&x.s.atraso<=.5);
+  if(pen.length)h+=`<div class="sec">Pendientes de esta semana <span class="chip c-hoy">${pen.length} · ${money(pen.reduce((s,x)=>s+x.s.pendSem,0))}</span></div><div class="card" style="padding:4px 13px">${pen.map(x=>{const c=x.s.cuotas.find(q=>q.st==='pend');return `<div class="ev"><button class="ini" data-a="cliente" data-v="${x.p.id}" style="color:var(--hoyt)">${esc(initials(x.cl.nombre))}</button><button class="x" data-a="cliente" data-v="${x.p.id}"><b>${esc(x.cl.nombre)}</b><span class="sub">Cuota del ${fdate(c.f)} · ${money(c.rem)} · plazo hasta el ${fdate(addDays(c.f,graceOf(x.p)))}</span></button><button class="act a-cobra mini" data-a="cobrar1" data-v="${x.p.id}" data-i="${c.i}">${ic('check','width:16px;height:16px')}Cobrar</button></div>`}).join('')}</div>`;
   if(atr.length)h+=`<div class="sec">Atrasados <span class="chip c-mal">${atr.length} · ${money(atr.reduce((s,x)=>s+x.s.atraso,0))}</span></div><div class="card" style="padding:4px 13px">${atr.map(x=>`<div class="ev"><button class="ini" data-a="cliente" data-v="${x.p.id}" style="color:var(--badt)">${esc(initials(x.cl.nombre))}</button><button class="x" data-a="cliente" data-v="${x.p.id}"><b>${esc(x.cl.nombre)}</b><span class="sub">${x.s.vencidas} cuota(s) · ${x.s.lateDays} día(s) tarde · ${money(x.s.atraso)}</span></button><button class="act a-enviar mini" data-a="wa" data-k="atraso" data-v="${x.p.id}">${ic('send','width:16px;height:16px')}Avisar</button></div>`).join('')}</div>`;
   return h;
 }
@@ -741,21 +774,22 @@ function vAgenda(){
 }
 function weekView(d){
   const w0=addDays(d,-((pd(d).getDay()+6)%7));let h=`<div class="card" style="padding:2px 13px">`;
-  for(let k=0;k<7;k++){const x=addDays(w0,k);const D=dayData(x);const dt=pd(x);const pend=D.cob.filter(c=>!c.paid);const late=pend.filter(c=>c.c.f<today());
+  for(let k=0;k<7;k++){const x=addDays(w0,k);const D=dayData(x);const dt=pd(x);const pend=D.cob.filter(c=>!c.paid);const late=pend.filter(c=>c.c.st==='n');
     let p='';
     if(D.cob.length)p+=`<span class="pill p-cob">${pi('coin')}${D.cob.length} cobro${D.cob.length>1?'s':''}${!pend.length?' ✓':''}</span>`;
-    if(late.length)p+=`<span class="pill p-mal">${pi('alert')}${late.length} sin pagar</span>`;
+    if(late.length)p+=`<span class="pill p-mal">${pi('alert')}${late.length} sin pagar</span>`;if(isHoliday(x))p+=`<span class="pill p-gr">🎌 Festivo</span>`;
     D.ev.slice(0,5).forEach(e=>{const t=tplOf(e.tipo);p+=`<span class="pill ${t.cat==='entrega'?'p-ent':t.cat==='tarea'?'p-tar':'p-rec'}${isDone(e,x)?' dn':''}">${pi(t.i)}${esc(evTitle(e))}${e.hora?' '+fmtHs(e.hora):''}</span>`});
     if(D.ev.length>5)p+=`<span class="pill p-gr">+${D.ev.length-5} más</span>`;
-    h+=`<button class="wd${x===today()?' today':''}" data-a="agoto" data-v="${x}" data-m="dia"><span class="dd"><small>${x===today()?'Hoy':DOW[dt.getDay()]}</small><b>${dt.getDate()}</b></span><span class="es">${p||`<span class="sub">${isHoliday(x)?'Festivo · libre':'Libre'}</span>`}</span></button>`}
+    const isC=D.cob.length&&dt.getDay()===((cfg()||{}).diaCobro??1);if(isC)p=p.replace(/^<span class="pill p-cob">([\s\S]*?)<\/span>/,`<span class="pill p-cob" style="font-size:.74em">${pi('coin')}Día de cobro · ${D.cob.length} · ${money(D.cob.reduce((s,q)=>s+q.c.v,0))}${!pend.length?' ✓':''}</span>`);
+    h+=`<button class="wd${x===today()?' today':''}${isC?' cobro':''}" data-a="agoto" data-v="${x}" data-m="dia"><span class="dd"><small>${x===today()?'Hoy':DOW[dt.getDay()]}</small><b>${dt.getDate()}</b></span><span class="es">${p||`<span class="sub">${isHoliday(x)?'Festivo · libre':'Libre'}</span>`}</span></button>`}
   return h+`</div><div class="sub" style="text-align:center;margin-top:-2px">Toca un día para verlo completo</div>`}
 function monthView(d){
   const [y,m]=d.split('-').map(Number);const first=new Date(y,m-1,1);const days=new Date(y,m,0).getDate();const off=(first.getDay()+6)%7;const t=today();
   let h=`<div class="card"><div class="mon">${['L','M','M','J','V','S','D'].map(x=>`<span class="wh">${x}</span>`).join('')}`;
   for(let i=0;i<off;i++)h+='<span></span>';
   for(let k=1;k<=days;k++){const x=`${y}-${pad2(m)}-${pad2(k)}`;const D=dayData(x);const dots=[];
-    if(D.cob.length)dots.push(D.cob.some(c=>!c.paid&&c.c.f<t)?'dm':'dc');if(D.cit.length)dots.push('dr');if(D.tar.length)dots.push('dt');if(D.ent.length)dots.push('de');
-    h+=`<button class="md${x===t?' t':''}${x===d?' s':''}${isHoliday(x)?' fe':''}" data-a="agsel" data-v="${x}">${k}<span class="mdots">${dots.map(c=>`<i class="${c}"></i>`).join('')}</span></button>`}
+    if(D.cob.length)dots.push(D.cob.some(c=>c.c.st==='n')?'dm':'dc');const mc=D.cob.length&&pd(x).getDay()===((cfg()||{}).diaCobro??1);if(D.cit.length)dots.push('dr');if(D.tar.length)dots.push('dt');if(D.ent.length)dots.push('de');
+    h+=`<button class="md${x===t?' t':''}${x===d?' s':''}${isHoliday(x)?' fe':''}${mc?' mc':''}" data-a="agsel" data-v="${x}">${k}<span class="mdots">${dots.map(c=>`<i class="${c}"></i>`).join('')}</span></button>`}
   h+=`</div><div class="leg"><span><i style="background:var(--cobra)"></i>Cobros</span><span><i style="background:var(--recor)"></i>Citas</span><span><i style="background:#C026D3"></i>Tareas</span><span><i style="background:var(--presta)"></i>Entregas</span><span><i style="background:var(--mal)"></i>Sin pagar</span></div></div>`;
   const D=dayData(d);
   h+=`<div class="row" style="margin:12px 2px 0"><b style="font-size:.9em">${fdateW(d)}</b><button class="sub" data-a="agoto" data-v="${d}" data-m="dia" style="color:var(--gold2);min-height:36px;font-weight:700">Ver día ›</button></div>`;
@@ -769,7 +803,7 @@ function sheetEv(id,d){
   <div class="row" style="justify-content:flex-start;gap:12px;margin-bottom:12px"><svg class="i tile ${t.g}" style="width:54px;height:54px;padding:12px;border-radius:16px"><use href="#${t.i}"/></svg><div style="min-width:0"><div class="mid">${esc(evTitle(e))}</div><div class="sub">${cap(dayWord(d))} · ${e.hora?fmtH(e.hora):'Todo el día'}${rep?' · '+REPL[e.rep]:''}</div>${e.nota?`<div class="sub">${esc(e.nota)}</div>`:''}<div class="sub">${e.hora&&e.aviso>=0?'🔔 '+(e.aviso===0?'A la hora':AVISOS.find(a=>a[0]===e.aviso)[1]+' y a la hora'):'Sin aviso'}</div></div></div>
   <button class="bigbtn ${dn?'a-ver':'a-ok'}" data-a="evdone" data-v="${id}" data-d="${d}" data-close="1">${ic('check')}${dn?'Marcar como pendiente':'Listo, ya lo hice'}</button>
   <div class="qlab">Mover ${rep?'(solo este día)':''}</div>
-  <div class="chs">${e.hora?`<button class="ch" data-a="evmove" data-v="${id}" data-d="${d}" data-m="h1">+1 hora</button>`:''}<button class="ch" data-a="evmove" data-v="${id}" data-d="${d}" data-m="d1">Al otro día</button><button class="ch" data-a="evmove" data-v="${id}" data-d="${d}" data-m="d7">En una semana</button><label class="ch pick">${ic('cal','width:15px;height:15px')}Otro día<input type="date" data-a3="evmovedate" data-v="${id}" data-d="${d}" aria-label="Otro día"></label></div>
+  <div class="chs">${e.hora?`<button class="ch" data-a="evmove" data-v="${id}" data-d="${d}" data-m="h1">+1 hora</button>`:''}<button class="ch" data-a="evmove" data-v="${id}" data-d="${d}" data-m="d1">Al otro día</button><button class="ch" data-a="evmove" data-v="${id}" data-d="${d}" data-m="d7">En una semana</button><button class="ch" data-a="evpickdate" data-v="${id}" data-d="${d}">${ic('cal','width:15px;height:15px')} Otro día</button></div>
   <div class="f2" style="margin-top:14px"><button class="act a-ver" data-a="evedit" data-v="${id}">${ic('editar')}Editar</button>${e.tipo==='entrega'&&e.prestamo&&S.items[e.prestamo]?`<button class="act a-presta" data-a="cliente" data-v="${e.prestamo}">${ic('list')}Ver préstamo</button>`:`<button class="act a-mal" data-a="evdel" data-v="${id}" data-d="${d}" data-m="${rep?'one':'all'}">${ic('trash')}${rep?'Quitar este día':'Borrar'}</button>`}</div>
   ${rep?`<button class="bigbtn" data-a="evdel" data-v="${id}" data-d="${d}" data-m="all" style="color:var(--badt);font-size:.9em">Borrar todas las repeticiones</button>`:''}
   <button class="bigbtn" data-a="close" style="color:var(--sub)">Cerrar</button></div>`;render();
@@ -796,24 +830,24 @@ function renderQuick(first){
   const c=cfg()||{};const t=Q.tipo?tplOf(Q.tipo):null;const top=c.top||[];
   const order=[...top,...TPL.map(x=>x.id).filter(id=>!top.includes(id))].map(tplOf);
   const fv=Q.id?[]:favs();const T=today();
-  const days=[0,1,2,3,4].map(n=>addDays(T,n));const ini=c.hIni??8,fin=c.hFin??17;const hours=[];for(let H=ini;H<=fin;H++)hours.push(pad2(H)+':00');
+  const days=[0,1,2,3,4].map(n=>addDays(T,n));const ini=c.hIni??8,fin=c.hFin??17;const hours=[];for(let H=ini;H<=fin;H++){hours.push(pad2(H)+':00');if(H<fin)hours.push(pad2(H)+':30')}
   const n1=new Date(Date.now()+60*60e3);const inHour=pad2(n1.getHours())+':'+(n1.getMinutes()<30?'00':'30');
   const dayLab=x=>x===T?'Hoy':x===addDays(T,1)?'Mañana':cap(DOW[pd(x).getDay()])+' '+pd(x).getDate();
   const customDay=!days.includes(Q.d),customH=Q.h&&!hours.includes(Q.h);
   const avTxt=Q.h&&Q.aviso>=0?(Q.aviso===0?' · te aviso a la hora':` · te aviso ${AVISOS.find(a=>a[0]===Q.aviso)[1]} y a la hora`):'';
   layer=`<div class="dim" data-a="close"></div><div class="sheet" id="qs"><div class="grab"></div>
-  <div class="row"><h2 style="margin:0">${Q.id?'Editar':'Cita rápida'}</h2>${Q.id?'':`<span class="badge3">${ic('bolt')}3 toques</span>`}</div>
+  <div class="row" style="padding-right:48px"><h2 style="margin:0;padding-right:0">${Q.id?'Editar':'Cita rápida'}</h2>${Q.id?'':`<span class="badge3">${ic('bolt')}3 toques</span>`}</div>
   ${fv.length?`<div class="qlab">Las de siempre <em>1 toque</em></div><div class="fav">${fv.map(e=>{const tt=tplOf(e.tipo);const dd=favDay(e);return `<button class="fv" data-a="favgo" data-v="${e.id}"><svg class="i tile ${tt.g}"><use href="#${tt.i}"/></svg><span><b>${esc(evTitle(e))}</b><small>${cap(dayWord(dd))}${e.hora?' · '+fmtH(e.hora):''}</small></span></button>`}).join('')}</div>`:''}
   <div class="qlab">1 · ¿Qué es?</div><div class="qg">${order.map(x=>`<button class="qt${Q.tipo===x.id?' on':''}" data-a="qtipo" data-v="${x.id}"><svg class="i tile ${x.g}"><use href="#${x.i}"/></svg>${x.l}</button>`).join('')}</div>
   <div class="qlab">2 · ¿Cuándo?</div>
-  <div class="chs">${days.map(x=>`<button class="ch${Q.d===x?' on':''}" data-a="qd" data-v="${x}">${dayLab(x)}</button>`).join('')}<label class="ch pick${customDay?' on':''}">${ic('cal','width:15px;height:15px')}${customDay?dayLab(Q.d):'Otro día'}<input type="date" data-a3="qdate" value="${customDay?Q.d:''}" aria-label="Otro día"></label></div>
-  <div class="chs" style="margin-top:6px"><button class="ch" data-a="qh" data-v="${inHour}">En 1 hora</button>${hours.map(x=>`<button class="ch${Q.h===x?' on':''}" data-a="qh" data-v="${x}">${fmtHc(x)}</button>`).join('')}<button class="ch${!Q.h?' on':''}" data-a="qh" data-v="">Todo el día</button><label class="ch pick${customH?' on':''}">${customH?fmtH(Q.h):'Otra hora'}<input type="time" data-a3="qtime" value="${customH?Q.h:''}" aria-label="Otra hora"></label></div>
+  <div class="chs">${days.map(x=>`<button class="ch${Q.d===x?' on':''}" data-a="qd" data-v="${x}">${dayLab(x)}</button>`).join('')}<button class="ch${customDay?' on':''}" data-a="qpickdate">${ic('cal','width:15px;height:15px')} ${customDay?dayLab(Q.d):'Otro día'}</button></div>
+  <div class="chs" style="margin-top:6px"><button class="ch" data-a="qh" data-v="${inHour}">En 1 hora</button>${hours.map(x=>`<button class="ch${Q.h===x?' on':''}" data-a="qh" data-v="${x}">${fmtHc(x)}</button>`).join('')}<button class="ch${!Q.h?' on':''}" data-a="qh" data-v="">Todo el día</button><button class="ch${customH?' on':''}" data-a="qpicktime">🕐 ${customH?fmtH(Q.h):'Otra hora'}</button></div>
   <label class="opt">${ic('mic')}<input id="qtit" data-q="titulo" autocomplete="off" placeholder="${t?esc(t.l)+': con quién o qué (opcional)':'Nombre o nota (opcional)'}" value="${esc(Q.titulo)}"></label>
   <button class="morebtn" data-a="qmore">${Q.more?'▾':'▸'} Aviso: <b>${Q.h?AVISOS.find(a=>a[0]===Q.aviso)[1]:'en el resumen de la mañana'}</b> · <b>${REPS.find(r=>r[0]===Q.rep)[1]}</b></button>
   ${Q.more?`<div class="chs">${AVISOS.map(([k,l])=>`<button class="ch${Q.aviso===k?' on':''}" data-a="qav" data-v="${k}">${l}</button>`).join('')}</div><div class="chs" style="margin-top:6px">${REPS.map(([k,l])=>`<button class="ch${Q.rep===k?' on':''}" data-a="qrep" data-v="${k}">${l}</button>`).join('')}</div><label class="field" style="margin-top:8px"><span>Nota</span><input id="qnota" data-q="nota" value="${esc(Q.nota)}" placeholder="Ej: llevar extractos"></label>`:''}
   <button class="savebtn${t?'':' off'}" data-a="qsave">${Q.id?'Guardar cambios':(t?'3 · Guardar '+t.l.toLowerCase():'Toca qué es (paso 1)')}<small>${cap(dayWord(Q.d))} · ${Q.h?fmtH(Q.h):'todo el día'}${avTxt}</small></button></div>`;
   if(first){render();return}
-  const qs=$('#qs');const st=qs?qs.scrollTop:0;$('#layer').innerHTML=layer;const q2=$('#qs');if(q2)q2.scrollTop=st;
+  const qs=$('#qs');const st=qs?qs.scrollTop:0;$('#layer').innerHTML=layer;enhanceLayer();const q2=$('#qs');if(q2)q2.scrollTop=st;
 }
 function saveQuick(){
   if(!Q.tipo){toast('Primero toca qué es');return}
@@ -839,79 +873,18 @@ function vPrestamos(){
   ${all.length>8?`<input class="tin" style="margin:0 0 9px" placeholder="Buscar cliente" value="${esc(S.me.pq||'')}" data-a2="pq">`:''}
   <div class="card">`;
   if(!list.length)h+=`<div class="empty"><b>${all.length?'Nadie en esta lista':'Aún no hay préstamos'}</b>${all.length?'':'Toca el botón azul "Prestar" para crear el primero.'}</div>`;
-  for(const x of list){const ch=x.s.done?'<span class="chip c-gris">Pagado</span>':x.s.atraso>.5?`<span class="chip c-mal">${x.s.lateDays} d tarde</span>`:x.s.debeHoy>0?'<span class="chip c-hoy">Hoy</span>':'<span class="chip c-ok">Al día</span>';
-    h+=`<button class="pp" data-a="cliente" data-v="${x.p.id}"><span class="ini">${esc(initials(x.cl.nombre))}</span><span class="t"><b>${esc(x.cl.nombre)}</b><span class="sub">Debe ${money(x.s.saldo)} · ${x.p.frec.toLowerCase()}</span></span>${ch}</button>`}
+  for(const x of list){const ch=x.s.done?'<span class="chip c-gris">Pagado</span>':x.s.atraso>.5?`<span class="chip c-mal">${x.s.lateDays} d tarde</span>`:x.s.pendSem>.5?'<span class="chip c-hoy">Pendiente</span>':x.s.debeHoy>0?'<span class="chip c-hoy">Hoy</span>':'<span class="chip c-ok">Al día</span>';
+    h+=`<button class="pp" data-a="cliente" data-v="${x.p.id}"><span class="ini">${esc(initials(x.cl.nombre))}</span><span class="t"><b>${esc(x.cl.nombre)}</b><span class="sub">Debe ${money(x.s.saldo)} · ${frecTxt(x.p)}</span></span>${ch}</button>`}
   return h+`</div>`;
 }
 const DIAS=[['todos','Todos los días'],['sindom','Sin domingos'],['sinfest','Sin domingos ni festivos']];
 const diasDef=()=>{const d=(cfg()||{}).domingos||'';return d.startsWith('Todos')||d==='Sí'?'todos':d==='Sin domingos'?'sindom':'sinfest'};
-function sheetPrestar(){
-  const c=cfg();const fr=(c.frecs&&c.frecs.length?c.frecs:['Diario','Semanal','Quincenal','Mensual']);const dc=c.datosCliente||[];
-  const clientes=items('cliente');const dd=diasDef();
-  layer=`<div class="dim" data-a="close"></div><div class="sheet"><div class="grab"></div><h2 style="color:var(--presta)">${ic('presta')}Nuevo préstamo</h2><form id="fp">
-  <div class="card"><div class="step"><em>1</em>¿A quién le prestas?</div>
-   <label class="field"><span>Nombre</span><input name="nombre" list="dl-cl" placeholder="Nombre y apellido" autocomplete="off"></label>
-   <datalist id="dl-cl">${clientes.map(x=>`<option value="${esc(x.nombre)}">`).join('')}</datalist>
-   <div class="f2">${dc.includes('Celular')?`<label class="field"><span>Celular (WhatsApp)</span><input name="cel" inputmode="tel" placeholder="310 000 0000"></label>`:''}${dc.includes('Cédula')?`<label class="field"><span>Cédula</span><input name="cedula" inputmode="numeric"></label>`:''}</div>
-   ${dc.includes('Barrio')?`<label class="field"><span>Barrio</span><input name="barrio"></label>`:''}${dc.includes('Dirección')?`<label class="field"><span>Dirección</span><input name="dir"></label>`:''}${dc.includes('Fiador')?`<label class="field"><span>Fiador</span><input name="codeudor" placeholder="Nombre y celular"></label>`:''}${dc.includes('Notas')?`<label class="field"><span>Notas</span><input name="notas"></label>`:''}</div>
-  <div class="card"><div class="step"><em>2</em>¿Cuánto y cómo paga?</div>
-   <div class="f2"><label class="field"><span>Le presto</span><input name="monto" inputmode="numeric" data-money="1" placeholder="1.000.000"></label><label class="field"><span>Interés % ${c.interesTipo==='Un % cada mes'?'mensual':'total'}</span><input name="pct" inputmode="decimal" value="${String(c.interesPct).replace('.',',')}"></label></div>
-   <div class="seg">${fr.map((x,i)=>`<button type="button" data-a="frec" data-v="${x}" class="${i===0?'on':''}">${x}</button>`).join('')}</div><input type="hidden" name="frec" value="${fr[0]}">
-   <div class="sub" style="margin:0 2px 6px;font-weight:700">¿Qué días se le cobra?</div>
-   <div class="seg">${DIAS.map(([k,l])=>`<button type="button" data-a="dias" data-v="${k}" class="${k===dd?'on':''}">${l}</button>`).join('')}</div><input type="hidden" name="dias" value="${dd}">
-   <div class="f2"><label class="field"><span>Número de cuotas</span><input name="n" inputmode="numeric" value="${fr[0]==='Diario'?24:fr[0]==='Semanal'?10:fr[0]==='Quincenal'?6:4}"></label><label class="field"><span>Primera cuota</span><input name="first" type="date" value="${firstDue(fr[0])}"></label></div>
-   <div class="f2"><label class="field"><span>Entrego con</span><select name="pago">${(c.pagos||['Efectivo']).map(m=>`<option>${esc(m)}</option>`).join('')}</select></label><label class="field"><span>Fecha del préstamo</span><input name="inicio" type="date" value="${today()}"></label></div>
-   <label class="field"><span>Hora de entrega (opcional · sale en tu agenda)</span><input name="hent" type="time"></label>
-   <div class="sum" id="psum"></div></div>
-  <div class="card"><div class="step"><em>3</em>Fechas (se llenan solas)</div><div class="sub" id="pfechas"></div>
-   <label class="row" style="margin-top:10px;justify-content:flex-start;gap:10px;font-size:.9em"><input type="checkbox" name="cuaderno" style="width:22px;height:22px;accent-color:var(--presta)"> Ya venía del cuaderno (le presté antes)</label>
-   <div id="cuad" style="display:none;margin-top:8px"></div></div>
-  <button class="bigbtn a-presta" type="submit">${ic('presta')}Crear préstamo</button></form></div>`;
-  render();pCalc();
-}
-function pCalc(){
-  const f=$('#fp');if(!f)return;const c=cfg();const monto=intv(f.monto.value),pct=num(f.pct.value),n=Math.max(1,intv(f.n.value)),frec=f.frec.value,dias=f.dias.value;
-  const fechas=f.first.value?makeDates(f.first.value,frec,n,dias):[];
-  let total=monto*(1+pct/100);if(c.interesTipo==='Un % cada mes'&&fechas.length){const months=Math.max(1,Math.round((pd(fechas[fechas.length-1])-pd(f.inicio.value||today()))/864e5/30));total=monto*(1+pct/100*months)}
-  total=Math.round(total);
-  $('#psum').innerHTML=`<div><span class="sub">Me debe en total</span><div class="mid">${money(total)}</div></div><div><span class="sub">Cada cuota</span><div class="mid ok">${money(Math.round(total/n))}</div></div><div style="grid-column:1/3"><span class="sub">Ganancia: ${money(total-monto)}</span></div>`;
-  $('#pfechas').innerHTML=fechas.length?`${DIAS.find(d=>d[0]===dias)[1]} · desde <b>${fdate(fechas[0])}</b> hasta <b>${fdate(fechas[fechas.length-1])}</b>`:'';
-  f._calc={monto,pct,n,frec,fechas,total,dias};f._cm=f._cm||{};
-  cuadRender(f);
-}
-/* cuaderno: tocar cada día para ponerle su color (sin candado) */
-const CM={p:['var(--venta)','#fff','pagó'],t:['var(--hoy)','#2A1000','pagó tarde'],n:['var(--mal)','#fff','no pagó']};
-function cuadRender(f){
-  const box=$('#cuad');if(!f.cuaderno.checked){box.style.display='none';return}box.style.display='block';
-  const x=f._calc;const t=today();const past=x.fechas.map((d,i)=>({d,i})).filter(o=>o.d<t);
-  if(!past.length){box.innerHTML=`<div class="sub">Pon la <b>fecha del préstamo</b> y la <b>primera cuota</b> en los días en que de verdad fueron (en el pasado). Así salen aquí los días para marcar.</div>`;return}
-  const cnt={p:0,t:0,n:0};past.forEach(o=>cnt[f._cm[o.i]||'p']++);
-  box.innerHTML=`<div class="sub" style="margin-bottom:6px"><b style="color:var(--ink)">Toca cada día para ponerle su color.</b> Cada toque cambia: verde pagó → naranja pagó tarde → rojo no pagó.</div>
-  <div class="cal" style="grid-template-columns:repeat(6,1fr)">${past.map(o=>{const st=f._cm[o.i]||'p';const d=pd(o.d);return `<button type="button" data-a="cuad" data-i="${o.i}" style="background:${CM[st][0]};color:${CM[st][1]};flex-direction:column;line-height:1.1;font-size:.7em">${d.getDate()}<small style="font-size:.75em;opacity:.85">${MES[d.getMonth()]}</small></button>`}).join('')}</div>
-  <div class="row" style="margin-top:8px"><span class="sub">${cnt.p} pagó · ${cnt.t} tarde · ${cnt.n} no pagó</span><span style="display:flex;gap:6px"><button type="button" class="act a-ver mini" data-a="cuadall" data-v="p">Todos pagaron</button><button type="button" class="act a-ver mini" data-a="cuadall" data-v="n">Ninguno</button></span></div>
-  <div class="sub" style="margin-top:6px">Desde hoy sigue normal. Estos pagos no se suman a la caja de hoy.</div>`;
-}
-function savePrestamo(f){
-  const x=f._calc;const nombre=f.nombre.value.trim();if(!nombre){toast('Falta el nombre');return}if(!x.monto){toast('Falta cuánto le prestas');return}
-  let cl=items('cliente').find(c=>c.nombre.toLowerCase()===nombre.toLowerCase());
-  const g=k=>f[k]?f[k].value.trim():'';
-  if(!cl){cl={id:uid(),k:'cliente',nombre,cel:g('cel'),cedula:g('cedula'),dir:g('dir'),barrio:g('barrio'),codeudor:g('codeudor'),notas:g('notas')};put(cl,true)}
-  else{let ch=false;['cel','cedula','dir','barrio','codeudor','notas'].forEach(k=>{if(g(k)){cl[k]=g(k);ch=true}});if(ch)put(cl,true)}
-  const cuaderno=f.cuaderno.checked;
-  const p={id:uid(),k:'prestamo',cliente:cl.id,monto:x.monto,pct:x.pct,tipo:cfg().interesTipo,frec:x.frec,dias:x.dias,n:x.n,total:x.total,cuota:Math.round(x.total/x.n),inicio:f.inicio.value||today(),fechas:x.fechas,previas:0,cuaderno,pago:f.pago.value};
-  put(p,true);
-  const hent=f.hent?f.hent.value:'';if(hent&&!cuaderno)put({id:uid(),k:'ev',tipo:'entrega',titulo:'Entregar a '+nombre,nota:money(x.monto),fecha:p.inicio,hora:hent,aviso:15,rep:'no',hechos:{},prestamo:p.id},true);
-  if(cuaderno){const sch=loanSched(p);const t=today();sch.filter(c=>c.f<t).forEach(c=>{const st=f._cm[c.i]||'p';if(st==='n')return;
-    let fe=st==='p'?c.f:addDays(c.f,1);if(fe>=t)fe=addDays(t,-1);put({id:uid(),k:'pago',prestamo:p.id,fecha:fe,monto:c.v,alloc:[{i:c.i,m:c.v}],cuaderno:true,pago:p.pago},true)})}
-  layer='';S.me.view='cliente';S.me.loan=p.id;S.me.calm=null;render();toast('Préstamo creado');
-}
-/* ficha del cliente */
 function vCliente(){
   const p=S.items[S.me.loan];if(!p||p.del){S.me.view='prestamos';return vPrestamos()}
   const cl=S.items[p.cliente]||{nombre:'?'};const s=loanStatus(p);
   const others=items('prestamo').filter(x=>x.cliente===p.cliente&&x.id!==p.id);
-  let h=`<div class="top"><button class="row" data-a="tab" data-v="prestamos" style="gap:4px;justify-content:flex-start;min-height:44px">${ic('chev')}<h1 style="font-size:1.3em">${esc(cl.nombre)}</h1></button>${s.done?'<span class="chip c-gris">Pagado</span>':s.atraso>.5?`<span class="chip c-mal">Debe ${s.vencidas}</span>`:s.debeHoy>0?'<span class="chip c-hoy">Paga hoy</span>':'<span class="chip c-ok">Al día</span>'}</div>
-  <div class="card hero"><span class="lbl">Le falta pagar</span><div class="big">${money(s.saldo)}</div><div class="sub">Pagó ${s.pagadas} de ${p.n} cuotas de ${money(p.cuota)} · ${p.frec.toLowerCase()}</div>
+  let h=`<div class="top"><button class="row" data-a="tab" data-v="prestamos" style="gap:4px;justify-content:flex-start;min-height:44px">${ic('chev')}<h1 style="font-size:1.3em">${esc(cl.nombre)}</h1></button>${s.done?'<span class="chip c-gris">Pagado</span>':s.atraso>.5?`<span class="chip c-mal">Atrasado</span>`:s.pendSem>.5?'<span class="chip c-hoy">Pendiente</span>':s.debeHoy>0?'<span class="chip c-hoy">Paga hoy</span>':'<span class="chip c-ok">Al día</span>'}</div>
+  <div class="card hero"><span class="lbl">Le falta pagar</span><div class="big">${money(s.saldo)}</div><div class="sub">Pagó ${s.pagadas} de ${p.n} cuotas de ${money(p.cuota)} · ${frecTxt(p)}</div>
    ${s.atraso>.5?`<div class="sub bad" style="margin-top:4px">Atrasado: ${money(s.atraso)}${s.mora?` + mora sugerida ${money(s.mora)}`:''}</div>`:''}
    <div class="k2"><div><span class="lbl">Le presté</span><div class="v">${money(p.monto)}</div></div><div><span class="lbl">Me paga en total</span><div class="v">${money(p.total)}</div></div></div></div>
   <div class="acts" style="grid-template-columns:1fr 1fr 1fr">${canEdit()&&!s.done?`<button class="act a-cobra" data-a="cobrar" data-v="${p.id}">${ic('cobra')}Cobrar</button>`:''}
@@ -929,20 +902,6 @@ function vCliente(){
   if(others.length)h+=`<div class="card">${others.map(o=>{const so=loanStatus(o);return `<button class="pp" data-a="cliente" data-v="${o.id}"><span class="t"><b>Préstamo del ${fdate(o.inicio)}</b><span class="sub">${so.done?'Pagado':'Debe '+money(so.saldo)}</span></span>${ic('right')}</button>`}).join('')}</div>`;
   return h;
 }
-function calendar(s,p){
-  const months=[...new Set(s.cuotas.map(c=>c.f.slice(0,7)))];
-  let cur=S.me.calm&&months.includes(S.me.calm)?S.me.calm:(months.find(m=>m===today().slice(0,7))||months.find(m=>m>today().slice(0,7))||months[months.length-1]);
-  const mi=months.indexOf(cur);const [y,m]=cur.split('-').map(Number);const first=new Date(y,m-1,1);const days=new Date(y,m,0).getDate();
-  const byDate={};s.cuotas.forEach(c=>byDate[c.f]=c);const off=(first.getDay()+6)%7;const t=today();
-  let h=`<div class="card"><div class="row"><button data-a="calm" data-v="${months[mi-1]||''}" ${mi>0?'':'disabled style="opacity:.3"'} class="iconbtn" aria-label="Mes anterior">${ic('chev')}</button><b>${MESL[m-1]} ${y}</b><button data-a="calm" data-v="${months[mi+1]||''}" ${mi<months.length-1?'':'disabled style="opacity:.3"'} class="iconbtn" aria-label="Mes siguiente">${ic('right')}</button></div><div class="cal">${['L','M','M','J','V','S','D'].map(d=>`<span class="h">${d}</span>`).join('')}`;
-  for(let i=0;i<off;i++)h+=`<span class="e"></span>`;
-  for(let d=1;d<=days;d++){const ds=`${y}-${pad2(m)}-${pad2(d)}`;const c=byDate[ds];
-    let cls=c?({p:'p',t:'t',n:'n',ab:'ab',hoy:'hy',f:'f'})[c.st]:(isOff(ds)?'x':'');if(ds===t&&c&&c.st!=='hoy')cls+=' hy';else if(ds===t&&!c)cls+=' hy';
-    h+=c?`<button class="${cls}" data-a="cuota" data-v="${p.id}" data-i="${c.i}" aria-label="Cuota ${c.i+1}">${d}</button>`:`<span class="${cls}">${d}</span>`}
-  h+=`</div><div class="leg"><span><i style="background:var(--venta)"></i>Pagó</span><span><i style="background:var(--hoy)"></i>Pagó tarde</span><span><i style="background:var(--mal)"></i>No pagó</span><span><i style="background:linear-gradient(180deg,var(--venta) 55%,#7F1D1D 55%)"></i>Abono</span><span><i style="border:1.5px dashed var(--sub)"></i>Falta</span></div></div>`;
-  return h;
-}
-/* candado: PIN o Face ID para corregir préstamos ya creados (dura 5 minutos) */
 let LOCKU=0,LOCKCB=null;
 function withLock(cb){if(!S.me.pin||LOCKU>Date.now())return cb();LOCKCB=cb;sheetAuth()}
 function sheetAuth(){
@@ -953,21 +912,8 @@ function sheetAuth(){
   ${S.me.face&&faceOK()?`<button class="bigbtn a-presta" data-a="authface">${ic('face')}Usar Face ID</button>`:''}
   <button class="bigbtn" data-a="close" style="color:var(--sub)">Cancelar</button></div>`;render();
 }
-function authOK(){LOCKU=Date.now()+5*60e3;const cb=LOCKCB;LOCKCB=null;layer='';if(cb)cb();else render()}
+function authOK(){LOCKU=Date.now()+5*60e3;const cb=LOCKCB;LOCKCB=null;layer='';render();if(cb)cb()}
 async function faceVerify(){try{await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),allowCredentials:[{type:'public-key',id:ub64(S.me.face)}],userVerification:'required',timeout:60000}});return true}catch(e){return false}}
-function sheetCuota(pid,i){
-  const p=S.items[pid];const s=loanStatus(p);const c=s.cuotas[i];
-  const txt={p:'Pagada a tiempo',t:`Pagada tarde (${c.pf?fdate(c.pf):''})`,n:'No pagó',ab:`Abono: falta ${money(c.falta||0)}`,hoy:'Vence hoy',f:'Falta (próxima)'}[c.st];
-  const pays=c.pays.filter(y=>!y.prev).map(y=>`${money(y.m)} el ${fdate(y.fecha)}${S.items[y.id]&&S.items[y.id].cuaderno?' (cuaderno)':''}`);if(c.pays.some(y=>y.prev))pays.unshift('Pagada en el cuaderno');
-  const ed=canEdit();const mode=c.st==='p'||c.st==='t'?c.st:c.st==='ab'?'ab':'n';
-  layer=`<div class="dim" data-a="close"></div><div class="sheet"><div class="grab"></div><div class="card"><div class="row" style="justify-content:flex-start;gap:12px"><span class="ini" style="width:52px;height:52px;border-radius:14px;font-size:1.2em;background:var(--card2)">${c.i+1}</span><div><div class="mid">Cuota ${c.i+1} · ${fdate(c.f)}</div><div class="sub">${money(c.v)} · ${txt}</div>${pays.length?`<div class="sub">${pays.map(esc).join(' · ')}</div>`:''}</div></div></div>
-  ${ed&&c.st!=='p'&&c.st!=='t'?`<button class="bigbtn a-cobra" data-a="cobrar1" data-v="${pid}" data-i="${i}">${ic('cobra')}Cobrar esta cuota</button>`:''}
-  ${ed?`<div class="card" style="margin-top:10px"><div class="row"><b>🔒 Corregir esta cuota</b><span class="sub">pide PIN o Face ID</span></div>
-   <form id="ffix" data-p="${pid}" data-i="${i}" style="margin-top:9px"><div class="seg">${[['p','Pagó ese día'],['t','Pagó otro día'],['ab','Abonó'],['n','No pagó']].map(([k,l])=>`<button type="button" data-a="fixmode" data-v="${k}" class="${k===mode?'on':''}">${l}</button>`).join('')}</div><input type="hidden" name="mode" value="${mode}">
-   <div id="fixextra"></div><button class="bigbtn a-ver" type="submit">Guardar corrección</button></form>
-   <label class="field" style="margin-top:12px"><span>Mover la fecha de cobro</span><input type="date" id="mvdate" value="${c.f}"></label><button class="bigbtn a-ver" data-a="mvcuota" data-v="${pid}" data-i="${i}">${ic('editar')}Guardar nueva fecha</button></div>`:''}
-  <button class="bigbtn" data-a="close" style="color:var(--sub)">Cerrar</button></div>`;render();fixExtra();
-}
 function fixExtra(){const f=$('#ffix');if(!f)return;const m=f.mode.value;const p=S.items[f.dataset.p];const c=loanSched(p)[+f.dataset.i];const methods=(cfg().pagos||['Efectivo']);
   $('#fixextra').innerHTML=(m==='t'||m==='ab'?`<label class="field"><span>¿Qué día pagó?</span><input type="date" name="fecha" value="${m==='t'?addDays(c.f,1)>today()?today():addDays(c.f,1):today()}"></label>`:'')+
    (m==='ab'?`<label class="field"><span>¿Cuánto abonó?</span><input name="monto" inputmode="numeric" data-money="1" placeholder="${thou(Math.round(c.v/2))}"></label>`:'')+
@@ -991,11 +937,11 @@ function sheetCobrar(pid,only){
 function cobCalc(setMonto){
   const f=$('#fcob');if(!f)return;const p=S.items[f.dataset.p];const s=loanStatus(p);const pend=s.cuotas.filter(x=>x.st!=='p'&&x.st!=='t');
   const sel=f._sel;$('#ncuo').textContent=sel.size;
-  const colors={n:'var(--mal)',ab:'linear-gradient(180deg,var(--venta) 55%,#7F1D1D 55%)',hoy:'var(--hoy)',f:'var(--card2)'};
+  const colors={n:'var(--mal)',pend:'var(--hoy)',ab:'linear-gradient(180deg,var(--venta) 55%,#7F1D1D 55%)',hoy:'var(--hoy)',f:'var(--card2)'};
   const maxShown=Math.max(...[...sel].map(i=>pend.findIndex(c=>c.i===i)),0)+3;
   let amt=0;$('#cuolist').innerHTML=pend.slice(0,Math.max(maxShown,4)).map(c=>{const v=c.rem;const on=sel.has(c.i);if(on)amt+=v;
-    return `<button type="button" class="q" data-a="csel" data-i="${c.i}" style="width:100%;text-align:left"><span style="width:24px;height:24px;border-radius:7px;border:2px solid var(--cobra);display:grid;place-items:center;background:${on?'var(--cobra)':'transparent'};color:#042420;flex:none">${on?'✓':''}</span><span class="bar" style="background:${colors[c.st]||'var(--card2)'}"></span><span style="flex:1"><b>${fdate(c.f)} · cuota ${c.i+1}</b><br><span class="sub">${{n:'No pagó ese día',ab:'Falta resto del abono',hoy:'Hoy',f:'Adelantada'}[c.st]}</span></span><b style="${on?'':'opacity:.5'}">${money(v)}</b></button>`}).join('')||'<div class="empty">No hay cuotas pendientes</div>';
-  if(setMonto!==false)f.monto.value=amt?thou(amt):'';
+    return `<button type="button" class="q" data-a="csel" data-i="${c.i}" style="width:100%;text-align:left"><span style="width:24px;height:24px;border-radius:7px;border:2px solid var(--cobra);display:grid;place-items:center;background:${on?'var(--cobra)':'transparent'};color:#042420;flex:none">${on?'✓':''}</span><span class="bar" style="background:${colors[c.st]||'var(--card2)'}"></span><span style="flex:1"><b>${fdate(c.f)} · cuota ${c.i+1}</b><br><span class="sub">${{n:'Atrasada',pend:'Pendiente de esta semana',ab:'Falta resto del abono',hoy:'Hoy',f:'Adelantada'}[c.st]}</span></span><b style="${on?'':'opacity:.5'}">${money(v)}</b></button>`}).join('')||'<div class="empty">No hay cuotas pendientes</div>';
+  if(setMonto!==false){f.monto.value=amt?thou(amt):'';f.monto.defaultValue=f.monto.value}
   $('#cobbtn').innerHTML=`${ic('cobra')}Confirmar cobro · ${money(intv(f.monto.value)+(f.mora?intv(f.mora.value):0))}`;
 }
 function saveCobro(f){
@@ -1019,13 +965,13 @@ function vReportes(){
   const inR=f=>f>=range[0]&&f<=range[1];
   const all=items('prestamo').map(p=>({p,s:lsOf(p),cl:S.items[p.cliente]})).filter(x=>x.cl&&!x.cl.del);
   let esperado=0,falto=0;all.forEach(x=>x.s.cuotas.forEach(c=>{if(inR(c.f)){esperado+=c.v;if(c.f<=t)falto+=c.rem||0}}));
-  const P=items('pago').filter(x=>inR(x.fecha)&&!x.cuaderno);const cob=P.reduce((s,x)=>s+x.monto+(x.mora||0),0);
+  const P=items('pago').filter(x=>inR(x.fecha));const cob=P.reduce((s,x)=>s+x.monto+(x.mora||0),0);
   const intr=P.reduce((s,x)=>{const p=S.items[x.prestamo];return s+(p?interesPart(p,x.monto):0)+(x.mora||0)},0);const capi=cob-intr;
   const pct=cob+falto>0?Math.round(cob/(cob+falto)*100):0;
   const la=all.filter(x=>!x.s.done);const calle=la.reduce((s,x)=>s+x.p.monto*(x.s.saldo/x.p.total),0);const porCob=la.reduce((s,x)=>s+x.s.saldo,0);
   const atr=la.filter(x=>x.s.atraso>.5).sort((a,b)=>b.s.atraso-a.s.atraso);
   const nx7=la.reduce((s,x)=>s+x.s.cuotas.filter(c=>c.f>t&&c.f<=addDays(t,7)).reduce((a,c)=>a+(c.rem||0),0),0);
-  const prest=items('prestamo').filter(x=>inR(x.inicio)&&!x.cuaderno).reduce((s,x)=>s+x.monto,0);
+  const prest=items('prestamo').filter(x=>inR(x.inicio)).reduce((s,x)=>s+x.monto,0);
   const best=la.filter(x=>x.s.atraso<=.5&&x.s.pagadas>0).sort((a,b)=>b.s.pagadas-a.s.pagadas).slice(0,3);
   const lbl={dia:'Hoy',semana:`${pd(range[0]).getDate()} – ${pd(range[1]).getDate()} ${MES[pd(range[1]).getMonth()]}`,mes:MESL[pd(t).getMonth()]}[per];
   REP={range,cob,capi,intr,falto,esperado,pct,calle,porCob,atr,nx7,prest,P,lbl};
@@ -1136,6 +1082,7 @@ function buildSchedule(){
   const c=cfg();if(!c)return [];const av=c.avisos||[];const out=[];const now=Date.now();
   for(let k=0;k<21;k++){const d=addDays(today(),k);
     if(av.includes('Resumen de la mañana')){const at=atTime(d,c.horaAviso||'07:00');if(at>now)out.push({at,title:k===0?'Tu día de hoy':'Tu día · '+fdate(d),body:summaryText(d,k===0),tag:'dia-'+d})}
+    if(isHoliday(d)){const n=items('prestamo').reduce((s,p)=>s+p.fechas.filter(f=>f===d).length,0);if(n){const pre=pd(d).getDay()===1?3:1;const at=atTime(addDays(d,-pre),c.horaAviso||'07:00')+30*60e3;if(at>now)out.push({at,title:`🎌 ${cap(fdate(d))} es festivo`,body:`Tienes ${n} cobro(s) ese día. Abre la app para decidir si los mueves.`,tag:'fest-'+d})}}
     if(av.includes('Citas y tareas'))for(const e of eventsOn(d)){if(!e.hora||e.aviso<0||isDone(e,d))continue;const at0=atTime(d,e.hora);if(at0<=now)continue;
       const tit=evTitle(e),body=[fmtH(e.hora),e.nota].filter(Boolean).join(' · ');
       if(e.aviso>0){let at=at0-e.aviso*60e3;if(at<=now)at=now+15e3;const m=Math.round((at0-at)/60e3);
@@ -1188,6 +1135,210 @@ function sheetBackup(){layer=`<div class="dim" data-a="close"></div><div class="
   <button class="bigbtn a-enviar" data-a="export">${ic('enviar')}Guardar copia</button>
   <label class="bigbtn a-ver" style="cursor:pointer">${ic('refresh')}Recuperar desde archivo<input type="file" accept=".json,application/json" id="impfile" style="display:none"></label></div>`;render()}
 
+/* =============== 1.1.0 · ventanas que siempre se pueden cerrar =============== */
+function isDirty(){
+  if(Q&&!Q.id&&(Q.tipo||(Q.titulo||'').trim()||(Q.nota||'').trim()))return true;
+  return [...document.querySelectorAll('#layer .sheet input,#layer .sheet textarea,#layer .sheet select')].some(i=>{
+    if(i.type==='hidden'||i.type==='file'||i.dataset.nodirty)return false;
+    if(i.type==='checkbox'||i.type==='radio')return i.checked!==i.defaultChecked;
+    if(i.tagName==='SELECT')return [...i.options].some(o=>o.selected!==o.defaultSelected);
+    return i.value!==i.defaultValue})||!!(document.querySelector('#fp')&&$('#fp')._touched);
+}
+function closeLayer(){layer='';Q=null;PK=null;renderPicker();render()}
+function requestClose(){if(isDirty())showChoice('¿Salir sin guardar?','Lo que escribiste en esta ventana se pierde.',[{l:'Sí, salir',c:'a-mal',f:closeLayer},{l:'No, seguir aquí',c:'a-ver',f:()=>{}}]);else closeLayer()}
+let CH=null;
+function showChoice(title,text,opts){CH=opts;$('#confirm').innerHTML=`<div class="cf-dim" data-a="chno"></div><div class="cf"><b>${esc(title)}</b>${text?`<p class="sub">${esc(text)}</p>`:''}${opts.map((o,i)=>`<button class="bigbtn ${o.c||'a-ver'}" data-a="chpick" data-v="${i}">${esc(o.l)}</button>`).join('')}</div>`}
+function closeChoice(){CH=null;$('#confirm').innerHTML=''}
+/* después de cada render: ✕ en cada ventana, fechas y horas con nuestro selector */
+let PKN=0;
+function enhanceLayer(){
+  document.querySelectorAll('#layer .sheet').forEach(sh=>{if(!sh.querySelector(':scope > .xclose')){const b=document.createElement('button');b.className='xclose';b.dataset.a='close';b.setAttribute('aria-label','Cerrar');b.innerHTML='✕';sh.prepend(b)}});
+  document.querySelectorAll('#app input[type=date],#app input[type=time],#layer input[type=date],#layer input[type=time]').forEach(inp=>{
+    const kind=inp.type==='date'?'date':'time';if(!inp.id)inp.id='pk'+(++PKN);inp.type='hidden';inp.dataset.pk=kind;
+    const b=document.createElement('button');b.type='button';b.className='pkbtn';b.dataset.a='pkopen';b.dataset.for=inp.id;b.dataset.kind=kind;
+    b.innerHTML=pkLabel(kind,inp.value);inp.after(b)});
+}
+const pkLabel=(k,v)=>k==='date'?(v?`${ic('cal','width:16px;height:16px')} ${cap(dayWord(v))}${v!==today()&&v!==addDays(today(),1)?'':' · '+fdate(v)}`:`${ic('cal','width:16px;height:16px')} Escoger fecha`):(v?`🕐 ${fmtH(v)}`:'🕐 Escoger hora');
+/* deslizar hacia abajo para cerrar */
+let SW=null;
+document.addEventListener('touchstart',e=>{const sh=e.target.closest('#layer .sheet');if(!sh||e.target.closest('input,textarea,select,.qg,.fav,.chs'))return;if(sh.scrollTop>2)return;SW={sh,y:e.touches[0].clientY,dy:0}},{passive:true});
+document.addEventListener('touchmove',e=>{if(!SW)return;SW.dy=e.touches[0].clientY-SW.y;if(SW.dy>0){SW.sh.style.transform=`translateY(${SW.dy}px)`;SW.sh.style.transition='none'}},{passive:true});
+document.addEventListener('touchend',()=>{if(!SW)return;const {sh,dy}=SW;SW=null;sh.style.transition='transform .2s';if(dy>110){sh.style.transform='';requestClose()}else sh.style.transform=''});
+
+/* =============== selector de fecha (calendario) y de hora (botones) =============== */
+let PK=null;
+function openPicker(kind,value,title,cb){PK={kind,v:value||'',m:(value||today()).slice(0,7),title,cb};if(kind==='time'&&!PK.v)PK.v='';renderPicker()}
+function nextWd(wd,from){let d=addDays(from||today(),1);while(pd(d).getDay()!==wd)d=addDays(d,1);return d}
+function renderPicker(){
+  const el=$('#picker');if(!el)return;if(!PK){el.innerHTML='';return}
+  let h=`<div class="pk-dim" data-a="pkclose"></div><div class="pk"><div class="row" style="margin-bottom:8px"><b>${esc(PK.title||(PK.kind==='date'?'Escoge el día':'Escoge la hora'))}</b><button class="xclose" style="position:static" data-a="pkclose" aria-label="Cerrar">✕</button></div>`;
+  if(PK.kind==='date'){
+    const wd=(cfg()||{}).diaCobro??1;const t=today();
+    h+=`<div class="chs" style="margin-bottom:10px"><button class="ch" data-a="pkd" data-v="${t}">Hoy</button><button class="ch" data-a="pkd" data-v="${addDays(t,1)}">Mañana</button><button class="ch" data-a="pkd" data-v="${nextWd(wd)}">Próximo ${DOWL[wd]}</button><button class="ch" data-a="pkd" data-v="${addDays(t,7)}">En una semana</button></div>`;
+    const [y,m]=PK.m.split('-').map(Number);const first=new Date(y,m-1,1);const days=new Date(y,m,0).getDate();const off=(first.getDay()+6)%7;
+    h+=`<div class="navrow"><button class="iconbtn" data-a="pkm" data-v="-1" aria-label="Mes anterior">${ic('chev')}</button><b>${MESL[m-1]} ${y}</b><button class="iconbtn" data-a="pkm" data-v="1" aria-label="Mes siguiente">${ic('right')}</button></div><div class="mon">${['L','M','M','J','V','S','D'].map(x=>`<span class="wh">${x}</span>`).join('')}`;
+    for(let i=0;i<off;i++)h+='<span></span>';
+    for(let k=1;k<=days;k++){const x=`${y}-${pad2(m)}-${pad2(k)}`;h+=`<button class="md${x===t?' t':''}${x===PK.v?' s':''}${isHoliday(x)||pd(x).getDay()===0?' fe':''}" data-a="pkd" data-v="${x}">${k}${isHoliday(x)?'<span class="mdots"><i class="dm"></i></span>':''}</button>`}
+    h+=`</div><div class="sub" style="margin-top:8px">En rojo: domingos y festivos de Colombia.</div>`;
+  }else{
+    const v=PK.v||'08:00';const [H,M]=v.split(':').map(Number);
+    h+=`<div class="big" style="text-align:center;margin:2px 0 10px">${fmtH(v)}</div><div class="qlab" style="margin-top:0">Hora</div><div class="pkgrid">${Array.from({length:18},(_,i)=>i+5).map(x=>`<button class="ch${x===H?' on':''}" data-a="pkh" data-v="${x}">${x%12||12} ${x<12?'a. m.':'p. m.'}</button>`).join('')}</div>
+    <div class="qlab">Minutos</div><div class="pkgrid">${[0,5,10,15,20,25,30,35,40,45,50,55].map(x=>`<button class="ch${x===M?' on':''}" data-a="pkmin" data-v="${x}">:${pad2(x)}</button>`).join('')}</div>
+    <button class="bigbtn a-compra" data-a="pkok">Listo · ${fmtH(v)}</button>`;
+  }
+  el.innerHTML=h+'</div>';
+}
+function pkDone(v){const cb=PK&&PK.cb;PK=null;renderPicker();if(cb)cb(v)}
+function pkInput(id){return v=>{const inp=document.getElementById(id);if(!inp)return;inp.value=v;const b=document.querySelector(`[data-for="${id}"]`);if(b)b.innerHTML=pkLabel(inp.dataset.pk,v);
+  inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}))}}
+
+/* =============== préstamos: frecuencia, día de cobro, festivos, fechas a mano =============== */
+const graceOf=p=>p.frec==='Semanal'?6:0;
+const frecTxt=p=>p.frec==='Semanal'?'cada '+DOWL[p.wd??pd(p.fechas[0]).getDay()]:p.frec==='A mano'?'fechas a mano':String(p.frec||'').toLowerCase();
+const FRECS=['Semanal','Diario','Quincenal','Mensual','A mano'];
+const defN=fr=>fr==='Semanal'||fr==='A mano'?((cfg()||{}).semanas||8):fr==='Diario'?24:fr==='Quincenal'?6:4;
+function firstFor(fr,wd,base){base=base||today();return fr==='Semanal'||fr==='A mano'?nextWd(wd,base):fr==='Diario'?addDays(base,1):fr==='Quincenal'?addDays(base,15):(()=>{const d=pd(base);d.setMonth(d.getMonth()+1);return ymd(d)})()}
+function baseDates(first,fr,n,dias){
+  if(fr==='Diario')return makeDates(first,'Diario',n,dias);
+  if(fr==='Semanal'||fr==='A mano'){const o=[];for(let k=0;k<n;k++)o.push(addDays(first,7*k));return o}
+  return makeDates(first,fr,n,'todos');
+}
+const prevWork=d=>{let x=addDays(d,-1);while(pd(x).getDay()===0||isHoliday(x))x=addDays(x,-1);return x};
+const nextWork=d=>{let x=addDays(d,1);while(pd(x).getDay()===0||isHoliday(x))x=addDays(x,1);return x};
+const festApply=(d,ch)=>ch==='sig'?nextWork(d):ch==='ant'?prevWork(d):d;
+function stepDate(p,d){return p.frec==='Diario'?(()=>{let x=addDays(d,1);while(!(p.dias==='todos'||(p.dias==='sindom'?pd(x).getDay()!==0:!isOff(x))))x=addDays(x,1);return x})():p.frec==='Quincenal'?addDays(d,15):p.frec==='Mensual'?(()=>{const x=pd(d);x.setMonth(x.getMonth()+1);return ymd(x)})():addDays(d,7)}
+
+function sheetPrestar(){
+  const c=cfg();const fr0=(c.frecs||[]).includes('Semanal')||!(c.frecs||[]).length?'Semanal':c.frecs[0];const wd=c.diaCobro??1;const dc=c.datosCliente||[];const dd=diasDef();
+  const frs=[...new Set([...(c.frecs&&c.frecs.length?c.frecs:['Semanal']),'Semanal','A mano'])].sort((a,b)=>FRECS.indexOf(a)-FRECS.indexOf(b));
+  layer=`<div class="dim" data-a="close"></div><div class="sheet"><div class="grab"></div><h2 style="color:var(--entt)">${ic('presta')}Nuevo préstamo</h2><form id="fp">
+  <div class="card"><div class="step"><em>1</em>¿A quién le prestas?</div>
+   <label class="field"><span>Nombre</span><input name="nombre" list="dl-cl" placeholder="Nombre y apellido" autocomplete="off"></label>
+   <datalist id="dl-cl">${items('cliente').map(x=>`<option value="${esc(x.nombre)}">`).join('')}</datalist>
+   <div class="f2">${dc.includes('Celular')?`<label class="field"><span>Celular (WhatsApp)</span><input name="cel" inputmode="tel" placeholder="310 000 0000"></label>`:''}${dc.includes('Cédula')?`<label class="field"><span>Cédula (número)</span><input name="cedula" inputmode="numeric"></label>`:''}</div>
+   ${dc.includes('Barrio')?`<label class="field"><span>Barrio</span><input name="barrio"></label>`:''}${dc.includes('Dirección')?`<label class="field"><span>Dirección</span><input name="dir"></label>`:''}${dc.includes('Fiador')?`<label class="field"><span>Fiador</span><input name="codeudor" placeholder="Nombre y celular"></label>`:''}${dc.includes('Notas')?`<label class="field"><span>Notas</span><input name="notas"></label>`:''}</div>
+  <div class="card"><div class="step"><em>2</em>¿Cuánto y cómo paga?</div>
+   <div class="f2"><label class="field"><span>Le presto</span><input name="monto" inputmode="numeric" data-money="1" placeholder="500.000"></label><label class="field"><span>Interés % ${c.interesTipo==='Un % cada mes'?'mensual':'total'}</span><input name="pct" inputmode="decimal" value="${String(c.interesPct).replace('.',',')}"></label></div>
+   <div class="sub" style="margin:0 2px 6px;font-weight:700">¿Cada cuánto paga?</div>
+   <div class="seg">${frs.map(x=>`<button type="button" data-a="pfrec" data-v="${x}" class="${x===fr0?'on':''}">${x==='A mano'?'Fechas a mano':x}</button>`).join('')}</div><input type="hidden" name="frec" value="${fr0}">
+   <div id="pwd"></div><input type="hidden" name="wd" value="${wd}"><input type="hidden" name="dias" value="${dd}">
+   <div class="f2"><div class="field"><span>Número de cuotas</span><div class="row" style="margin-top:2px"><button type="button" class="act a-ver mini" data-a="pn" data-v="-1" style="width:40px">−</button><input name="n" inputmode="numeric" value="${defN(fr0)}" style="text-align:center"><button type="button" class="act a-ver mini" data-a="pn" data-v="1" style="width:40px">+</button></div></div><label class="field"><span>Primera cuota</span><input name="first" type="date" value="${firstFor(fr0,wd)}"></label></div>
+   <div class="f2"><label class="field"><span>Entrego con</span><select name="pago">${(c.pagos||['Efectivo']).map(m=>`<option>${esc(m)}</option>`).join('')}</select></label><label class="field"><span>Fecha del préstamo</span><input name="inicio" type="date" value="${today()}"></label></div>
+   <label class="field"><span>Hora de entrega (opcional · sale en tu agenda)</span><input name="hent" type="time"></label>
+   <div class="sum" id="psum"></div></div>
+  <div class="card"><div class="step"><em>3</em>Fechas de cobro</div><div class="sub" id="pfechas"></div><div id="pfest"></div><div id="pmano"></div>
+   <label class="row" style="margin-top:12px;justify-content:flex-start;gap:10px;font-size:.9em"><input type="checkbox" name="cuaderno" style="width:24px;height:24px;accent-color:var(--presta)"> Ya venía de antes (del cuaderno)</label>
+   <div id="cuad" style="display:none;margin-top:8px"></div></div>
+  <button class="bigbtn a-presta" type="submit">${ic('presta')}Crear préstamo</button></form></div>`;
+  render();const f=$('#fp');f._fest={};f._mano=null;f._cm={};f._open=-1;f._paid=null;pWd();pCalc();
+}
+function pWd(){const f=$('#fp');if(!f)return;const fr=f.frec.value;
+  $('#pwd').innerHTML=fr==='Semanal'||fr==='A mano'?`<div class="sub" style="margin:0 2px 6px;font-weight:700">¿Qué día ${fr==='A mano'?'se sugieren las fechas':'cobras'}?</div><div class="seg wdseg">${[1,2,3,4,5,6,0].map(d=>`<button type="button" data-a="pwdd" data-v="${d}" class="${+f.wd.value===d?'on':''}">${cap(DOWL[d]).slice(0,3)}</button>`).join('')}</div>`
+   :fr==='Diario'?`<div class="sub" style="margin:0 2px 6px;font-weight:700">¿Qué días se le cobra?</div><div class="seg">${DIAS.map(([k,l])=>`<button type="button" data-a="pdias" data-v="${k}" class="${k===f.dias.value?'on':''}">${l}</button>`).join('')}</div>`:''}
+function pCalc(){
+  const f=$('#fp');if(!f)return;const c=cfg();const monto=intv(f.monto.value),pct=num(f.pct.value),n=Math.max(1,Math.min(200,intv(f.n.value)||1)),fr=f.frec.value;
+  let fechas=f.first.value?baseDates(f.first.value,fr,n,f.dias.value):[];
+  // festivos (semanal, quincenal, mensual): preguntar qué hacer
+  const fest=fr==='Diario'?[]:fechas.filter(d=>isHoliday(d));
+  if(fr==='A mano'){if(!f._mano||f._mano.length!==n){const old=f._mano||[];f._mano=fechas.map((d,i)=>old[i]||d)}fechas=f._mano.slice()}
+  else fechas=fechas.map(d=>f._fest[d]?festApply(d,f._fest[d]):d);
+  let total=monto*(1+pct/100);if(c.interesTipo==='Un % cada mes'&&fechas.length){const months=Math.max(1,Math.round((pd(fechas[fechas.length-1])-pd(f.inicio.value||today()))/864e5/30));total=monto*(1+pct/100*months)}
+  total=Math.round(total);
+  $('#psum').innerHTML=`<div><span class="sub">Me debe en total</span><div class="mid">${money(total)}</div></div><div><span class="sub">Cada cuota</span><div class="mid ok">${money(Math.round(total/n))}</div></div><div style="grid-column:1/3"><span class="sub">Ganancia: ${money(total-monto)} · ${n} cuota(s) ${fr==='Semanal'?'cada '+DOWL[+f.wd.value]:fr==='A mano'?'con fechas a mano':fr.toLowerCase()}</span></div>`;
+  const fs=fechas.slice().sort();
+  $('#pfechas').innerHTML=fs.length?`Desde <b>${fdate(fs[0])}</b> hasta <b>${fdate(fs[fs.length-1])}</b>${fr==='Semanal'?' · plazo para pagar: toda la semana':''}`:'';
+  $('#pfest').innerHTML=fest.length&&fr!=='A mano'?`<div class="festbox"><b>🎌 ${fest.length===1?'Hay un festivo':'Hay '+fest.length+' festivos'} en las fechas de cobro</b><div class="sub">¿Qué hago con esa cuota?</div>${fest.map(d=>`<div class="festrow"><span>${cap(fdate(d))}</span><div class="chs">${[['igual',`Cobrar igual (${DOW[pd(d).getDay()]})`],['sig',cap(fdate(nextWork(d)))],['ant',cap(fdate(prevWork(d)))]].map(([k,l])=>`<button type="button" class="ch${f._fest[d]===k?' on':''}" data-a="pfest" data-d="${d}" data-v="${k}">${l}</button>`).join('')}</div></div>`).join('')}</div>`:'';
+  $('#pmano').innerHTML=fr==='A mano'?`<div class="sub" style="margin:8px 2px 6px">Toca una fecha para cambiarla:</div><div class="manolist">${f._mano.map((d,i)=>`<button type="button" class="ch" data-a="pmano" data-i="${i}"><b>${i+1}.</b> ${cap(fdate(d))}${isHoliday(d)?' 🎌':''}</button>`).join('')}</div>`:'';
+  f._calc={monto,pct,n,frec:fr,fechas,total,dias:f.dias.value,wd:+f.wd.value,festPend:fr!=='A mano'?fest.filter(d=>!f._fest[d]):[]};
+  cuadRender(f);
+}
+/* préstamo que venía de antes: cuántas pagó + ajustar cada una */
+const CMS={p:['A tiempo','var(--venta)'],t:['Tarde','var(--hoy)'],ab:['Abono','linear-gradient(180deg,var(--venta) 55%,#7F1D1D 55%)'],n:['No pagó','var(--mal)']};
+function cuadRender(f){
+  const box=$('#cuad');if(!f.cuaderno.checked){box.style.display='none';return}box.style.display='block';
+  const x=f._calc;const t=today();const per=Math.round(x.total/x.n);
+  const idx=x.fechas.map((d,i)=>({d,i})).sort((a,b)=>a.d<b.d?-1:1);const past=idx.filter(o=>o.d<=t).length;
+  if(f._paid===null){f._paid=past;idx.forEach((o,k)=>f._cm[o.i]={st:k<past?'p':'n',met:(cfg().pagos||['Efectivo'])[0]})}
+  const met0=(cfg().pagos||['Efectivo']);const shown=idx.slice(0,Math.max(past,f._paid));
+  if(!shown.length){box.innerHTML=`<div class="sub">Pon la <b>fecha del préstamo</b> y la <b>primera cuota</b> en los días en que de verdad fueron (en el pasado). Así salen aquí las cuotas para marcar.</div>`;return}
+  const tot={p:0,t:0,ab:0,n:0};shown.forEach(o=>tot[(f._cm[o.i]||{}).st||'n']++);
+  box.innerHTML=`<div class="field"><span>¿Cuántas cuotas te ha pagado?</span><div class="row" style="margin-top:4px"><button type="button" class="act a-ver mini" data-a="cpaid" data-v="-1" style="width:44px">−</button><b class="big" style="font-size:1.5em">${f._paid}</b><button type="button" class="act a-cobra mini" data-a="cpaid" data-v="1" style="width:44px">+</button></div><div class="sub">de ${x.n} · ${past} ya pasaron</div></div>
+  <div class="sub" style="margin:4px 2px 6px"><b style="color:var(--ink)">Toca una cuota para ajustarla</b> (tarde, abono, por dónde pagó).</div>
+  <div class="card" style="padding:4px 12px">${shown.map((o,k)=>{const m=f._cm[o.i]||{st:'n'};const lab=m.st==='t'?`Tarde · ${fdate(m.fecha||addDays(o.d,1))}`:m.st==='ab'?`Abono ${money(m.monto||0)}`:CMS[m.st][0];
+    let row=`<button type="button" class="q" data-a="copen" data-i="${o.i}" style="width:100%;text-align:left"><span class="bar" style="background:${CMS[m.st][1]}"></span><span style="flex:1"><b>Cuota ${k+1} · ${fdate(o.d)}</b><br><span class="sub">${lab}${m.st!=='n'?' · '+esc(m.met||met0[0]):''}</span></span><b>${money(per)}</b></button>`;
+    if(f._open===o.i)row+=`<div class="cmed"><div class="seg">${Object.entries(CMS).map(([k2,v])=>`<button type="button" data-a="cst" data-i="${o.i}" data-v="${k2}" class="${m.st===k2?'on':''}">${v[0]}</button>`).join('')}</div>
+      ${m.st==='t'?`<button type="button" class="pkbtn" data-a="cfecha" data-i="${o.i}">${ic('cal','width:16px;height:16px')} Pagó el ${fdate(m.fecha||addDays(o.d,1))} · cambiar</button>`:''}
+      ${m.st==='ab'?`<label class="field"><span>¿Cuánto abonó?</span><input inputmode="numeric" data-money="1" data-cm="${o.i}" value="${m.monto?thou(m.monto):''}" placeholder="${thou(Math.round(per/2))}"></label>`:''}
+      ${m.st!=='n'?`<div class="chs">${met0.map(mm=>`<button type="button" class="ch${(m.met||met0[0])===mm?' on':''}" data-a="cmet" data-i="${o.i}" data-v="${esc(mm)}">${esc(mm)}</button>`).join('')}</div>`:''}
+      <button type="button" class="act a-ver mini" data-a="copen" data-i="-1" style="margin-top:8px;width:100%">Listo</button></div>`;
+    return row}).join('')}</div>
+  <div class="sub" style="margin-top:6px">${tot.p} a tiempo · ${tot.t} tarde · ${tot.ab} abono · ${tot.n} sin pagar. Estos pagos sí cuentan en los reportes.</div>`;
+}
+function savePrestamo(f){
+  const x=f._calc;const nombre=f.nombre.value.trim();if(!nombre){toast('Falta el nombre');return}if(!x.monto){toast('Falta cuánto le prestas');return}
+  if(x.festPend.length){toast('Escoge qué hacer con '+(x.festPend.length>1?'los festivos':'el festivo')+' (paso 3)');$('#pfest').scrollIntoView({behavior:'smooth',block:'center'});return}
+  let cl=items('cliente').find(c=>c.nombre.toLowerCase()===nombre.toLowerCase());const g=k=>f[k]?f[k].value.trim():'';
+  if(!cl){cl={id:uid(),k:'cliente',nombre,cel:g('cel'),cedula:g('cedula'),dir:g('dir'),barrio:g('barrio'),codeudor:g('codeudor'),notas:g('notas')};put(cl,true)}
+  else{let ch=false;['cel','cedula','dir','barrio','codeudor','notas'].forEach(k=>{if(g(k)){cl[k]=g(k);ch=true}});if(ch)put(cl,true)}
+  const cuaderno=f.cuaderno.checked;const fest={};Object.entries(f._fest).forEach(([d,v])=>{if(x.fechas.length)fest[d]=v});
+  const p={id:uid(),k:'prestamo',cliente:cl.id,monto:x.monto,pct:x.pct,tipo:cfg().interesTipo,frec:x.frec,wd:x.wd,dias:x.dias,n:x.n,total:x.total,cuota:Math.round(x.total/x.n),inicio:f.inicio.value||today(),fechas:x.fechas.slice(),fest,previas:0,cuaderno,pago:f.pago.value};
+  put(p,true);
+  const hent=f.hent?f.hent.value:'';if(hent&&!cuaderno)put({id:uid(),k:'ev',tipo:'entrega',titulo:'Entregar a '+nombre,nota:money(x.monto),fecha:p.inicio,hora:hent,aviso:15,rep:'no',hechos:{},prestamo:p.id},true);
+  if(cuaderno){const sch=loanSched(p);const t=today();sch.forEach(c=>{const m=f._cm[c.i];if(!m||m.st==='n')return;
+    let fe=m.st==='p'?c.f:m.st==='t'?(m.fecha||addDays(c.f,1)):(m.fecha||c.f);if(fe>t)fe=t;const mon=m.st==='ab'?Math.min(m.monto||0,c.v):c.v;if(mon<=0)return;
+    put({id:uid(),k:'pago',prestamo:p.id,fecha:fe,monto:mon,alloc:[{i:c.i,m:mon}],cuaderno:true,pago:m.met||p.pago},true)})}
+  layer='';S.me.view='cliente';S.me.loan=p.id;S.me.calm=null;render();toast('Préstamo creado');
+}
+/* calendario del cliente */
+function calendar(s,p){
+  const months=[...new Set(s.cuotas.map(c=>c.f.slice(0,7)))].sort();
+  let cur=S.me.calm&&months.includes(S.me.calm)?S.me.calm:(months.find(m=>m===today().slice(0,7))||months.find(m=>m>today().slice(0,7))||months[months.length-1]);
+  const mi=months.indexOf(cur);const [y,m]=cur.split('-').map(Number);const first=new Date(y,m-1,1);const days=new Date(y,m,0).getDate();
+  const byDate={};s.cuotas.forEach(c=>(byDate[c.f]=byDate[c.f]||[]).push(c));const off=(first.getDay()+6)%7;const t=today();
+  const pri=a=>a.find(c=>c.st!=='p'&&c.st!=='t')||a[0];
+  let h=`<div class="card"><div class="row"><button data-a="calm" data-v="${months[mi-1]||''}" ${mi>0?'':'disabled style="opacity:.3"'} class="iconbtn" aria-label="Mes anterior">${ic('chev')}</button><b>${MESL[m-1]} ${y}</b><button data-a="calm" data-v="${months[mi+1]||''}" ${mi<months.length-1?'':'disabled style="opacity:.3"'} class="iconbtn" aria-label="Mes siguiente">${ic('right')}</button></div><div class="cal">${['L','M','M','J','V','S','D'].map(d=>`<span class="h">${d}</span>`).join('')}`;
+  for(let i=0;i<off;i++)h+=`<span class="e"></span>`;
+  for(let d=1;d<=days;d++){const ds=`${y}-${pad2(m)}-${pad2(d)}`;const arr=byDate[ds];const c=arr&&pri(arr);
+    let cls=c?({p:'p',t:'t',n:'n',ab:'ab',hoy:'hy',f:'f',pend:'pe'})[c.st]:(isOff(ds)?'x':'');if(ds===t&&!(c&&c.st==='hoy'))cls+=' hy';
+    h+=c?`<button class="${cls}" data-a="cuota" data-v="${p.id}" data-i="${c.i}" aria-label="Cuota ${c.i+1}">${d}${arr.length>1?`<sup>×${arr.length}</sup>`:''}</button>`:`<span class="${cls}">${d}</span>`}
+  h+=`</div><div class="leg"><span><i style="background:var(--venta)"></i>Pagó</span><span><i style="background:rgba(249,115,22,.35);border:1.5px solid var(--hoy)"></i>Pendiente</span><span><i style="background:var(--hoy)"></i>Pagó tarde</span><span><i style="background:var(--mal)"></i>Atrasada</span><span><i style="background:linear-gradient(180deg,var(--venta) 55%,#7F1D1D 55%)"></i>Abono</span><span><i style="border:1.5px dashed var(--sub)"></i>Falta</span></div></div>`;
+  return h;
+}
+/* una cuota: cobrar, corregir, correr la fecha */
+function sheetCuota(pid,i){
+  const p=S.items[pid];const s=loanStatus(p);const c=s.cuotas[i];
+  const txt={p:'Pagada',t:`Pagada tarde`,n:'Atrasada',pend:'Pendiente de esta semana',ab:`Abono: falta ${money(c.falta||0)}`,hoy:'Se cobra hoy',f:'Falta (próxima)'}[c.st];
+  const pays=c.pays.filter(y=>!y.prev).map(y=>`${money(y.m)} el ${fdate(y.fecha)}${S.items[y.id]&&S.items[y.id].cuaderno?' (de antes)':''}`);
+  const mode=c.st==='p'||c.st==='t'?c.st:c.st==='ab'?'ab':'n';const nx=stepDate(p,c.f);
+  layer=`<div class="dim" data-a="close"></div><div class="sheet"><div class="grab"></div><div class="card"><div class="row" style="justify-content:flex-start;gap:12px"><span class="ini" style="width:52px;height:52px;border-radius:14px;font-size:1.2em;background:var(--card2)">${c.i+1}</span><div><div class="mid">Cuota ${c.i+1} · ${fdate(c.f)}</div><div class="sub">${money(c.v)} · ${txt}</div>${pays.length?`<div class="sub">Pagos: ${pays.map(esc).join(' · ')}</div>`:''}</div></div></div>
+  ${c.st!=='p'&&c.st!=='t'?`<button class="bigbtn a-cobra" data-a="cobrar1" data-v="${pid}" data-i="${i}">${ic('cobra')}Cobrar esta cuota</button>`:''}
+  ${c.st!=='p'&&c.st!=='t'?`<button class="bigbtn a-ver" data-a="correr" data-v="${pid}" data-i="${i}">${ic('right')}Correr al ${fdate(nx)} <span class="sub" style="margin-left:4px">🔒</span></button>`:''}
+  <div class="card" style="margin-top:10px"><div class="row"><b>🔒 Corregir esta cuota</b><span class="sub">pide PIN o Face ID</span></div>
+   <form id="ffix" data-p="${pid}" data-i="${i}" style="margin-top:9px"><div class="seg">${[['p','Pagó ese día'],['t','Pagó otro día'],['ab','Abonó'],['n','No pagó']].map(([k,l])=>`<button type="button" data-a="fixmode" data-v="${k}" class="${k===mode?'on':''}">${l}</button>`).join('')}</div><input type="hidden" name="mode" value="${mode}">
+   <div id="fixextra"></div><button class="bigbtn a-ver" type="submit">Guardar corrección</button></form>
+   <label class="field" style="margin-top:12px"><span>Mover esta cuota a otra fecha</span><input type="date" id="mvdate" value="${c.f}" data-nodirty="1"></label><button class="bigbtn a-ver" data-a="mvcuota" data-v="${pid}" data-i="${i}">${ic('editar')}Guardar nueva fecha</button></div>
+  ${pays.length?`<button class="bigbtn" data-a="delcuopay" data-v="${pid}" data-i="${i}" style="color:var(--badt)">${ic('trash')}Borrar los pagos de esta cuota</button>`:''}</div>`;
+  render();fixExtra();
+}
+function shiftLoan(pid,i,all){const p=S.items[pid];materialize(p);const f=p.fechas.slice();
+  if(all){for(let j=i;j<f.length;j++)f[j]=stepDate(p,f[j])}else f[i]=stepDate(p,f[i]);
+  p.fechas=f;layer='';put(p);toast(all?`Se corrieron ${f.length-i} cuota(s)`:`Cuota ${i+1} movida al ${fdate(f[i])}`)}
+
+/* =============== festivos que vienen (aviso en Inicio) =============== */
+function festUpcoming(){const t=today();const out=[];
+  for(let k=0;k<=4;k++){const d=addDays(t,k);if(!isHoliday(d)||(S.me.festOk||{})[d])continue;
+    const cs=[];for(const p of items('prestamo')){const cl=S.items[p.cliente];if(!cl||cl.del)continue;const s=lsOf(p);p.fechas.forEach((f,i)=>{if(f===d&&s.cuotas[i]&&s.cuotas[i].st!=='p'&&s.cuotas[i].st!=='t')cs.push({p,i,cl})})}
+    if(cs.length)out.push({d,cs})}
+  return out}
+function sheetFestivo(d){const F=festUpcoming().find(x=>x.d===d);if(!F)return;
+  layer=`<div class="dim" data-a="close"></div><div class="sheet"><div class="grab"></div><h2>🎌 ${cap(fdateW(d))} es festivo</h2><p class="sub" style="margin:-6px 0 12px">Tienes ${F.cs.length} cobro(s) ese día. ¿Qué hago?</p>
+  <div class="acts" style="grid-template-columns:1fr 1fr 1fr"><button class="act a-cobra" data-a="festall" data-d="${d}" data-v="sig">${cap(fdate(nextWork(d)))}</button><button class="act a-cobra" data-a="festall" data-d="${d}" data-v="ant">${cap(fdate(prevWork(d)))}</button><button class="act a-ver" data-a="festall" data-d="${d}" data-v="igual">Cobrar igual</button></div>
+  <div class="sub" style="margin:4px 2px 8px">Esto aplica a todos. Si quieres algo distinto para alguien, abre su préstamo y usa "Mover esta cuota".</div>
+  <div class="card" style="padding:4px 12px">${F.cs.map(x=>`<button class="ev" data-a="cliente" data-v="${x.p.id}"><span class="ini">${esc(initials(x.cl.nombre))}</span><span class="x"><b>${esc(x.cl.nombre)}</b><span class="sub">Cuota ${x.i+1} · ${money(loanSched(x.p)[x.i].v)}</span></span>${ic('right')}</button>`).join('')}</div></div>`;render()}
+function festAll(d,ch){const F=festUpcoming().find(x=>x.d===d);S.me.festOk=Object.assign({},S.me.festOk,{[d]:1});
+  if(F&&ch!=='igual')F.cs.forEach(x=>{const p=S.items[x.p.id];materialize(p);const f=p.fechas.slice();f[x.i]=festApply(d,ch);p.fechas=f;p.fest=Object.assign({},p.fest,{[d]:ch});put(p,true)});
+  persist();layer='';render();toast(ch==='igual'?'Listo: se cobra igual ese día':`Cobros movidos al ${fdate(festApply(d,ch))}`)}
+
 /* =============== eventos =============== */
 document.addEventListener('click',async e=>{
   const el=e.target.closest('[data-a]');if(!el)return;const a=el.dataset.a,v=el.dataset.v;
@@ -1237,7 +1388,37 @@ document.addEventListener('click',async e=>{
     case 'demo':loadDemo();break;
     case 'tab':layer='';S.me.view=v;S.me.dayf='';if(v==='agenda'&&!S.me.ad)S.me.ad=today();persist();render();scrollTo(0,0);break;
     case 'plus':sheetPlus();break;
-    case 'close':layer='';Q=null;render();break;
+    case 'close':requestClose();break;
+    case 'chpick':{const o=CH&&CH[+v];closeChoice();if(o&&o.f)o.f();break}
+    case 'chno':closeChoice();break;
+    case 'pkopen':{const inp=document.getElementById(el.dataset.for);if(inp)openPicker(el.dataset.kind,inp.value,el.closest('.field')?.querySelector('span')?.textContent||'',pkInput(inp.id));break}
+    case 'pkclose':PK=null;renderPicker();break;
+    case 'pkd':pkDone(v);break;
+    case 'pkm':{const [y,m]=PK.m.split('-').map(Number);const d=new Date(y,m-1+(+v),1);PK.m=ymd(d).slice(0,7);renderPicker();break}
+    case 'pkh':{const M=(PK.v||'08:00').split(':')[1];PK.v=pad2(+v)+':'+M;renderPicker();break}
+    case 'pkmin':{const H=(PK.v||'08:00').split(':')[0];PK.v=H+':'+pad2(+v);renderPicker();break}
+    case 'pkok':pkDone(PK.v||'08:00');break;
+    case 'qpickdate':openPicker('date',Q.d,'¿Qué día?',v2=>{Q.d=v2;renderQuick()});break;
+    case 'qpicktime':openPicker('time',Q.h||defHour()||'08:00','¿A qué hora?',v2=>{Q.h=v2;renderQuick()});break;
+    case 'evpickdate':{const id=v,d=el.dataset.d;openPicker('date',d,'¿Para qué día?',v2=>evMove(id,d,'date',v2));break}
+    /* préstamo nuevo */
+    case 'pfrec':{const f=$('#fp');f.frec.value=v;el.parentElement.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===el));f.n.value=defN(v);const fi=document.getElementById(f.first.id);pkInput(fi.id)(firstFor(v,+f.wd.value,f.inicio.value||today()));f._fest={};f._mano=null;f._paid=null;pWd();pCalc();break}
+    case 'pwdd':{const f=$('#fp');f.wd.value=v;pWd();pkInput(f.first.id)(firstFor(f.frec.value,+v,f.inicio.value||today()));f._fest={};f._mano=null;f._paid=null;pCalc();break}
+    case 'pdias':{const f=$('#fp');f.dias.value=v;pWd();pCalc();break}
+    case 'pn':{const f=$('#fp');f.n.value=Math.max(1,(intv(f.n.value)||1)+(+v));f._paid=null;pCalc();break}
+    case 'pfest':{const f=$('#fp');f._fest[el.dataset.d]=v;pCalc();break}
+    case 'pmano':{const f=$('#fp');const i=+el.dataset.i;openPicker('date',f._mano[i],'Fecha de la cuota '+(i+1),v2=>{f._mano[i]=v2;pCalc()});break}
+    case 'cpaid':{const f=$('#fp');const x=f._calc;const idx=x.fechas.map((d,i)=>({d,i})).sort((a,b)=>a.d<b.d?-1:1);f._paid=Math.max(0,Math.min(x.n,f._paid+(+v)));
+      idx.forEach((o,k)=>{const m=f._cm[o.i]||{};f._cm[o.i]=Object.assign(m,{st:k<f._paid?(m.st&&m.st!=='n'?m.st:'p'):'n'})});cuadRender(f);break}
+    case 'copen':{const f=$('#fp');f._open=+el.dataset.i;cuadRender(f);break}
+    case 'cst':{const f=$('#fp');const i=+el.dataset.i;f._cm[i]=Object.assign(f._cm[i]||{},{st:v});f._paid=Object.values(f._cm).filter(m=>m.st!=='n').length;cuadRender(f);break}
+    case 'cmet':{const f=$('#fp');const i=+el.dataset.i;f._cm[i].met=v;cuadRender(f);break}
+    case 'cfecha':{const f=$('#fp');const i=+el.dataset.i;const d0=f._cm[i].fecha||addDays(f._calc.fechas[i],1);openPicker('date',d0>today()?today():d0,'¿Qué día pagó la cuota '+(i+1)+'?',v2=>{f._cm[i].fecha=v2;cuadRender(f)});break}
+    /* cuotas */
+    case 'correr':{const pid=v,i=+el.dataset.i;withLock(()=>showChoice('¿Qué se corre?','La cuota '+(i+1)+' pasa al '+fdate(stepDate(S.items[pid],S.items[pid].fechas[i]))+'.',[{l:'Esta y todas las siguientes',c:'a-cobra',f:()=>shiftLoan(pid,i,true)},{l:'Solo esta cuota',c:'a-ver',f:()=>shiftLoan(pid,i,false)},{l:'Cancelar',c:'',f:()=>{}}]));break}
+    case 'delcuopay':{const pid=v,i=+el.dataset.i;withLock(()=>showChoice('¿Borrar los pagos de esta cuota?','La cuota queda como no pagada.',[{l:'Sí, borrar',c:'a-mal',f:()=>{setCuota(pid,i,'n');layer='';render();toast('Pagos borrados')}},{l:'No',c:'a-ver',f:()=>{}}]));break}
+    case 'festsheet':sheetFestivo(el.dataset.d);break;
+    case 'festall':festAll(el.dataset.d,v);break;
     case 'undo':if(UNDO){const f=UNDO;UNDO=null;f();$('#toast').classList.remove('show');toast('Deshecho')}break;
     /* agenda */
     case 'dayf':S.me.dayf=S.me.dayf===v?'':v;render();break;
@@ -1288,13 +1469,16 @@ document.addEventListener('input',e=>{
   if(t.dataset.w!==undefined&&W){W.a[t.dataset.w]=t.value}
   if(t.dataset.wo!==undefined&&W){W.a[t.dataset.wo+'Val']=t.value}
   if(t.dataset.q&&Q){Q[t.dataset.q]=t.value}
-  if(t.closest('#fp'))pCalc();
+  if(t.dataset.cm!==undefined){const f=$('#fp');const i=+t.dataset.cm;f._cm[i]=Object.assign(f._cm[i]||{},{monto:intv(t.value)})}
+  else if(t.closest('#fp')&&t.name!=='n')pCalc();
+  if(t.closest('#fp')&&t.name==='n'){$('#fp')._paid=null;pCalc()}
   if(t.closest('#fcob')){if(t.name==='monto'||t.name==='mora')cobCalc(false)}
   if(t.dataset.a2==='pq'){S.me.pq=t.value;const pos=t.selectionStart;render();const x=document.querySelector('[data-a2=pq]');if(x){x.focus();x.setSelectionRange(pos,pos)}}
   if(t.dataset.a3==='iconlx'){const L=t.value.trim().slice(0,1);S.me.iconL=L;persist();setTouchIcon(L)}
 });
 document.addEventListener('change',e=>{const t=e.target;
-  if(t.closest('#fp'))pCalc();
+  if(t.closest('#fp')&&!t.dataset.cm&&t.type!=='checkbox'&&t.type!=='hidden')pCalc();
+  if(t.closest('#fp')&&t.name==='cuaderno'){const f=$('#fp');f._paid=null;cuadRender(f)}
   if(t.dataset.a3==='qdate'&&t.value&&Q){Q.d=t.value;renderQuick()}
   if(t.dataset.a3==='qtime'&&t.value&&Q){Q.h=t.value;renderQuick()}
   if(t.dataset.a3==='evmovedate'&&t.value)evMove(t.dataset.v,t.dataset.d,'date',t.value);

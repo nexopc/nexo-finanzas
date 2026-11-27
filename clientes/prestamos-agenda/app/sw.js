@@ -1,5 +1,5 @@
 /* Cobros y Agenda — modo sin internet y avisos. La página siempre se pide primero a la red (así llegan las mejoras). */
-const VERSION='1.0.2';
+const VERSION='1.1.0';
 const SHELL='cobros-shell-'+VERSION;
 const FILES=['./','index.html','manifest.webmanifest','icons/icon-192.png','icons/icon-512.png','icons/apple-180.png'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(SHELL).then(c=>c.addAll(FILES)))});

@@ -1,5 +1,5 @@
 /* =============== Cobros y Agenda · NEXO PC =============== */
-const APP_VERSION='1.0.2';
+const APP_VERSION='1.1.0';
 /* Servidor de avisos (Cloudflare Worker). Se llenan al publicar; también se pueden poner en Ajustes → Avisos. */
 const PUSH_URL='https://avisos-cobros.nexopc2.workers.dev';
 const PUSH_KEY='BDByMhR_ZXytK35XVfBvh4x4ct1BRnoc4fTryHHrqYWY4F5cBo_8orkzzrwy8Lw9PbOz4CQjwmNsPgKYfAtkuSA';
@@ -84,7 +84,9 @@ const WZ=[
   {id:'letra',t:'¿Tamaño de la letra?',opts:['Normal*','Grande']},
  ]},
  {s:'Tus préstamos',qs:[
-  {id:'frecs',t:'¿Cada cuánto te pagan?',multi:1,opts:['Diario','Semanal','Quincenal','Mensual']},
+  {id:'frecs',t:'¿Cada cuánto te pagan?',multi:1,opts:['Semanal','Diario','Quincenal','Mensual'],hint:'Marca todas las que uses. La primera sale de primera al prestar.'},
+  {id:'diaCobro',t:'¿Qué día cobras los préstamos semanales?',opts:['Lunes*','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'],hint:'Tienen plazo de toda la semana: solo salen atrasados desde el mismo día de la semana siguiente.'},
+  {id:'semanas',t:'¿Cuántas cuotas tiene casi siempre un préstamo semanal?',opts:['4','8*','10','12'],other:'Otro número'},
   {id:'interesTipo',t:'¿Cómo cobras el interés?',opts:['Un % fijo sobre lo prestado*','Un % cada mes'],ex:'Fijo: prestas $500.000 al 20 % → te pagan $600.000 en cuotas.'},
   {id:'interesPct',t:'¿Qué % usas casi siempre?',type:'num',ph:'20'},
   {id:'moraTipo',t:'Si un cliente se atrasa, ¿cobras mora?',opts:['No*','Sí, un % de la cuota','Sí, un valor fijo por día'],other:'¿Cuánto? (ej. 5 o 2.000)'},
@@ -111,7 +113,7 @@ const WZ=[
   {id:'pin',t:'Crea un PIN de 4 números para entrar',type:'pin',ph:'••••',req:1,hint:'Después puedes activar Face ID en Ajustes.'},
  ]},
 ];
-const DEF={letra:'Normal',frecs:['Diario','Semanal'],interesTipo:'Un % fijo sobre lo prestado',interesPct:20,moraTipo:'No',domingos:'Sin domingos',pagos:['Efectivo','Nequi'],tono:'Amable',
+const DEF={diaCobro:'Lunes',semanas:'8',letra:'Normal',frecs:['Semanal'],interesTipo:'Un % fijo sobre lo prestado',interesPct:20,moraTipo:'No',domingos:'Sin domingos',pagos:['Efectivo','Nequi'],tono:'Amable',
   avisos:['Resumen de la mañana','Citas y tareas','Préstamo por terminar'],horaAviso:'7:00 a. m.',vista:'Día',hIni:'8 a. m.',hFin:'5 p. m.',top:['Reunión','Llamada','Banco','Recordar'],datosCliente:['Celular','Cédula','Barrio']};
 const h24=s=>{const m=String(s||'').match(/(\d+)(?::(\d+))?\s*([ap])/i);if(!m)return 8;let H=+m[1]%12;if(m[3].toLowerCase()==='p')H+=12;return H};
 let W=null;
@@ -150,7 +152,8 @@ function finishWizard(){
   const c=Object.assign({},old,{id:'cfg',k:'cfg',ans:Object.assign({},a),nombre:String(a.nombre||'Mi negocio').trim(),duena:String(a.duena||'').trim(),letra:g('letra'),
     frecs:g('frecs'),interesTipo:g('interesTipo'),interesPct:num(g('interesPct'))||20,moraTipo:g('moraTipo'),moraVal:a.moraTipoVal||'',domingos:g('domingos'),
     pagos:g('pagos'),tono:g('tono'),avisos:g('avisos'),horaAviso:pad2(h24(g('horaAviso')))+':00',vista:g('vista'),hIni:h24(g('hIni')),hFin:h24(g('hFin')),
-    top:g('top').map(l=>(TPL.find(t=>t.l===l)||{}).id).filter(Boolean),datosCliente:g('datosCliente')});
+    top:g('top').map(l=>(TPL.find(t=>t.l===l)||{}).id).filter(Boolean),datosCliente:g('datosCliente'),
+    diaCobro:['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'].indexOf(g('diaCobro')),semanas:intv(a.semanasVal)||intv(g('semanas'))||8});
   if(a.pin&&/^\d{4}$/.test(a.pin))S.me.pin=a.pin;
   delete c.ans.pin;
   const first=!old.nombre;
@@ -169,22 +172,24 @@ function sheetListo(){
 function loadDemo(){
   S={v:1,items:{},me:{pin:'1234',demo:true,view:'inicio',unlocked:true,push:S.me.push,pushUrl:S.me.pushUrl,pushKey:S.me.pushKey,iconL:S.me.iconL}};
   const t=today();const D=n=>addDays(t,n);
-  const c={id:'cfg',k:'cfg',ans:{},nombre:'Cobros Martha',duena:'Martha',letra:'Normal',frecs:['Diario','Semanal'],interesTipo:'Un % fijo sobre lo prestado',interesPct:20,moraTipo:'No',moraVal:'',domingos:'Sin domingos',
+  const c={id:'cfg',k:'cfg',ans:{},nombre:'Cobros Martha',duena:'Martha',letra:'Normal',frecs:['Semanal','Diario'],diaCobro:1,semanas:8,interesTipo:'Un % fijo sobre lo prestado',interesPct:20,moraTipo:'No',moraVal:'',domingos:'Sin domingos',
     pagos:['Efectivo','Nequi'],tono:'Amable',avisos:DEF.avisos,horaAviso:'07:00',vista:'Día',hIni:8,hFin:17,top:['reunion','llamada','banco','recordar'],datosCliente:['Celular','Cédula','Barrio']};
   c.ans={nombre:c.nombre,duena:'Martha',interesPct:20,frecs:c.frecs,pagos:c.pagos,tono:'Amable',letra:'Normal',avisos:c.avisos,vista:'Día',hIni:'8 a. m.',hFin:'5 p. m.',top:['Reunión','Llamada','Banco','Recordar'],datosCliente:c.datosCliente,domingos:'Sin domingos'};
   const add=o=>{o.id=o.id||uid();o.ts=Date.now()-Math.random()*1e5;S.items[o.id]=o;return o};
   add(c);
+  const lun0=addDays(t,-((pd(t).getDay()+6)%7));
   const mk=(nombre,cel,barrio,monto,pct,frec,n,startOff,payPlan)=>{const cl=add({k:'cliente',nombre,cel,cedula:String(1077400000+Math.floor(Math.random()*99999)),barrio,dir:'',notas:''});
-    const ini=D(startOff);const fechas=makeDates(addDays(ini,frec==='Diario'?1:7),frec,n,'sindom');const total=Math.round(monto*(1+pct/100));
-    const p=add({k:'prestamo',cliente:cl.id,monto,pct,tipo:'fijo',frec,dias:'sindom',n,total,cuota:Math.round(total/n),inicio:ini,fechas,previas:0,pago:'Efectivo'});
+    const ini=frec==='Semanal'?addDays(lun0,startOff*7-3):D(startOff);const fechas=frec==='Semanal'?baseDates(addDays(lun0,(startOff+1)*7),'Semanal',n):makeDates(addDays(ini,1),frec,n,'sindom');const total=Math.round(monto*(1+pct/100));
+    const p=add({k:'prestamo',cliente:cl.id,monto,pct,tipo:'fijo',frec,wd:1,dias:'sindom',n,total,cuota:Math.round(total/n),inicio:ini,fechas,fest:{},previas:0,pago:'Efectivo'});
     const sch=loanSched(p);payPlan(sch).forEach(([i,fecha,m])=>add({k:'pago',prestamo:p.id,fecha,monto:m,alloc:[{i,m}],pago:Math.random()<.7?'Efectivo':'Nequi'}));return p};
   const upTo=s=>s.filter(c=>c.f<t);
-  mk('Ana Mosquera','3105550101','Yesca Grande',500000,20,'Diario',24,-10,s=>upTo(s).map(c=>[c.i,c.f,c.v]));
-  mk('Jorge Palacios','3105550142','Kennedy',800000,20,'Diario',24,-6,s=>upTo(s).map(c=>[c.i,c.f,c.v]));
-  mk('Rosa Perea','3105550177','Cristo Rey',500000,20,'Diario',24,-27,s=>upTo(s).map(c=>[c.i,c.f,c.v]));
-  mk('Diana Valencia','3105550188','La Aurora',1000000,20,'Semanal',10,-22,s=>upTo(s).map(c=>[c.i,c.f,c.v]));
-  mk('Luis Rentería','3105550199','Pandeyuca',600000,20,'Diario',24,-12,s=>upTo(s).filter((c,i,a)=>i<a.length-2).map(c=>[c.i,c.f,c.v]));
-  mk('Mario Torres','3105550111','Niño Jesús',800000,20,'Diario',20,-5,s=>upTo(s).map(c=>[c.i,c.f,c.v]));
+  const lunes=x=>x<lun0;
+  mk('Ana Mosquera','3105550101','Yesca Grande',500000,20,'Semanal',8,-4,s=>s.filter(c=>lunes(c.f)).map(c=>[c.i,c.f,c.v]));
+  mk('Jorge Palacios','3105550142','Kennedy',800000,20,'Semanal',8,-2,s=>s.filter(c=>lunes(c.f)).map(c=>[c.i,c.i===1?addDays(c.f,2):c.f,c.v]));
+  mk('Rosa Perea','3105550177','Cristo Rey',500000,20,'Semanal',8,-6,s=>s.filter(c=>lunes(c.f)).map(c=>[c.i,c.f,c.v]));
+  mk('Diana Valencia','3105550188','La Aurora',1000000,20,'Semanal',10,-5,s=>s.filter(c=>lunes(c.f)).map(c=>[c.i,c.f,c.v]));
+  mk('Luis Rentería','3105550199','Pandeyuca',600000,20,'Semanal',8,-4,s=>s.filter(c=>lunes(c.f)).filter((c,i,a)=>i<a.length-2).map(c=>[c.i,c.f,c.v]));
+  mk('Mario Torres','3105550111','Niño Jesús',300000,20,'Diario',20,-5,s=>upTo(s).map(c=>[c.i,c.f,c.v]));
   const mon=addDays(t,-((pd(t).getDay()+6)%7)),thu=addDays(mon,3);
   const ev=(tipo,titulo,fecha,hora,o={})=>add(Object.assign({k:'ev',tipo,titulo,fecha,hora,aviso:15,rep:'no',nota:'',hechos:{}},o));
   ev('reunion','Reunión de equipo',mon,'09:00',{rep:'sem',nota:'Sala 2'});ev('reunion','Reunión de equipo',thu,'09:00',{rep:'sem',nota:'Sala 2'});

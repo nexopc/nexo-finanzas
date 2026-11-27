@@ -59,3 +59,13 @@ Negocio (nombre/logo) · Préstamos (tipo, interés, frecuencia, días, mora, ab
 - Cuenta Cloudflare de NEXO PC. Worker `avisos-cobros` → https://avisos-cobros.nexopc2.workers.dev · KV `AVISOS` (id 1b6c2d6677fb4419bcc7965c1cfb3d26) · cron cada minuto.
 - Variables: VAPID_PUBLIC, VAPID_PRIVATE_JWK (secreto), VAPID_SUBJECT. La privada solo vive en Cloudflare.
 - `PUSH_URL` y `PUSH_KEY` ya están en `src/p1.js`.
+
+## App 1.1.0
+- Código de préstamos congelado en `src/o_*.js` (ya no se extrae de la app de oro). Lo nuevo de 1.1.0 está en `src/p5.js`.
+- Todas las ventanas: ✕ arriba + deslizar hacia abajo; si hay algo escrito pregunta "¿Salir sin guardar?" (`isDirty`, `showChoice`).
+- Fechas con calendario propio y horas con botones (`openPicker`); todo `<input type=date|time>` se convierte solo (`enhanceLayer`). Cita rápida: horas cada 30 min.
+- Préstamos: Semanal (día escogido, por defecto lunes, `cfg.diaCobro`, `cfg.semanas`=8) · Diario · Quincenal · Mensual · Fechas a mano. Plazo semanal = 6 días (`graceOf`): estado `pend` naranja "Pendiente de esta semana", rojo desde el mismo día de la semana siguiente; pagar dentro del plazo cuenta como a tiempo pero guarda la fecha real.
+- Festivos: al crear el préstamo se escoge (cobrar igual / día hábil siguiente / anterior); aviso push y banner en Inicio antes del festivo (`festUpcoming`, `sheetFestivo`).
+- Préstamo que venía de antes: "¿Cuántas cuotas te ha pagado?" + ajustar cada una (a tiempo, tarde con fecha, abono, método). Cuenta en reportes.
+- Cuota: "Correr al siguiente" (pregunta solo esta o todas, con PIN), borrar pagos de la cuota (con PIN).
+- Agenda: lunes (día de cobro) destacado en día, semana y mes. Inicio: sección "Pendientes de esta semana".

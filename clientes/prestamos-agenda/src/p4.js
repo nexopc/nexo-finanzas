@@ -18,7 +18,37 @@ document.addEventListener('click',async e=>{
     case 'demo':loadDemo();break;
     case 'tab':layer='';S.me.view=v;S.me.dayf='';if(v==='agenda'&&!S.me.ad)S.me.ad=today();persist();render();scrollTo(0,0);break;
     case 'plus':sheetPlus();break;
-    case 'close':layer='';Q=null;render();break;
+    case 'close':requestClose();break;
+    case 'chpick':{const o=CH&&CH[+v];closeChoice();if(o&&o.f)o.f();break}
+    case 'chno':closeChoice();break;
+    case 'pkopen':{const inp=document.getElementById(el.dataset.for);if(inp)openPicker(el.dataset.kind,inp.value,el.closest('.field')?.querySelector('span')?.textContent||'',pkInput(inp.id));break}
+    case 'pkclose':PK=null;renderPicker();break;
+    case 'pkd':pkDone(v);break;
+    case 'pkm':{const [y,m]=PK.m.split('-').map(Number);const d=new Date(y,m-1+(+v),1);PK.m=ymd(d).slice(0,7);renderPicker();break}
+    case 'pkh':{const M=(PK.v||'08:00').split(':')[1];PK.v=pad2(+v)+':'+M;renderPicker();break}
+    case 'pkmin':{const H=(PK.v||'08:00').split(':')[0];PK.v=H+':'+pad2(+v);renderPicker();break}
+    case 'pkok':pkDone(PK.v||'08:00');break;
+    case 'qpickdate':openPicker('date',Q.d,'¿Qué día?',v2=>{Q.d=v2;renderQuick()});break;
+    case 'qpicktime':openPicker('time',Q.h||defHour()||'08:00','¿A qué hora?',v2=>{Q.h=v2;renderQuick()});break;
+    case 'evpickdate':{const id=v,d=el.dataset.d;openPicker('date',d,'¿Para qué día?',v2=>evMove(id,d,'date',v2));break}
+    /* préstamo nuevo */
+    case 'pfrec':{const f=$('#fp');f.frec.value=v;el.parentElement.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===el));f.n.value=defN(v);const fi=document.getElementById(f.first.id);pkInput(fi.id)(firstFor(v,+f.wd.value,f.inicio.value||today()));f._fest={};f._mano=null;f._paid=null;pWd();pCalc();break}
+    case 'pwdd':{const f=$('#fp');f.wd.value=v;pWd();pkInput(f.first.id)(firstFor(f.frec.value,+v,f.inicio.value||today()));f._fest={};f._mano=null;f._paid=null;pCalc();break}
+    case 'pdias':{const f=$('#fp');f.dias.value=v;pWd();pCalc();break}
+    case 'pn':{const f=$('#fp');f.n.value=Math.max(1,(intv(f.n.value)||1)+(+v));f._paid=null;pCalc();break}
+    case 'pfest':{const f=$('#fp');f._fest[el.dataset.d]=v;pCalc();break}
+    case 'pmano':{const f=$('#fp');const i=+el.dataset.i;openPicker('date',f._mano[i],'Fecha de la cuota '+(i+1),v2=>{f._mano[i]=v2;pCalc()});break}
+    case 'cpaid':{const f=$('#fp');const x=f._calc;const idx=x.fechas.map((d,i)=>({d,i})).sort((a,b)=>a.d<b.d?-1:1);f._paid=Math.max(0,Math.min(x.n,f._paid+(+v)));
+      idx.forEach((o,k)=>{const m=f._cm[o.i]||{};f._cm[o.i]=Object.assign(m,{st:k<f._paid?(m.st&&m.st!=='n'?m.st:'p'):'n'})});cuadRender(f);break}
+    case 'copen':{const f=$('#fp');f._open=+el.dataset.i;cuadRender(f);break}
+    case 'cst':{const f=$('#fp');const i=+el.dataset.i;f._cm[i]=Object.assign(f._cm[i]||{},{st:v});f._paid=Object.values(f._cm).filter(m=>m.st!=='n').length;cuadRender(f);break}
+    case 'cmet':{const f=$('#fp');const i=+el.dataset.i;f._cm[i].met=v;cuadRender(f);break}
+    case 'cfecha':{const f=$('#fp');const i=+el.dataset.i;const d0=f._cm[i].fecha||addDays(f._calc.fechas[i],1);openPicker('date',d0>today()?today():d0,'¿Qué día pagó la cuota '+(i+1)+'?',v2=>{f._cm[i].fecha=v2;cuadRender(f)});break}
+    /* cuotas */
+    case 'correr':{const pid=v,i=+el.dataset.i;withLock(()=>showChoice('¿Qué se corre?','La cuota '+(i+1)+' pasa al '+fdate(stepDate(S.items[pid],S.items[pid].fechas[i]))+'.',[{l:'Esta y todas las siguientes',c:'a-cobra',f:()=>shiftLoan(pid,i,true)},{l:'Solo esta cuota',c:'a-ver',f:()=>shiftLoan(pid,i,false)},{l:'Cancelar',c:'',f:()=>{}}]));break}
+    case 'delcuopay':{const pid=v,i=+el.dataset.i;withLock(()=>showChoice('¿Borrar los pagos de esta cuota?','La cuota queda como no pagada.',[{l:'Sí, borrar',c:'a-mal',f:()=>{setCuota(pid,i,'n');layer='';render();toast('Pagos borrados')}},{l:'No',c:'a-ver',f:()=>{}}]));break}
+    case 'festsheet':sheetFestivo(el.dataset.d);break;
+    case 'festall':festAll(el.dataset.d,v);break;
     case 'undo':if(UNDO){const f=UNDO;UNDO=null;f();$('#toast').classList.remove('show');toast('Deshecho')}break;
     /* agenda */
     case 'dayf':S.me.dayf=S.me.dayf===v?'':v;render();break;
@@ -69,13 +99,16 @@ document.addEventListener('input',e=>{
   if(t.dataset.w!==undefined&&W){W.a[t.dataset.w]=t.value}
   if(t.dataset.wo!==undefined&&W){W.a[t.dataset.wo+'Val']=t.value}
   if(t.dataset.q&&Q){Q[t.dataset.q]=t.value}
-  if(t.closest('#fp'))pCalc();
+  if(t.dataset.cm!==undefined){const f=$('#fp');const i=+t.dataset.cm;f._cm[i]=Object.assign(f._cm[i]||{},{monto:intv(t.value)})}
+  else if(t.closest('#fp')&&t.name!=='n')pCalc();
+  if(t.closest('#fp')&&t.name==='n'){$('#fp')._paid=null;pCalc()}
   if(t.closest('#fcob')){if(t.name==='monto'||t.name==='mora')cobCalc(false)}
   if(t.dataset.a2==='pq'){S.me.pq=t.value;const pos=t.selectionStart;render();const x=document.querySelector('[data-a2=pq]');if(x){x.focus();x.setSelectionRange(pos,pos)}}
   if(t.dataset.a3==='iconlx'){const L=t.value.trim().slice(0,1);S.me.iconL=L;persist();setTouchIcon(L)}
 });
 document.addEventListener('change',e=>{const t=e.target;
-  if(t.closest('#fp'))pCalc();
+  if(t.closest('#fp')&&!t.dataset.cm&&t.type!=='checkbox'&&t.type!=='hidden')pCalc();
+  if(t.closest('#fp')&&t.name==='cuaderno'){const f=$('#fp');f._paid=null;cuadRender(f)}
   if(t.dataset.a3==='qdate'&&t.value&&Q){Q.d=t.value;renderQuick()}
   if(t.dataset.a3==='qtime'&&t.value&&Q){Q.h=t.value;renderQuick()}
   if(t.dataset.a3==='evmovedate'&&t.value)evMove(t.dataset.v,t.dataset.d,'date',t.value);

@@ -12,13 +12,13 @@ function vReportes(){
   const inR=f=>f>=range[0]&&f<=range[1];
   const all=items('prestamo').map(p=>({p,s:lsOf(p),cl:S.items[p.cliente]})).filter(x=>x.cl&&!x.cl.del);
   let esperado=0,falto=0;all.forEach(x=>x.s.cuotas.forEach(c=>{if(inR(c.f)){esperado+=c.v;if(c.f<=t)falto+=c.rem||0}}));
-  const P=items('pago').filter(x=>inR(x.fecha)&&!x.cuaderno);const cob=P.reduce((s,x)=>s+x.monto+(x.mora||0),0);
+  const P=items('pago').filter(x=>inR(x.fecha));const cob=P.reduce((s,x)=>s+x.monto+(x.mora||0),0);
   const intr=P.reduce((s,x)=>{const p=S.items[x.prestamo];return s+(p?interesPart(p,x.monto):0)+(x.mora||0)},0);const capi=cob-intr;
   const pct=cob+falto>0?Math.round(cob/(cob+falto)*100):0;
   const la=all.filter(x=>!x.s.done);const calle=la.reduce((s,x)=>s+x.p.monto*(x.s.saldo/x.p.total),0);const porCob=la.reduce((s,x)=>s+x.s.saldo,0);
   const atr=la.filter(x=>x.s.atraso>.5).sort((a,b)=>b.s.atraso-a.s.atraso);
   const nx7=la.reduce((s,x)=>s+x.s.cuotas.filter(c=>c.f>t&&c.f<=addDays(t,7)).reduce((a,c)=>a+(c.rem||0),0),0);
-  const prest=items('prestamo').filter(x=>inR(x.inicio)&&!x.cuaderno).reduce((s,x)=>s+x.monto,0);
+  const prest=items('prestamo').filter(x=>inR(x.inicio)).reduce((s,x)=>s+x.monto,0);
   const best=la.filter(x=>x.s.atraso<=.5&&x.s.pagadas>0).sort((a,b)=>b.s.pagadas-a.s.pagadas).slice(0,3);
   const lbl={dia:'Hoy',semana:`${pd(range[0]).getDate()} – ${pd(range[1]).getDate()} ${MES[pd(range[1]).getMonth()]}`,mes:MESL[pd(t).getMonth()]}[per];
   REP={range,cob,capi,intr,falto,esperado,pct,calle,porCob,atr,nx7,prest,P,lbl};
@@ -129,6 +129,7 @@ function buildSchedule(){
   const c=cfg();if(!c)return [];const av=c.avisos||[];const out=[];const now=Date.now();
   for(let k=0;k<21;k++){const d=addDays(today(),k);
     if(av.includes('Resumen de la mañana')){const at=atTime(d,c.horaAviso||'07:00');if(at>now)out.push({at,title:k===0?'Tu día de hoy':'Tu día · '+fdate(d),body:summaryText(d,k===0),tag:'dia-'+d})}
+    if(isHoliday(d)){const n=items('prestamo').reduce((s,p)=>s+p.fechas.filter(f=>f===d).length,0);if(n){const pre=pd(d).getDay()===1?3:1;const at=atTime(addDays(d,-pre),c.horaAviso||'07:00')+30*60e3;if(at>now)out.push({at,title:`🎌 ${cap(fdate(d))} es festivo`,body:`Tienes ${n} cobro(s) ese día. Abre la app para decidir si los mueves.`,tag:'fest-'+d})}}
     if(av.includes('Citas y tareas'))for(const e of eventsOn(d)){if(!e.hora||e.aviso<0||isDone(e,d))continue;const at0=atTime(d,e.hora);if(at0<=now)continue;
       const tit=evTitle(e),body=[fmtH(e.hora),e.nota].filter(Boolean).join(' · ');
       if(e.aviso>0){let at=at0-e.aviso*60e3;if(at<=now)at=now+15e3;const m=Math.round((at0-at)/60e3);
